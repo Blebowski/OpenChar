@@ -6,4 +6,8 @@ add_executable(open_char)
 
 target_include_directories(open_char PRIVATE src)
 
+add_subdirectory(thirdparty/fmt)
 add_subdirectory(src)
+
+target_link_libraries(open_char fmt::fmt)
+
