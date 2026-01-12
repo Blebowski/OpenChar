@@ -30,6 +30,11 @@ namespace open_char {
         PULSE,
         CONSTANT
     };
+
+    enum class SimulationKind {
+        TRAN,
+        DC
+    };
 }
 
 #endif

@@ -7,26 +7,33 @@
 
 #include "open_char.h"
 
-class open_char::Stimulus {
+namespace open_char {
 
-    StimulusKind kind;
+class Stimulus {
 
-    union val {
-        struct {
-            double v1;
-            double v2;
+    public:
+        StimulusKind kind_;
 
-            // All in femto-seconds
-            double t_delay;
-            double t_rise;
-            double t_fall;
-            double pulse_width;
-            double period;
-            double num_pulses;
-        } pulse;
-        double constant;
-    };
+        // Constant source
+        double volage_;
 
+        // Pulse source
+        double v1_;
+        double v2_;
+
+        // All in femto-seconds
+        double t_delay_;
+        double t_rise_;
+        double t_fall_;
+        double pulse_width_;
+        double period_;
+        double num_pulses_;
+
+        Stimulus(double voltage);
+        Stimulus(double v1, double v2, double t_delay, double t_rise, double t_fall,
+                 double pulse_width, double period, double num_pulses);
 };
+
+}
 
 #endif

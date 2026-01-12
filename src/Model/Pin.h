@@ -11,14 +11,15 @@ namespace open_char {
 
 class Pin {
 
-    std::string name;
+    public:
+        std::string name;
 
-    PinDirection direction;
-    PinKind kind;
+        PinDirection direction;
+        PinKind kind;
 
-    LogicTable *logic_table;
+        LogicTable logic_table;
 
-    Pin();
+        Pin();
 };
 
 }

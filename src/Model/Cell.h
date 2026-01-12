@@ -11,11 +11,12 @@ namespace open_char {
 
 class Cell {
 
-    std::string name;
+    public:
+        std::string name_;
 
-    std::vector<Pin> pins;
+        std::vector<Pin> pins_;
 
-    Cell();
+        Cell();
 };
 
 }
