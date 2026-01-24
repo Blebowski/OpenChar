@@ -1,6 +1,8 @@
 #ifndef OPEN_CHAR
 #define OPEN_CHAR
 
+#include "tcl.h"
+
 namespace open_char {
 
     // Data Model
@@ -11,6 +13,16 @@ namespace open_char {
     // Simulation backends
     class Stimulus;
     class Simulation;
+
+    // TCL Commands
+    class TclCmd;
+    class TclCmdOpt;
+
+    // OpenChar run context
+    class Context;
+
+    // Exposed routines;
+    void RegisterTclCommands(Context *ctx);
 
     enum class PinDirection {
         IN,
@@ -35,6 +47,8 @@ namespace open_char {
         TRAN,
         DC
     };
+
+
 }
 
 #endif
