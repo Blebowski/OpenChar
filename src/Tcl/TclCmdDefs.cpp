@@ -10,37 +10,21 @@
 
 namespace open_char {
 
-DefineCell::DefineCell(Context *ctx):
-    TclCmd(
-        ctx,
-        "define_cell",
-        {             // name_              has_value_              is_positional_
-            TclCmdOpt("-input",             true,                   false)
-        }
-    )
-{}
-
-int DefineCell::Execute()
-{
-    // TODO: Execute here
-
-    return TCL_OK;
-}
-
-int DefinceCellCb(void *data, Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
-{
-    DefineCell *cmd = (DefineCell *)data;
-
-    cmd->ParseArgs(interp, objc, objv);
-    cmd->Execute();
-
-    return TCL_OK;
-}
+CREATE_TCL_COMMAND(
+    DefineCell,
+    "define_cell",
+    {       // name_                    has_value_  is_positional_
+            TclCmdOpt("-input",         true,       false)
+    },
+    {
+        fmt::print("define_cell executed\n");
+    }
+)
 
 void RegisterTclCommands(Context *ctx)
 {
     std::vector<std::pair<TclCmd, Tcl_ObjCmdProc*>> tcl_commands = {
-        {DefineCell(ctx), DefinceCellCb}
+        {DefineCell(ctx), DefineCellCb}
     };
 
     for (const auto &p : tcl_commands) {
