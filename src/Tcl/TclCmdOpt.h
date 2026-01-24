@@ -4,18 +4,22 @@
 
 #include <string>
 
+#include <tcl.h>
+
 namespace open_char {
 
 class TclCmdOpt {
 
     public:
-        TclCmdOpt(const char *name, const bool has_value, const bool is_positional);
+        TclCmdOpt(const char* name, const bool has_value, const char* desc);
 
-        const char *name_;
+        const std::string name_;
         const bool has_value_;
-        const bool is_positional_;
+        const std::string desc_;
 
-        std::string value_;
+        bool isOptional() const;
+        bool is_set_;
+        const Tcl_Obj* objv_;
 };
 
 }

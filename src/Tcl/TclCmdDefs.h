@@ -2,11 +2,16 @@
 #ifndef TCL_CMD_DEFS_H
 #define TCL_CMD_DEFS_H
 
+#include <fmt/format.h>
+#include <fmt/printf.h>
+
 #include "TclCmd.h"
 
 namespace open_char {
 
-#define CREATE_TCL_COMMAND(class_name, cmd_name, params, exec_rtn)                                  \
+#define ARG(...) __VA_ARGS__
+
+#define CREATE_TCL_COMMAND(class_name, cmd_name, desc, params, exec_rtn)                            \
                                                                                                     \
     class class_name : public TclCmd {                                                              \
     public:                                                                                         \
@@ -18,20 +23,21 @@ namespace open_char {
         TclCmd (                                                                                    \
             ctx,                                                                                    \
             cmd_name,                                                                               \
+            desc,                                                                                   \
             params                                                                                  \
         ) {}                                                                                        \
                                                                                                     \
     int class_name::Execute()                                                                       \
     {                                                                                               \
         exec_rtn                                                                                    \
-        return TCL_OK;                                                                              \
     }                                                                                               \
                                                                                                     \
     int class_name##Cb(void *data, Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)              \
     {                                                                                               \
         class_name *cmd = (class_name *) data;                                                      \
-                                                                                                    \
-        cmd->ParseArgs(interp, objc, objv);                                                         \
+        int parse_rv = cmd->ParseArgs(interp, objc, objv);                                          \
+        if (parse_rv != TCL_OK)                                                                     \
+            return parse_rv;                                                                        \
         return cmd->Execute();                                                                      \
     }                                                                                               \
 

@@ -15,13 +15,15 @@ namespace open_char {
 class TclCmd {
 
     public:
-        TclCmd(Context *ctx, std::string name, std::vector<TclCmdOpt> opts);
+        TclCmd(Context *ctx, const char* name, const char *desc, std::vector<TclCmdOpt> opts);
 
         Context *ctx_;
         const std::string name_;
+        const std::string desc_;
         std::vector<TclCmdOpt> opts_;
 
         int ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv);
+        void Help(void);
 };
 
 }
