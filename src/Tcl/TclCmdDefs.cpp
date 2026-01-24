@@ -23,6 +23,24 @@ CREATE_TCL_COMMAND(
         }),
 
     ARG({
+
+        return TCL_OK;
+    })
+)
+
+CREATE_TCL_COMMAND(
+    Help,
+    "help",
+    "List all available commands",
+
+    ARG({}),
+
+    ARG({
+
+        // TODO: Sort alphabetically
+        for (const auto & cmd_pair : ctx_->tcl_commands_)
+            fmt::printf("%s\n", cmd_pair.first.name_);
+
         return TCL_OK;
     })
 )
@@ -30,12 +48,11 @@ CREATE_TCL_COMMAND(
 void RegisterTclCommands(Context *ctx)
 {
     ctx->tcl_commands_.push_back({ DefineCell(ctx), DefineCellCb });
+    ctx->tcl_commands_.push_back({ Help(ctx),       HelpCb });
 
-    for (const auto &p : ctx->tcl_commands_) {
-        fmt::printf("%p\n", (void*)&(p.first));
+    for (const auto &p : ctx->tcl_commands_)
         Tcl_CreateObjCommand(p.first.ctx_->interp_, p.first.name_.c_str(),
                              p.second, (void*)(&(p.first)), NULL);
-    }
 }
 
 }

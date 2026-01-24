@@ -3,7 +3,7 @@
 #define TCL_CMD_H
 
 #include <string>
-#include <vector>
+#include <map>
 
 #include <tcl.h>
 
@@ -15,7 +15,7 @@ namespace open_char {
 class TclCmd {
 
     public:
-        TclCmd(Context *ctx, const char* name, const char *desc, std::vector<TclCmdOpt> opts);
+        TclCmd(Context *ctx, std::string name, std::string desc, std::vector<TclCmdOpt> opts);
 
         Context *ctx_;
         const std::string name_;

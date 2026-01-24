@@ -6,7 +6,7 @@
 
 namespace open_char {
 
-TclCmd::TclCmd(Context *ctx, const char *name, const char *desc,
+TclCmd::TclCmd(Context *ctx, std::string name, std::string desc,
                 std::vector<TclCmdOpt> opts) :
     ctx_(ctx),
     name_(name),

@@ -4,9 +4,8 @@
 
 namespace open_char {
 
-Cell::Cell()
-{
-
-};
+Cell::Cell(const char *name) :
+    name_(name)
+{};
 
 }
