@@ -12,12 +12,12 @@ namespace open_char {
 class Pin {
 
     public:
-        std::string name;
+        std::string name_;
 
-        PinDirection direction;
-        PinKind kind;
+        PinDirection direction_;
+        PinKind kind_;
 
-        LogicTable logic_table;
+        LogicTable logic_table_;
 
         Pin();
 };

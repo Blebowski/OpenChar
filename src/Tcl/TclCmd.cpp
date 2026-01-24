@@ -7,46 +7,57 @@
 namespace open_char {
 
 TclCmd::TclCmd(Context *ctx, std::string name, std::string desc,
-                std::vector<TclCmdOpt> opts) :
+                std::map<std::string, TclCmdOpt> opts) :
     ctx_(ctx),
     name_(name),
     desc_(desc),
     opts_(opts)
-{}
+{
+    // Copy the string intentionally to keep it simple
+    for (auto &x : opts_)
+        x.second.name_ = x.first;
+}
 
 void TclCmd::Help(void)
 {
     fmt::printf("%s\n\n", desc_);
 
     bool has_opts = false;
-    for (const auto & opt : opts_) {
-        if (opt.isOptional()) {
+    for (const auto & opt_p : opts_) {
+        if (opt_p.second.isOptional()) {
             has_opts = true;
             break;
         }
     }
 
     fmt::printf("%s %s", name_, (has_opts) ? "[options]" : "");
-    for (const auto & opt : opts_) {
+    for (const auto & opt_p : opts_) {
+        auto &opt = opt_p.second;
+
         if (opt.isOptional())
             continue;
+
         fmt::printf(" %s", opt.name_);
     }
     fmt::printf("\n");
 
-    for (const auto & opt : opts_) {
+    for (const auto & opt_p : opts_) {
+        auto &opt = opt_p.second;
+
         if (!opt.isOptional())
             continue;
 
-        fmt::printf("   %-15s %-15s %-15s\n", opt.name_, opt.has_value_ ? "value" : " ", opt.desc_);
+        fmt::printf("   %-15s %-15s %-15s\n", opt.name_,
+                    opt.has_value_ ? "value" : " ", opt.desc_);
     }
     fmt::printf("   %-15s %-15s %-15s", "-h, -help", " ", "Display this help message\n");
 
-    for (const auto & opt : opts_) {
-        if (opt.isOptional())
+    for (const auto & opt_p : opts_) {
+        if (opt_p.second.isOptional())
             continue;
 
-        fmt::printf("   %-15s %-15s %-15s\n", opt.name_, " ", opt.desc_);
+        fmt::printf("   %-15s %-15s %-15s\n", opt_p.second.name_, " ",
+                    opt_p.second.desc_);
     }
 }
 
@@ -57,9 +68,12 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
     (void) interp;
 
     int n_pos = 0;
-    for (auto & opt : opts_) {
+    for (auto & opt_p : opts_) {
+        auto &opt = opt_p.second;
+
         if (!opt.isOptional())
             n_pos++;
+
         opt.is_set_ = false;
         opt.objv_ = nullptr;
     }
@@ -78,14 +92,16 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
         // Handle help
         if (arg == "-h" || arg == "-help") {
             Help();
-            return TCL_OK;
+            return -1;
         }
 
         // Handle switches starting with "-"
         if (arg[0] == '-') {
             bool switch_found = false;
 
-            for (auto & opt : opts_) {
+            for (auto & opt_p : opts_) {
+
+                auto &opt = opt_p.second;
 
                 if (arg != opt.name_)
                     continue;
@@ -120,7 +136,9 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
         int curr_arg_i = 0;
         bool pos_found = false;
 
-        for (auto & opt : opts_) {
+        for (auto & opt_p : opts_) {
+            auto &opt = opt_p.second;
+
             if (opt.isOptional())
                 continue;
 

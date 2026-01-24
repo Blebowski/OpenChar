@@ -2,7 +2,7 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
-#include <vector>
+#include <map>
 
 #include <tcl.h>
 
@@ -14,11 +14,15 @@ namespace open_char {
 
 class Context {
 
-    public:
-        std::vector<Cell> cells_;
+    private:
+        std::map<std::string, Cell> cells_;
 
+    public:
         std::vector<std::pair<TclCmd, Tcl_ObjCmdProc*>> tcl_commands_;
         Tcl_Interp* interp_;
+
+        bool AddCell(std::string name);
+        Cell &GetCell(std::string name);
 };
 
 }

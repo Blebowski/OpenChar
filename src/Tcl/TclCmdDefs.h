@@ -36,6 +36,8 @@ namespace open_char {
     {                                                                                               \
         class_name *cmd = (class_name *) data;                                                      \
         int parse_rv = cmd->ParseArgs(interp, objc, objv);                                          \
+        if (parse_rv == -1)                                                                         \
+            return TCL_OK;                                                                          \
         if (parse_rv != TCL_OK)                                                                     \
             return parse_rv;                                                                        \
         return cmd->Execute();                                                                      \

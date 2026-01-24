@@ -3,7 +3,7 @@
 #define CELL_H
 
 #include <string>
-#include <vector>
+#include <map>
 
 #include "Pin.h"
 
@@ -12,10 +12,10 @@ namespace open_char {
 class Cell {
 
     public:
-        const std::string name_;
-        std::vector<Pin> pins_;
+        std::string name_;
+        std::map<std::string, Pin> pins_;
 
-        Cell(const char *name);
+        Cell(std::string name);
 };
 
 }

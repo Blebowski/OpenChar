@@ -16,13 +16,22 @@ CREATE_TCL_COMMAND(
     "Define cell to be characterized.",
 
     ARG({
-        // name_                    has_value_
-        TclCmdOpt("-input",         true,           "Input pin or pins"),
-        TclCmdOpt("-output",        true,           "Output pin or pins"),
-        TclCmdOpt("cell_name",      false,          "Name of the cell")
+        // name_                  has_value_      desc_
+        {"-input",      TclCmdOpt(true,           "Input pin or pins")},
+        {"-output",     TclCmdOpt(true,           "Output pin or pins")},
+        {"cell_name",   TclCmdOpt(false,          "Name of the cell")}
         }),
-
     ARG({
+
+        const std::string cell_name = Tcl_GetString((Tcl_Obj*)opts_["cell_name"].objv_);
+
+        if (!ctx_->AddCell(cell_name)) {
+            // TODO: Replace by some logging
+            fmt::printf("Error: Cell %s is already defined", cell_name);
+            return TCL_ERROR;
+        }
+
+        // TODO: Add Pins
 
         return TCL_OK;
     })

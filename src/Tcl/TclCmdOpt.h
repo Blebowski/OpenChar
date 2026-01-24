@@ -11,9 +11,10 @@ namespace open_char {
 class TclCmdOpt {
 
     public:
-        TclCmdOpt(const char* name, const bool has_value, const char* desc);
+        TclCmdOpt();
+        TclCmdOpt(const bool has_value, std::string desc);
 
-        const std::string name_;
+        std::string name_;
         const bool has_value_;
         const std::string desc_;
 

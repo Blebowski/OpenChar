@@ -78,7 +78,7 @@ void Simulation::WriteNetlist()
         if (s.first == nullptr)
             continue;
 
-        std::string_view pn = s.first->name;
+        std::string_view pn = s.first->name_;
         const Stimulus &v = s.second;
         fmt::print(f, "V{} {} {}", pn, pn, vss_.first);
 
@@ -90,8 +90,8 @@ void Simulation::WriteNetlist()
     }
 
     fmt::print(f, "{} ", dut_title_);
-    for (const auto &pin : dut_->pins_)
-        fmt::print(f, "{} ", pin.name);
+    for (const auto &pin_p : dut_->pins_)
+        fmt::print(f, "{} ", pin_p.second.name_);
     fmt::print(f, "{} \n\n", dut_->name_);
 
     fmt::print(f, ".control \n");
