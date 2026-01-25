@@ -3,9 +3,10 @@
 
 namespace open_char {
 
-Pin::Pin()
-{
-
-}
+Pin::Pin(std::string name, PinDirection direction, PinKind kind) :
+    name_(name),
+    direction_(direction),
+    kind_(kind)
+{}
 
 }

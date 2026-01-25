@@ -23,15 +23,56 @@ CREATE_TCL_COMMAND(
         }),
     ARG({
 
-        const std::string cell_name = Tcl_GetString((Tcl_Obj*)opts_["cell_name"].objv_);
-
-        if (!ctx_->AddCell(cell_name)) {
+        if (opts_["-input"].objv_ == nullptr && opts_["-output"].objv_ == nullptr) {
             // TODO: Replace by some logging
-            fmt::printf("Error: Cell %s is already defined", cell_name);
+            fmt::printf("Error: You need to specify at least -input or -outputs.\n");
             return TCL_ERROR;
         }
 
-        // TODO: Add Pins
+        const std::string cell_name = Tcl_GetString((Tcl_Obj*)opts_["cell_name"].objv_);
+
+        std::pair<Cell&, bool> cell_p = ctx_->AddCell(cell_name);
+        if (!cell_p.second) {
+            // TODO: Replace by some logging
+            fmt::printf("Error: Cell %s is already defined\n", cell_name);
+            return TCL_ERROR;
+        }
+
+        if (opts_["-input"].objv_ != nullptr) {
+            const std::string inputs = Tcl_GetString((Tcl_Obj*)opts_["-input"].objv_);
+
+            // TODO: Move this to some function that can process either single element or collection!
+            // TODO: Handle duplicit pins here!
+            std::size_t start = 0;
+            while (true) {
+                size_t pos = inputs.find(' ', start);
+                if (pos == inputs.npos) {
+                    cell_p.first.AddPin(inputs.substr(start), PinDirection::IN, PinKind::DATA);
+                    break;
+                }
+                cell_p.first.AddPin(inputs.substr(start, pos - start),
+                                    PinDirection::IN, PinKind::DATA);
+                start = pos + 1;
+            }
+        }
+
+        if (opts_["-output"].objv_ != nullptr) {
+            const std::string inputs = Tcl_GetString((Tcl_Obj*)opts_["-output"].objv_);
+
+            // TODO: Move this to some function that can process either single element or collection!
+            // TODO: Handle duplicit pins here!
+            std::size_t start = 0;
+            while (true) {
+                size_t pos = inputs.find(' ', start);
+                if (pos == inputs.npos) {
+                    cell_p.first.AddPin(inputs.substr(start), PinDirection::OUT, PinKind::DATA);
+                    break;
+                }
+                cell_p.first.AddPin(inputs.substr(start, pos - start),
+                                    PinDirection::OUT, PinKind::DATA);
+                start = pos + 1;
+            }
+        }
 
         return TCL_OK;
     })

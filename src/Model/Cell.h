@@ -12,10 +12,11 @@ namespace open_char {
 class Cell {
 
     public:
-        std::string name_;
+        const std::string name_;
         std::map<std::string, Pin> pins_;
 
         Cell(std::string name);
+        std::pair<Pin&, bool> AddPin(std::string name, PinDirection direction, PinKind kind);
 };
 
 }

@@ -74,7 +74,6 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
         if (!opt.isOptional())
             n_pos++;
 
-        opt.is_set_ = false;
         opt.objv_ = nullptr;
     }
 
@@ -107,7 +106,6 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
                     continue;
 
                 switch_found = true;
-                opt.is_set_ = true;
 
                 if (!opt.has_value_)
                     continue;
@@ -147,7 +145,6 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
                 continue;
             }
 
-            opt.is_set_ = true;
             opt.objv_ = objv[i];
             pos_arg_i++;
             pos_found = true;
