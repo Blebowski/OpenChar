@@ -3,6 +3,12 @@ cmake_minimum_required(VERSION 3.24.2)
 project(characterizer)
 
 ###############################################################################
+# Settings
+###############################################################################
+set(CMAKE_CXX_STANDARD 20)
+
+
+###############################################################################
 # Dependencies
 ###############################################################################
 
@@ -15,7 +21,7 @@ find_package(TCL REQUIRED)
 
 add_executable(open_char)
 
-target_compile_options(open_char PRIVATE -Wall -Wextra -Wpedantic -Wconversion)
+target_compile_options(open_char PRIVATE -Wall -Wextra -Wpedantic -Wconversion -O2)
 
 target_include_directories(open_char PRIVATE src)
 target_include_directories(open_char PRIVATE ${TCL_INCLUDE_PATH})
