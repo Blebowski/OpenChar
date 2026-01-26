@@ -9,6 +9,8 @@
 #include "open_char.h"
 #include "Cell.h"
 #include "TclCmd.h"
+#include "Algorithms.h"
+
 
 namespace open_char {
 
@@ -18,11 +20,30 @@ class Context {
         std::map<std::string, Cell> cells_;
 
     public:
+
+        Context();
+        ~Context();
+
+        // Cell management
+        std::pair<Cell&, bool> AddCell(std::string name);
+        bool HasCell(std::string name);
+        Cell &GetCell(std::string name);
+
+        // Global environment
+        double temp_ = 25;
+
+        std::pair<std::string, double> vcc_ = {"VDD", 1.2};
+        std::pair<std::string, double> vss_ = {"VSS", 0};
+
+        std::vector<std::string> libs_ = {"models.lib tt"};
+        std::vector<std::string> includes_ = {"cells.cdl"};
+
+        // TCL objects
         std::vector<std::pair<TclCmd, Tcl_ObjCmdProc*>> tcl_commands_;
         Tcl_Interp* interp_;
 
-        std::pair<Cell&, bool> AddCell(std::string name);
-        Cell &GetCell(std::string name);
+        // Other
+        Algorithms *algorithms_;
 };
 
 }

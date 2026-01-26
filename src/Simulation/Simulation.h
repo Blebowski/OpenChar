@@ -3,35 +3,41 @@
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
+#include <vector>
+#include <string>
+#include <filesystem>
+
 #include "open_char.h"
 #include "Pin.h"
 #include "Cell.h"
 #include "Stimulus.h"
 #include "Waves.h"
 
-#include <vector>
-#include <string>
-
 namespace open_char {
 
 class Simulation {
 
     public:
-        Simulation(Cell *dut, double temp, double duration, double time_step);
-        Simulation(Cell *dut, double temp);
+        Simulation(std::string name, Cell *dut, double duration, double time_step);
+        Simulation(std::string name, Cell *dut);
 
-        void AddInclude(std::string &include);
-        void AddLib(std::string &lib);
-        void SetVcc(std::string &name, double val);
-        void SetVss(std::string &name, double val);
+        void SetVcc(std::pair<std::string, double> &v);
+        void SetVss(std::pair<std::string, double> &v);
+        void SetTemp(double temp);
+
+        void AddInclude(const std::string include);
+        void AddLib(std::string lib);
         void AddStimuli(Pin *pin, Stimulus &&stim);
 
         int Simulate();
         Waves* ReadWaves();
 
     private:
-        SimulationKind kind_;
-        Cell *dut_;
+
+        const std::string name_;
+        const SimulationKind kind_;
+        Cell * const dut_;
+
         double temp_;
 
         // Transient simulation details - always in femto-seconds
@@ -46,13 +52,12 @@ class Simulation {
 
         std::vector<std::pair<Pin*, Stimulus>> stimuli_;
 
-        std::string netlist_path_;
-
-        const std::string simulation_name_ = "OPEN_CHAR_SIMULATION";
+        const std::string testbench_ = "tb.cdl";
         const std::string dut_title_ = "XDUT";
         const std::string wave_file_ = "data.raw";
+        const std::string log_file_ = "sim.log";
 
-        void WriteNetlist();
+        void WriteTestBench();
 };
 
 };

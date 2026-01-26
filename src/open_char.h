@@ -11,6 +11,7 @@ namespace open_char {
     class Cell;
 
     // Simulation backends
+    class Algorithms;
     class Stimulus;
     class Simulation;
 
@@ -32,7 +33,7 @@ namespace open_char {
 
     enum class PinKind {
         PWR,
-        GROUND,
+        GND,
         DATA,
         CLK,
         ASYNC

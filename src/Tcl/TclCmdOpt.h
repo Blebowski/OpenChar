@@ -19,6 +19,7 @@ class TclCmdOpt {
         const std::string desc_;
 
         bool isOptional() const;
+        bool isSet() const;
         const Tcl_Obj* objv_;
 };
 

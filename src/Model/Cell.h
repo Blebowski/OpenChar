@@ -4,6 +4,7 @@
 
 #include <string>
 #include <map>
+#include <ranges>
 
 #include "Pin.h"
 
@@ -13,10 +14,35 @@ class Cell {
 
     public:
         const std::string name_;
-        std::map<std::string, Pin> pins_;
 
         Cell(std::string name);
         std::pair<Pin&, bool> AddPin(std::string name, PinDirection direction, PinKind kind);
+        std::map<std::string, Pin>& GetPins();
+
+
+        auto GetPins(PinDirection direction) const {
+            auto filtered = std::views::filter(pins_,
+                [direction](const auto& pair) {
+                    return pair.second.direction_ == direction;
+                }
+            );
+            return std::views::values(filtered);
+        };
+
+        auto GetPins(PinKind kind) const {
+            auto filtered = std::views::filter(pins_,
+                [kind](const auto& pair) {
+                    return pair.second.kind_ == kind;
+                }
+            );
+            return std::views::values(filtered);
+        };
+
+        size_t GetPinsCount(PinDirection direction);
+
+    private:
+        std::map<std::string, Pin> pins_;
+
 };
 
 }

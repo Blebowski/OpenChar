@@ -26,4 +26,11 @@ bool TclCmdOpt::isOptional() const
     return false;
 }
 
+bool TclCmdOpt::isSet() const
+{
+    if (objv_ == nullptr)
+        return false;
+    return true;
+}
+
 }
