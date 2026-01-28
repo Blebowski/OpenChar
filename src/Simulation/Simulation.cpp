@@ -144,9 +144,12 @@ int Simulation::Simulate()
     return system(cmd.c_str());
 }
 
-Waves* Simulation::ReadWaves()
+Waves Simulation::ReadWaves()
 {
-    return new Waves(wave_file_);
+    std::filesystem::path sim_dir(name_);
+    std::filesystem::path wave = sim_dir / wave_file_;
+
+    return Waves(wave);
 }
 
 }

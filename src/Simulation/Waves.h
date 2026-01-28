@@ -15,6 +15,7 @@ class Waves {
 
     public:
         Waves(std::string path);
+        void Print();
 
         std::string title_;
         std::string plot_name_;

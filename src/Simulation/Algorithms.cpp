@@ -57,7 +57,10 @@ bool Algorithms::GetLogicFunction(Cell &cell)
 
             sim.Simulate();
 
-            // TODO: Add logic_table_ entry here
+            Waves w = sim.ReadWaves();
+            w.Print();
+
+            // TODO: Extract logic table entry
         }
     }
 

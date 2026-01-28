@@ -30,7 +30,7 @@ class Simulation {
         void AddStimuli(Pin *pin, Stimulus &&stim);
 
         int Simulate();
-        Waves* ReadWaves();
+        Waves ReadWaves();
 
     private:
 
