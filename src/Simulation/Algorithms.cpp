@@ -11,6 +11,13 @@ Algorithms::Algorithms(Context *ctx) :
     ctx_(ctx)
 {}
 
+int Algorithms::ToLogic(double val)
+{
+    if (abs(val - ctx_->vcc_.second) < 0.05)
+        return 1;
+    return 0;
+}
+
 bool Algorithms::GetLogicFunction(Cell &cell)
 {
     auto o_pins = cell.GetPins(PinDirection::OUT);
@@ -60,8 +67,12 @@ bool Algorithms::GetLogicFunction(Cell &cell)
             Waves w = sim.ReadWaves();
             w.Print();
 
-            // TODO: Extract logic table entry
+            o_pin.AddLogTableEntry(ipin_vect, ToLogic(w.data_[o_pin.name_][0]));
         }
+    }
+
+    for (auto & o_pin : o_pins) {
+        o_pin.PrintLogicTable();
     }
 
     return true;

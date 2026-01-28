@@ -19,8 +19,7 @@ class Cell {
         std::pair<Pin&, bool> AddPin(std::string name, PinDirection direction, PinKind kind);
         std::map<std::string, Pin>& GetPins();
 
-
-        auto GetPins(PinDirection direction) const {
+        auto GetPins(PinDirection direction) {
             auto filtered = std::views::filter(pins_,
                 [direction](const auto& pair) {
                     return pair.second.direction_ == direction;
@@ -29,7 +28,7 @@ class Cell {
             return std::views::values(filtered);
         };
 
-        auto GetPins(PinKind kind) const {
+        auto GetPins(PinKind kind) {
             auto filtered = std::views::filter(pins_,
                 [kind](const auto& pair) {
                     return pair.second.kind_ == kind;

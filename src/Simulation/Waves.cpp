@@ -81,6 +81,8 @@ Waves::Waves(std::string path)
                 curr++;
 
             key = std::string(start + 1 , curr - start - 1);
+            for (auto & c: key)
+                c = toupper(c);
         }
 
         data_[key] = std::vector<double>();

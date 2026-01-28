@@ -15,6 +15,9 @@ class Algorithms {
         bool GetLogicFunction(Cell &cell);
 
         Context *ctx_;
+
+    private:
+        int ToLogic(double val);
 };
 
 }
