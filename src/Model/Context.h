@@ -10,24 +10,20 @@
 #include "Cell.h"
 #include "TclCmd.h"
 #include "Algorithms.h"
-
+#include "Library.h"
 
 namespace open_char {
 
-class Context {
 
-    private:
-        std::map<std::string, Cell> cells_;
+class Context {
 
     public:
 
         Context();
         ~Context();
 
-        // Cell management
-        std::pair<Cell&, bool> AddCell(std::string name);
-        bool HasCell(std::string name);
-        Cell &GetCell(std::string name);
+        // Cell library to characterize
+        Library lib_;
 
         // Global environment
         double temp_ = 25;

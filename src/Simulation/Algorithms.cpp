@@ -61,8 +61,6 @@ bool Algorithms::GetLogicFunction(Cell &cell)
         }
     }
 
-    // TODO: Extract the logic function!
-
     return true;
 }
 

@@ -31,7 +31,7 @@ CREATE_TCL_COMMAND(
 
         const std::string cell_name = Tcl_GetString((Tcl_Obj*)opts_["cell_name"].objv_);
 
-        std::pair<Cell&, bool> cell_p = ctx_->AddCell(cell_name);
+        std::pair<Cell&, bool> cell_p = ctx_->lib_.AddCell(cell_name);
         if (!cell_p.second) {
             // TODO: Replace by some logging
             fmt::printf("Error: Cell %s is already defined\n", cell_name);
@@ -95,14 +95,14 @@ CREATE_TCL_COMMAND(
 
         const std::string cell_name = Tcl_GetString((Tcl_Obj*)opts_["cell_name"].objv_);
 
-        if (!ctx_->HasCell(cell_name)) {
+        if (!ctx_->lib_.HasCell(cell_name)) {
             // TODO: Replace by some logging
             fmt::printf("Error: The cell %s does not exist. Use 'define_cell' to define it.\n",
                          cell_name);
             return TCL_ERROR;
         }
 
-        ctx_->algorithms_->GetLogicFunction(ctx_->GetCell(cell_name));
+        ctx_->algorithms_->GetLogicFunction(ctx_->lib_.GetCell(cell_name));
 
         return TCL_OK;
     })
