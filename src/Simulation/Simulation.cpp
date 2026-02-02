@@ -3,9 +3,9 @@
 #include <vector>
 #include <string>
 
-#include <fmt/printf.h>
-
 #include "open_char.h"
+
+#include "Utils.h"
 #include "Simulation.h"
 
 namespace open_char {
@@ -62,67 +62,66 @@ void Simulation::WriteTestBench()
     std::string tb_path =  sim_dir / testbench_;
     FILE *f = fopen(tb_path.c_str(), "w");
 
-    fmt::print(f, ".title {}\n\n", name_);
+    fprintf(f, ".title %s \n\n", name_);
 
-    fmt::print(f, "* Libraries\n");
+    fprintf(f, "* Libraries\n");
     for (const auto &lib : libs_)
-        fmt::print(f, ".lib {}\n", lib);
-    fmt::print(f, "\n");
+        fprintf(f, ".lib %s\n", lib);
+    fprintf(f, "\n");
 
-    fmt::print(f, "* Include files\n");
+    fprintf(f, "* Include files\n");
     for (const auto &include : includes_)
-        fmt::print(f, ".include {}\n", include);
-    fmt::print(f, "\n");
+        fprintf(f, ".include %s\n", include);
+    fprintf(f, "\n");
 
-    fmt::print(f, ".temp {}\n", temp_);
+    fprintf(f, ".temp %f\n", temp_);
 
-    fmt::print(f, "* Power Supply\n");
-    fmt::print(f, "Vpwr {} {} {}\n", vcc_.first, vss_.first, vcc_.second);
-    fmt::print(f, "VGnd {} GND {}\n\n", vss_.first, vss_.second);
+    fprintf(f, "* Power Supply\n");
+    fprintf(f, "Vpwr %s %s %f\n", vcc_.first, vss_.first, vcc_.second);
+    fprintf(f, "VGnd %s GND %f\n\n", vss_.first, vss_.second);
 
-    fmt::print(f, "* Stimuli\n");
+    fprintf(f, "* Stimuli\n");
     for (const auto &s : stimuli_) {
         if (s.first == nullptr)
             continue;
 
-        std::string_view pn = s.first->name_;
+        fprintf(f, "V%s %s %s ", s.first->name_, s.first->name_, vss_.first);
+
         const Stimulus &v = s.second;
-        fmt::print(f, "V{} {} {} ", pn, pn, vss_.first);
-
         if (v.kind_ == StimulusKind::CONSTANT)
-            fmt::print(f, "{}\n", v.volage_);
+            fprintf(f, "%f\n", v.volage_);
         else
-            fmt::print(f, "PULSE({} {} {} {} {} {})\n", v.v1_, v.v2_, v.t_delay_, v.t_rise_,
-                       v.t_fall_, v.pulse_width_, v.period_, v.num_pulses_);
+            fprintf(f, "PULSE(%f %f %f %f %f %f)\n", v.v1_, v.v2_, v.t_delay_, v.t_rise_,
+                    v.t_fall_, v.pulse_width_, v.period_, v.num_pulses_);
     }
-    fmt::print(f, "\n");
+    fprintf(f, "\n");
 
-    fmt::print(f, "* DUT\n", dut_title_);
-    fmt::print(f, "{} ", dut_title_);
+    fprintf(f, "* DUT\n", dut_title_);
+    fprintf(f, "%s ", dut_title_);
 
     for (const auto &pin_p : dut_->GetPins(PinDirection::OUT))
-        fmt::print(f, "{} ", pin_p.name_);
+        fprintf(f, "%s ", pin_p.name_);
     for (const auto &pin_p : dut_->GetPins(PinDirection::IN))
-        fmt::print(f, "{} ", pin_p.name_);
+        fprintf(f, "%s ", pin_p.name_);
     for (const auto &pin_p : dut_->GetPins(PinKind::PWR))
-        fmt::print(f, "{} ", pin_p.name_);
+        fprintf(f, "%s ", pin_p.name_);
     for (const auto &pin_p : dut_->GetPins(PinKind::GND))
-        fmt::print(f, "{} ", pin_p.name_);
+        fprintf(f, "%s ", pin_p.name_);
 
-    fmt::print(f, "{} \n\n", dut_->name_);
+    fprintf(f, "%s \n\n", dut_->name_);
 
-    fmt::print(f, ".control \n");
+    fprintf(f, ".control \n");
     if (kind_ == SimulationKind::TRAN)
-        fmt::print(f, "     tran {}FS {}FS\n", duration_, time_step_);
+        fprintf(f, "     tran %fFS %fFS\n", duration_, time_step_);
     else if (kind_ == SimulationKind::DC)
-        fmt::print(f, "     DC VGnd 0 0 0.1\n");
+        fprintf(f, "     DC VGnd 0 0 0.1\n");
 
     std::filesystem::path wave = sim_dir / wave_file_;
-    fmt::print(f, "     write {} all\n", wave.c_str());
+    fprintf(f, "     write %s all\n", wave);
 
-    fmt::print(f, "     exit\n");
-    fmt::print(f, ".endc\n");
-    fmt::print(f, ".end\n");
+    fprintf(f, "     exit\n");
+    fprintf(f, ".endc\n");
+    fprintf(f, ".end\n");
 
     fclose(f);
 }
@@ -139,7 +138,7 @@ int Simulation::Simulate()
     std::filesystem::path log_path = sim_dir / log_file_;
 
     // TODO: Redirect also Error output!
-    std::string cmd = fmt::sprintf("ngspice %s > %s", tb_path.c_str(), log_path.c_str());
+    std::string cmd = sprintf("ngspice %s > %s", tb_path.c_str(), log_path.c_str());
 
     return system(cmd.c_str());
 }

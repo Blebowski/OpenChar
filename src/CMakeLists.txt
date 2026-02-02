@@ -3,6 +3,7 @@
 target_include_directories(open_char PRIVATE Model)
 target_include_directories(open_char PRIVATE Simulation)
 target_include_directories(open_char PRIVATE Tcl)
+target_include_directories(open_char PRIVATE Common)
 
 add_subdirectory(Model)
 add_subdirectory(Simulation)

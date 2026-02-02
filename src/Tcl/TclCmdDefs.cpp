@@ -1,12 +1,10 @@
 
-#include <fmt/format.h>
-#include <fmt/printf.h>
-
 #include <tcl.h>
 #include <utility>
 
 #include "TclCmdDefs.h"
 #include "TclCmdOpt.h"
+#include "Utils.h"
 
 namespace open_char {
 
@@ -25,7 +23,7 @@ CREATE_TCL_COMMAND(
 
         if (!opts_["-input"].isSet() && !opts_["-output"].isSet()) {
             // TODO: Replace by some logging
-            fmt::printf("Error: You need to specify at least -input or -outputs.\n");
+            printf("Error: You need to specify at least -input or -outputs.\n");
             return TCL_ERROR;
         }
 
@@ -34,7 +32,7 @@ CREATE_TCL_COMMAND(
         std::pair<Cell&, bool> cell_p = ctx_->lib_.AddCell(cell_name);
         if (!cell_p.second) {
             // TODO: Replace by some logging
-            fmt::printf("Error: Cell %s is already defined\n", cell_name);
+            printf("Error: Cell %s is already defined\n", cell_name);
             return TCL_ERROR;
         }
 
@@ -97,8 +95,8 @@ CREATE_TCL_COMMAND(
 
         if (!ctx_->lib_.HasCell(cell_name)) {
             // TODO: Replace by some logging
-            fmt::printf("Error: The cell %s does not exist. Use 'define_cell' to define it.\n",
-                         cell_name);
+            printf("Error: The cell %s does not exist. Use 'define_cell' to define it.\n",
+                    cell_name);
             return TCL_ERROR;
         }
 
@@ -119,7 +117,7 @@ CREATE_TCL_COMMAND(
 
         // TODO: Sort alphabetically
         for (const auto & cmd_pair : ctx_->tcl_commands_)
-            fmt::printf("%s\n", cmd_pair.first.name_);
+            printf("%s\n", cmd_pair.first.name_);
 
         return TCL_OK;
     })

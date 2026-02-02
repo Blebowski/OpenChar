@@ -1,21 +1,20 @@
-
-#include <fmt/printf.h>
-
 #include "open_char.h"
+
 #include "Waves.h"
+#include "Utils.h"
 
 namespace open_char {
 
 #define MOVE_TILL_CHAR(ptr) while (*ptr == ' ' || *ptr == '\t') ptr++
 #define MOVE_TILL_SPACE(ptr) while (*ptr != ' ' && *ptr != '\t') ptr++
-#define PRINT_LINE(len) fmt::printf("%s\n", std::string (len, '-'));
+#define PRINT_LINE(len) printf("%s\n", std::string (len, '-'));
 
 Waves::Waves(std::string path)
 {
     FILE *f = fopen(path.c_str(), "r");
     if (f == NULL) {
         // TODO: Replace with some logging
-        fmt::printf("Failed to open file: %s\n", path);
+        printf("Failed to open file: %s\n", path);
         return;
     }
 
@@ -131,22 +130,22 @@ void Waves::Print()
 
     PRINT_LINE(total);
 
-    fmt::printf("|");
+    printf("|");
     for (const auto &sig : data_) {
-        std::string fmt_str = fmt::sprintf(" %%%ds |", lens[sig.first]);
-        fmt::printf(fmt_str, sig.first);
+        std::string fmt_str = sprintf(" %%%ds |", lens[sig.first]);
+        printf(fmt_str, sig.first);
     }
-    fmt::printf(" \n");
+    printf(" \n");
 
     PRINT_LINE(total);
 
     for (size_t i = 0; i < data_.begin()->second.size(); i++) {
-        fmt::printf("|");
+        printf("|");
         for (const auto &sig : data_) {
-            std::string fmt_str = fmt::sprintf(" %%%d.4f |", lens[sig.first]);
-            fmt::printf(fmt_str, sig.second[i]);
+            std::string fmt_str = sprintf(" %%%d.4f |", lens[sig.first]);
+            printf(fmt_str, sig.second[i]);
         }
-        fmt::printf(" \n");
+        printf(" \n");
     }
 
     PRINT_LINE(total);

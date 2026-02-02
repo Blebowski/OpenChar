@@ -1,9 +1,8 @@
 
 
-#include <fmt/printf.h>
-
 #include "Algorithms.h"
 #include "Simulation.h"
+#include "Utils.h"
 
 namespace open_char {
 
@@ -38,7 +37,7 @@ bool Algorithms::GetLogicFunction(Cell &cell)
             size_t input = ipin_vect;
 
             for (const auto & i_pin : i_pins) {
-                sim_name = fmt::sprintf("%s_%s%d", sim_name, i_pin.name_, input & 0x1);
+                sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, input & 0x1);
                 input >>= 1;
             }
 

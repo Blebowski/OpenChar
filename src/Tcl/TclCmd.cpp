@@ -1,8 +1,6 @@
 
-#include <fmt/format.h>
-#include <fmt/printf.h>
-
 #include "TclCmd.h"
+#include "Utils.h"
 
 namespace open_char {
 
@@ -20,7 +18,7 @@ TclCmd::TclCmd(Context *ctx, std::string name, std::string desc,
 
 void TclCmd::Help(void)
 {
-    fmt::printf("%s\n\n", desc_);
+    printf("%s\n\n", desc_);
 
     bool has_opts = false;
     for (const auto & opt_p : opts_) {
@@ -30,16 +28,16 @@ void TclCmd::Help(void)
         }
     }
 
-    fmt::printf("%s %s", name_, (has_opts) ? "[options]" : "");
+    printf("%s %s", name_, (has_opts) ? "[options]" : "");
     for (const auto & opt_p : opts_) {
         auto &opt = opt_p.second;
 
         if (opt.isOptional())
             continue;
 
-        fmt::printf(" %s", opt.name_);
+        printf(" %s", opt.name_);
     }
-    fmt::printf("\n");
+    printf("\n");
 
     for (const auto & opt_p : opts_) {
         auto &opt = opt_p.second;
@@ -47,17 +45,16 @@ void TclCmd::Help(void)
         if (!opt.isOptional())
             continue;
 
-        fmt::printf("   %-15s %-15s %-15s\n", opt.name_,
-                    opt.has_value_ ? "value" : " ", opt.desc_);
+        printf("   %-15s %-15s %-15s\n", opt.name_,
+                opt.has_value_ ? "value" : " ", opt.desc_);
     }
-    fmt::printf("   %-15s %-15s %-15s", "-h, -help", " ", "Display this help message\n");
+    printf("   %-15s %-15s %-15s", "-h, -help", " ", "Display this help message\n");
 
     for (const auto & opt_p : opts_) {
         if (opt_p.second.isOptional())
             continue;
 
-        fmt::printf("   %-15s %-15s %-15s\n", opt_p.second.name_, " ",
-                    opt_p.second.desc_);
+        printf("   %-15s %-15s %-15s\n", opt_p.second.name_, " ", opt_p.second.desc_);
     }
 }
 
@@ -84,7 +81,7 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
         const std::string arg = Tcl_GetString(objv[i]);
 
         if (arg.length() < 1) {
-            fmt::printf("Error: Empty argument\n");
+            printf("Error: Empty argument\n");
             return TCL_ERROR;
         }
 
@@ -112,7 +109,7 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
 
                 if (i == objc - 1) {
                     // TODO: Wrap to some logging!
-                    fmt::printf("Error: %s is missing value.\n", opt.name_);
+                    printf("Error: %s is missing value.\n", opt.name_);
                     return TCL_ERROR;
                 }
 
@@ -125,8 +122,8 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
                 continue;
             }
 
-            fmt::printf("Error: %s is invalid argument to %s. See %s -help for correct usage.\n",
-                            arg, name_, name_);
+            printf("Error: %s is invalid argument to %s. See %s -help for correct usage.\n",
+                    arg, name_, name_);
             return TCL_ERROR;
         }
 
@@ -156,14 +153,14 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
             continue;
         }
 
-        fmt::printf("Error: Too many positonal arguments: %d. "
-                            "See %s -help for correct usage.\n", pos_arg_i + 1, name_);
+        printf("Error: Too many positonal arguments: %d. "
+                "See %s -help for correct usage.\n", pos_arg_i + 1, name_);
         return TCL_ERROR;
     }
 
     if (n_pos != pos_arg_i) {
-       fmt::printf("Error: Not enough positional arguments: %d. "
-                           "See %s -help for correct usage.\n", pos_arg_i, name_);
+       printf("Error: Not enough positional arguments: %d. "
+               "See %s -help for correct usage.\n", pos_arg_i, name_);
         return TCL_ERROR;
     }
 
