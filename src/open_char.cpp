@@ -1,9 +1,9 @@
 
-#include <tcl.h>
-
 #include "open_char.h"
 #include "Context.h"
 #include "Utils.h"
+
+#include <tcl.h>
 
 open_char::Context *ctx;
 
@@ -46,7 +46,7 @@ int ShellInit(Tcl_Interp *interp)
     open_char::RegisterTclCommands(ctx);
 
     if (argt[ARG_FILE].present) {
-        printf("Evaluating file: %s\n", argt[ARG_FILE].val);
+        open_char::printf("Evaluating file: %s\n", argt[ARG_FILE].val);
         Tcl_EvalFile(interp, argt[ARG_FILE].val.c_str());
     }
 
@@ -55,12 +55,12 @@ int ShellInit(Tcl_Interp *interp)
 
 void PrintUsage()
 {
-    printf("OpenChar - Open Source library characterization tool\n");
-    printf("Usage: open_char [options]\n\n");
+    open_char::printf("OpenChar - Open Source library characterization tool\n");
+    open_char::printf("Usage: open_char [options]\n\n");
 
-    printf("Options:\n");
+    open_char::printf("Options:\n");
     for (t_cli_arg *ent = argt; ent->kind != ARG_LAST; ent++)
-        printf("    %s %-10s %s\n", ent->name, ent->val_name, ent->desc);
+        open_char::printf("    %s %-10s %s\n", ent->name, ent->val_name, ent->desc);
 }
 
 int ParseArgs(int argc, char *argv[])
@@ -90,7 +90,7 @@ int ParseArgs(int argc, char *argv[])
         }
 
         if (!found) {
-            printf("Error: Invalid argument %s\n", argv[argi]);
+            open_char::error("Invalid argument %s\n", argv[argi]);
             PrintUsage();
             return TCL_ERROR;
         }

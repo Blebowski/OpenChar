@@ -22,8 +22,7 @@ CREATE_TCL_COMMAND(
     ARG({
 
         if (!opts_["-input"].isSet() && !opts_["-output"].isSet()) {
-            // TODO: Replace by some logging
-            printf("Error: You need to specify at least -input or -outputs.\n");
+            error("You need to specify at least -input or -outputs.\n");
             return TCL_ERROR;
         }
 
@@ -31,8 +30,7 @@ CREATE_TCL_COMMAND(
 
         std::pair<Cell&, bool> cell_p = ctx_->lib_.AddCell(cell_name);
         if (!cell_p.second) {
-            // TODO: Replace by some logging
-            printf("Error: Cell %s is already defined\n", cell_name);
+            error("Cell %s is already defined\n", cell_name);
             return TCL_ERROR;
         }
 
@@ -94,8 +92,7 @@ CREATE_TCL_COMMAND(
         const std::string cell_name = Tcl_GetString((Tcl_Obj*)opts_["cell_name"].objv_);
 
         if (!ctx_->lib_.HasCell(cell_name)) {
-            // TODO: Replace by some logging
-            printf("Error: The cell %s does not exist. Use 'define_cell' to define it.\n",
+            error("The cell %s does not exist. Use 'define_cell' to define it.\n",
                     cell_name);
             return TCL_ERROR;
         }
@@ -114,7 +111,6 @@ CREATE_TCL_COMMAND(
     ARG({}),
 
     ARG({
-
         // TODO: Sort alphabetically
         for (const auto & cmd_pair : ctx_->tcl_commands_)
             printf("%s\n", cmd_pair.first.name_);

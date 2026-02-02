@@ -7,14 +7,13 @@ namespace open_char {
 
 #define MOVE_TILL_CHAR(ptr) while (*ptr == ' ' || *ptr == '\t') ptr++
 #define MOVE_TILL_SPACE(ptr) while (*ptr != ' ' && *ptr != '\t') ptr++
-#define PRINT_LINE(len) printf("%s\n", std::string (len, '-'));
+#define PRINT_LINE(len) printf("%s\n", std::string(len, '-'));
 
 Waves::Waves(std::string path)
 {
     FILE *f = fopen(path.c_str(), "r");
     if (f == NULL) {
-        // TODO: Replace with some logging
-        printf("Failed to open file: %s\n", path);
+        error("Failed to open file: %s\n", path);
         return;
     }
 

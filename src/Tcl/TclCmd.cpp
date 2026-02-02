@@ -108,8 +108,7 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
                     continue;
 
                 if (i == objc - 1) {
-                    // TODO: Wrap to some logging!
-                    printf("Error: %s is missing value.\n", opt.name_);
+                    error("%s is missing value.\n", opt.name_);
                     return TCL_ERROR;
                 }
 
@@ -122,8 +121,8 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
                 continue;
             }
 
-            printf("Error: %s is invalid argument to %s. See %s -help for correct usage.\n",
-                    arg, name_, name_);
+            error("%s is invalid argument to %s. See %s -help for correct usage.\n",
+                   arg, name_, name_);
             return TCL_ERROR;
         }
 
@@ -153,14 +152,14 @@ int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
             continue;
         }
 
-        printf("Error: Too many positonal arguments: %d. "
-                "See %s -help for correct usage.\n", pos_arg_i + 1, name_);
+        error("Too many positonal arguments: %d. "
+               "See %s -help for correct usage.\n", pos_arg_i + 1, name_);
         return TCL_ERROR;
     }
 
     if (n_pos != pos_arg_i) {
-       printf("Error: Not enough positional arguments: %d. "
-               "See %s -help for correct usage.\n", pos_arg_i, name_);
+        error("Not enough positional arguments: %d. "
+              "See %s -help for correct usage.\n", pos_arg_i, name_);
         return TCL_ERROR;
     }
 

@@ -64,27 +64,27 @@ std::string sprintf(std::string format, Args&&... args) {
 }
 
 template<typename... Args>
-void error(std::string_view fmt, const Args&... args)
+void error(const std::string &fmt, const Args&... args)
 {
-    printf("Error: ");
-    printf(fmt, args...);
-    printf("\n");
+    std::printf("Error: ");
+    std::printf(fmt.c_str(), format_arg(args)...);
+    std::printf("\n");
 }
 
 template<typename... Args>
-void info(std::string_view fmt, const Args&... args)
+void info(const std::string &fmt, const Args&... args)
 {
-    printf("Info: ");
-    printf(fmt, args...);
-    printf("\n");
+    std::printf("Info: ");
+    std::printf(fmt.c_str(), format_arg(args)...);
+    std::printf("\n");
 }
 
 template<typename... Args>
-void warning(std::string_view fmt, const Args&... args)
+void warning(const std::string &fmt, const Args&... args)
 {
-    printf("Warning: ");
-    printf(fmt, args...);
-    printf("\n");
+    std::printf("Warning: ");
+    std::printf(fmt.c_str(), format_arg(args)...);
+    std::printf("\n");
 }
 
 }
