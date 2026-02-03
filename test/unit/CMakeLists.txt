@@ -1,0 +1,2 @@
+add_executable(ExtractLogicTableTest ExtractLogicTableTest.cpp)
+add_test(NAME ExtractLogicTableTest COMMAND ExtractLogicTableTest)
