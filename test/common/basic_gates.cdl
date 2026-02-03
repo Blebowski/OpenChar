@@ -2,6 +2,31 @@
 .model NMOS nmos (level=1)
 
 .subckt INV Y A VDD VSS
-M1 Y A VDD VDD pmos W=10u L=1u
-M2 Y A GND GND nmos W=5u L=1u
+MN0 Y A VDD VDD pmos W=10u L=1u
+MP0 Y A GND GND nmos W=5u L=1u
 .ends
+
+.subckt NAND2 Y A B VDD VSS
+MN0 Y A vdd vdd pmos w=2u l=0.18u
+MN1 Y B vdd vdd pmos w=2u l=0.18u
+MP0 Y A n2 0 nmos w=1u l=0.18u
+MP1 n2 B 0 0 nmos w=1u l=0.18u
+.ends
+
+.subckt HALF_ADDER CO S A B VDD VSS
+MP0 VDD A net01 VDD pmos w=0.12u l=0.06u
+MP1 VDD B net01 VDD pmos w=0.12u l=0.06u
+MP2 net04 A net03 VDD pmos w=0.20u l=0.06u
+MP3 VDD B net04 VDD pmos w=0.20u l=0.06u
+MP4 VDD net01 net03 VDD pmos w=0.12u l=0.06u
+MP5 VDD net03 S VDD pmos w=0.30u l=0.06u
+MP6 VDD net01 CO VDD pmos w=0.30u l=0.06u
+MN0 net01 A net02 VSS nmos w=0.12u l=0.06u
+MN1 net02 B VSS VSS nmos w=0.12u l=0.06u
+MN2 net05 A VSS VSS nmos w=0.12u l=0.06u
+MN3 net05 B VSS VSS nmos w=0.12u l=0.06u
+MN4 net03 net01 net05 VSS nmos w=0.12u l=0.06u
+MN5 S net03 VSS VSS nmos w=0.20u l=0.06u
+MN6 CO net01 VSS VSS nmos w=0.20u l=0.06u
+.ends ADHM1UM
+
