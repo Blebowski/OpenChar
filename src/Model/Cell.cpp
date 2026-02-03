@@ -1,4 +1,6 @@
 
+#include <algorithm>
+
 #include "open_char.h"
 #include "Cell.h"
 
