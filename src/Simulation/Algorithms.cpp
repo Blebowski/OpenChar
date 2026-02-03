@@ -66,7 +66,7 @@ bool Algorithms::GetLogicFunction(Cell &cell)
             Waves w = sim.ReadWaves();
             w.Print();
 
-            o_pin.AddLogTableEntry(ipin_vect, ToLogic(w.data_[o_pin.name_][0]));
+            o_pin.AddLogicTableEntry(ipin_vect, ToLogic(w.data_[o_pin.name_][0]));
         }
     }
 

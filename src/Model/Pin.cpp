@@ -21,7 +21,7 @@ Pin::Pin() :
     kind_(PinKind::DATA)
 {}
 
-void Pin::AddLogTableEntry(int64_t inputs, int output)
+void Pin::AddLogicTableEntry(int64_t inputs, int output)
 {
     int64_t v = inputs | (((int64_t)output) << 63);
     logic_table_.push_back(v);

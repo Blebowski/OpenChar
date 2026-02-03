@@ -20,7 +20,7 @@ class Pin {
         Pin();
         Pin(Cell *cell, std::string name, PinDirection direction, PinKind kind);
 
-        void AddLogTableEntry(int64_t inputs, int output);
+        void AddLogicTableEntry(int64_t inputs, int output);
         std::pair<int64_t, int> GetLogicTableEntry(int index);
         void PrintLogicTable();
 
