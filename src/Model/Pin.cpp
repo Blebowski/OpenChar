@@ -15,10 +15,22 @@ Pin::Pin(Cell *cell, std::string name, PinDirection direction, PinKind kind) :
     kind_(kind)
 {}
 
+Pin::Pin() :
+    name_(""),
+    direction_(PinDirection::IN),
+    kind_(PinKind::DATA)
+{}
+
 void Pin::AddLogTableEntry(int64_t inputs, int output)
 {
     int64_t v = inputs | (((int64_t)output) << 63);
     logic_table_.push_back(v);
+}
+
+std::pair<int64_t, int> Pin::GetLogicTableEntry(int index)
+{
+    int64_t v = logic_table_[index];
+    return {v & ~((int64_t)1 << 63), (v >> 63) & 0x1};
 }
 
 void Pin::PrintLogicTable()
@@ -27,7 +39,6 @@ void Pin::PrintLogicTable()
     size_t line_len = (i_pins_cnt + 1) * 10 + 1;
 
     PRINT_LINE(line_len)
-
 
     printf("|");
     for (const auto &i_pin : cell_->GetPins(PinDirection::IN)) {
