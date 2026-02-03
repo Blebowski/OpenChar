@@ -14,7 +14,6 @@
 
 namespace open_char {
 
-
 class Context {
 
     public:
@@ -31,8 +30,8 @@ class Context {
         std::pair<std::string, double> vcc_ = {"VDD", 1.2};
         std::pair<std::string, double> vss_ = {"VSS", 0};
 
-        std::vector<std::string> libs_ = {"models.lib tt"};
-        std::vector<std::string> includes_ = {"cells.cdl"};
+        std::vector<std::string> libs_;
+        std::vector<std::string> includes_;
 
         // TCL objects
         std::vector<std::pair<TclCmd, Tcl_ObjCmdProc*>> tcl_commands_;
