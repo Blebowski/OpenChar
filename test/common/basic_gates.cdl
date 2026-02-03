@@ -1,0 +1,7 @@
+.model PMOS pmos (level=1)
+.model NMOS nmos (level=1)
+
+.subckt INV Y A VDD VSS
+M1 Y A VDD VDD pmos W=10u L=1u
+M2 Y A GND GND nmos W=5u L=1u
+.ends

@@ -1,5 +1,0 @@
-
-.subckt INV Y A VDD VSS
-M1 Out In VDD VDD pmos W=10u L=1u
-M2 Out In GND GND nmos W=5u L=1u
-.ends
