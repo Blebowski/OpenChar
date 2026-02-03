@@ -16,6 +16,11 @@ std::pair<Pin&, bool> Cell::AddPin(std::string name, PinDirection direction, Pin
     return {it->second, inserted};
 }
 
+Pin& Cell::GetPin(std::string name)
+{
+    return pins_[name];
+}
+
 std::map<std::string, Pin>& Cell::GetPins()
 {
     return pins_;
