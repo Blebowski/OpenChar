@@ -44,7 +44,7 @@ int fprintf(FILE *f, std::string &format, Args&&... args) {
 template<typename... Args>
 std::string sprintf(const char* format, Args&&... args) {
     int sz = std::snprintf(nullptr, 0, format, format_arg(args)...);
-    char *buf = static_cast<char *>(calloc(1, sz));
+    char *buf = static_cast<char *>(calloc(1, sz + 1));
     int sz2 = std::sprintf(buf, format, format_arg(args)...);
     assert(sz == sz2);
     std::string rv = std::string(buf);
@@ -54,7 +54,7 @@ std::string sprintf(const char* format, Args&&... args) {
 
 template<typename... Args>
 std::string sprintf(std::string format, Args&&... args) {
-    int sz = std::snprintf(nullptr, 0, format, format_arg(args)...);
+    int sz = std::snprintf(nullptr, 0, format.c_str(), format_arg(args)...);
     char *buf = static_cast<char *>(calloc(1, sz));
     int sz2 = std::sprintf(buf, format.c_str(), format_arg(args)...);
     assert(sz == sz2);
