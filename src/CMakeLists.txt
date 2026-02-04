@@ -22,4 +22,4 @@ target_include_directories(open_char PUBLIC .)
 target_include_directories(open_char PUBLIC ${TCL_INCLUDE_PATH})
 
 target_link_libraries(open_char PRIVATE lib_open_char)
-target_link_libraries(open_char PRIVATE ${TCL_LIBRARY})
+target_link_libraries(open_char PRIVATE ${TCL_LIBRARY} ${TCLREADLINE_LIB} ${READLINE_LIB})

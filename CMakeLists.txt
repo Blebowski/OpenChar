@@ -14,8 +14,9 @@ set(CMAKE_CXX_STANDARD 20)
 # Dependencies
 ###############################################################################
 
-# TODO: Check libraries are found!
 find_package(TCL REQUIRED)
+find_library(READLINE_LIB NAMES readline REQUIRED)
+find_library(TCLREADLINE_LIB NAMES tclreadline REQUIRED)
 
 ###############################################################################
 # Build

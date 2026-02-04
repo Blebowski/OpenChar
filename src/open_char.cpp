@@ -28,20 +28,22 @@ static t_cli_arg argt[] = {
     {ARG_LAST, "",        "",           false,   "",    ""}
 };
 
+extern "C" {
+    int Tclreadline_Init(Tcl_Interp *interp);
+}
+
 int ShellInit(Tcl_Interp *interp)
 {
+    ctx->interp_ = interp;
+
     if (Tcl_Init(interp) == TCL_ERROR) {
         return TCL_ERROR;
     }
 
-    ctx->interp_ = interp;
-
-    Tcl_SetVar(interp, "tcl_prompt1",
-               "puts -nonewline \"open_char> \"; flush stdout",
-               TCL_GLOBAL_ONLY);
-    Tcl_SetVar(interp, "tcl_prompt2",
-               "puts -nonewline \"... \"; flush stdout",
-               TCL_GLOBAL_ONLY);
+    if (Tclreadline_Init(interp) != TCL_OK) {
+        open_char::printf("tclreadline Init Failed: %s\n", Tcl_GetStringResult(interp));
+        return TCL_ERROR;
+    }
 
     open_char::RegisterTclCommands(ctx);
 
@@ -50,6 +52,46 @@ int ShellInit(Tcl_Interp *interp)
         Tcl_EvalFile(interp, argt[ARG_FILE].val.c_str());
     }
 
+    const char* loop_script = R"(
+        if {[info commands history] eq ""} {
+            auto_load history
+        }
+        namespace eval my_terminal {
+            proc run {} {
+                ::tclreadline::readline initialize ~/.openchar_history
+
+                while {1} {
+                    set line [::tclreadline::readline read "open_char> "]
+
+                    if {$line eq "exit" || $line eq "quit"} { break }
+
+                    set trimmed [string trim $line]
+                    if {[string length $trimmed] > 0} {
+                        # Add to Readline (for arrow keys)
+                        ::tclreadline::readline add $line
+
+                        # Add to Tcl History (for the 'history' command)
+                        # This makes the 'history' command actually show results
+                        history add $line
+
+                        if {[catch {uplevel #0 $line} result]} {
+                            puts stderr "Error: $result"
+                        } elseif {$result ne ""} {
+                            puts $result
+                        }
+                    }
+                }
+            }
+        }
+        my_terminal::run
+    )";
+
+    if (Tcl_Eval(interp, loop_script) == TCL_ERROR) {
+        Tcl_DeleteInterp(interp);
+        return TCL_ERROR;
+    }
+
+    Tcl_DeleteInterp(interp);
     return TCL_OK;
 }
 
