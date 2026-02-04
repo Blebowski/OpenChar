@@ -36,14 +36,9 @@ void Simulation::AddLib(std::string lib)
     libs_.push_back(lib);
 }
 
-void Simulation::SetVcc(std::pair<std::string, double> &v)
+void Simulation::SetSupply(Supply *supply)
 {
-    vcc_ = v;
-}
-
-void Simulation::SetVss(std::pair<std::string, double> &v)
-{
-    vss_ = v;
+    supply_ = supply;
 }
 
 void Simulation::SetTemp(double temp)
@@ -77,15 +72,15 @@ void Simulation::WriteTestBench()
     fprintf(f, ".temp %f\n", temp_);
 
     fprintf(f, "* Power Supply\n");
-    fprintf(f, "Vpwr %s %s %f\n", vcc_.first, vss_.first, vcc_.second);
-    fprintf(f, "VGnd %s GND %f\n\n", vss_.first, vss_.second);
+    fprintf(f, "Vpwr %s %s %f\n",  supply_->vdd_name_, supply_->gnd_name_, supply_->vdd_val_);
+    fprintf(f, "VGnd %s GND %f\n\n", supply_->gnd_name_, supply_->gnd_val_);
 
     fprintf(f, "* Stimuli\n");
     for (const auto &s : stimuli_) {
         if (s.first == nullptr)
             continue;
 
-        fprintf(f, "V%s %s %s ", s.first->name_, s.first->name_, vss_.first);
+        fprintf(f, "V%s %s %s ", s.first->name_, s.first->name_, supply_->gnd_name_);
 
         const Stimulus &v = s.second;
         if (v.kind_ == StimulusKind::CONSTANT)

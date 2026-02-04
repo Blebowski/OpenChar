@@ -24,12 +24,6 @@ class Context {
         // Cell library to characterize
         Library lib_;
 
-        // Global environment
-        double temp_ = 25;
-
-        std::pair<std::string, double> vcc_ = {"VDD", 1.2};
-        std::pair<std::string, double> vss_ = {"VSS", 0};
-
         std::vector<std::string> libs_;
         std::vector<std::string> includes_;
 

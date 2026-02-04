@@ -4,6 +4,7 @@
 
 #include "TclCmdDefs.h"
 #include "TclCmdOpt.h"
+#include "Supply.h"
 #include "Utils.h"
 
 namespace open_char {
@@ -70,8 +71,9 @@ CREATE_TCL_COMMAND(
             }
         }
 
-        cell_p.first.AddPin(ctx_->vcc_.first, PinDirection::INOUT, PinKind::PWR);
-        cell_p.first.AddPin(ctx_->vss_.first, PinDirection::INOUT, PinKind::GND);
+        Supply *supply = ctx_->lib_.GetOpCond().supply_;
+        cell_p.first.AddPin(supply->vdd_name_, PinDirection::INOUT, PinKind::PWR);
+        cell_p.first.AddPin(supply->gnd_name_, PinDirection::INOUT, PinKind::GND);
 
         return TCL_OK;
     })
@@ -104,6 +106,111 @@ CREATE_TCL_COMMAND(
 )
 
 CREATE_TCL_COMMAND(
+    SetVdd,
+    "set_vdd",
+    "Define supply voltage and supply voltage net name",
+
+    ARG({
+        // name_                      has_value_      desc_
+        {"net_name",        TclCmdOpt(true,          "Name of the supply voltage net")},
+        {"voltage_value",   TclCmdOpt(true,          "Supply voltage value")}
+        }),
+
+    ARG({
+        double volts;
+        Tcl_GetDoubleFromObj(ctx_->interp_, (Tcl_Obj*)opts_["voltage_value"].objv_, &volts);
+        std::string name = Tcl_GetString((Tcl_Obj*)opts_["net_name"].objv_);
+
+        ctx_->lib_.SetDefaultSupplyVdd(name, volts);
+
+        return TCL_OK;
+    })
+)
+
+CREATE_TCL_COMMAND(
+    SetGnd,
+    "set_gnd",
+    "Define ground voltage and ground net name",
+
+    ARG({
+        // name_                      has_value_      desc_
+        {"net_name",        TclCmdOpt(true,          "Name of the ground net")},
+        {"voltage_value",   TclCmdOpt(true,          "Ground voltage value")}
+        }),
+
+    ARG({
+        double volts;
+        Tcl_GetDoubleFromObj(ctx_->interp_, (Tcl_Obj*)opts_["voltage_value"].objv_, &volts);
+        std::string name = Tcl_GetString((Tcl_Obj*)opts_["net_name"].objv_);
+
+        ctx_->lib_.SetDefaultSupplyGnd(name, volts);
+
+        return TCL_OK;
+    })
+)
+
+CREATE_TCL_COMMAND(
+    SetOperatingCondition,
+    "set_operating_condition",
+    "Define operating conditions (supply volate, temperature, name)",
+
+    ARG({
+        // name_                      has_value_      desc_
+        {"-name",           TclCmdOpt(true,          "Name of the operating condition.")},
+        {"-supply_name",    TclCmdOpt(true,          "Supply name set by 'set_vdd' command.")},
+        {"-temp",           TclCmdOpt(true,          "Operating temperature.")},
+        {"-voltage",        TclCmdOpt(true,          "Operating voltage.")}
+        }),
+
+    ARG({
+
+        if (!opts_["-name"].isSet()) {
+            error("You need to specify -name for operating conditions name\n");
+            return TCL_ERROR;
+        }
+
+        if (!opts_["-temp"].isSet()) {
+            error("You need to specify -temp for operating conditions temperature\n");
+            return TCL_ERROR;
+        }
+
+        if ((!opts_["-supply_name"].isSet() && !opts_["-voltage"].isSet()) ||
+            (opts_["-supply_name"].isSet() && opts_["-voltage"].isSet())) {
+            error("You need to specify exactly one of: -supply_name, -voltage .\n");
+            return TCL_ERROR;
+        }
+
+        if (opts_["-supply_name"].isSet()) {
+            std::string supply_name = Tcl_GetString((Tcl_Obj*)opts_["-supply_name"].objv_);
+            if (!ctx_->lib_.HasSupply(supply_name)) {
+                error("Supply %s does not exists. Define it using set_vdd", supply_name);
+                return TCL_ERROR;
+            }
+        }
+
+        ctx_->lib_.GetOpCond().name_ = Tcl_GetString((Tcl_Obj*)opts_["-name"].objv_);
+
+        double temp;
+        Tcl_GetDoubleFromObj(ctx_->interp_, (Tcl_Obj*)opts_["-temp"].objv_, &temp);
+        ctx_->lib_.GetOpCond().temp_ = temp;
+
+        if (opts_["-voltage"].isSet()) {
+            double volts;
+            Tcl_GetDoubleFromObj(ctx_->interp_, (Tcl_Obj*)opts_["voltage"].objv_, &volts);
+            ctx_->lib_.SetDefaultSupplyVdd(volts);
+        }
+
+        if (opts_["-supply_name"].isSet()) {
+            std::string supply_name = Tcl_GetString((Tcl_Obj*)opts_["-supply_name"].objv_);
+            Supply& supply = ctx_->lib_.GetSupply(supply_name);
+            ctx_->lib_.GetOpCond().supply_ = &(supply);
+        }
+
+        return TCL_OK;
+    })
+)
+
+CREATE_TCL_COMMAND(
     Help,
     "help",
     "List all available commands",
@@ -121,9 +228,12 @@ CREATE_TCL_COMMAND(
 
 void RegisterTclCommands(Context *ctx)
 {
-    ctx->tcl_commands_.push_back({ DefineCell(ctx),         DefineCellCb });
-    ctx->tcl_commands_.push_back({ ExtractLogicTable(ctx),  ExtractLogicTableCb });
-    ctx->tcl_commands_.push_back({ Help(ctx),               HelpCb });
+    ctx->tcl_commands_.push_back({ DefineCell(ctx),             DefineCellCb });
+    ctx->tcl_commands_.push_back({ ExtractLogicTable(ctx),      ExtractLogicTableCb });
+    ctx->tcl_commands_.push_back({ SetVdd(ctx),                 SetVddCb });
+    ctx->tcl_commands_.push_back({ SetGnd(ctx),                 SetGndCb });
+    ctx->tcl_commands_.push_back({ SetOperatingCondition(ctx),  SetOperatingConditionCb });
+    ctx->tcl_commands_.push_back({ Help(ctx),                   HelpCb });
 
     for (const auto &p : ctx->tcl_commands_)
         Tcl_CreateObjCommand(p.first.ctx_->interp_, p.first.name_.c_str(),

@@ -2,6 +2,7 @@
 
 #include "Algorithms.h"
 #include "Simulation.h"
+#include "Library.h"
 #include "Utils.h"
 
 namespace open_char {
@@ -12,16 +13,19 @@ Algorithms::Algorithms(Context *ctx) :
 
 int Algorithms::ToLogic(double val)
 {
-    if (abs(val - ctx_->vcc_.second) < 0.05)
+    OpCond& op_cond = ctx_->lib_.GetOpCond();
+    if (abs(val - op_cond.supply_->vdd_val_) < 0.05)
         return 1;
     return 0;
 }
 
 bool Algorithms::GetLogicFunction(Cell &cell)
 {
+    OpCond &op_cond = ctx_->lib_.GetOpCond();
+    double log0_v = op_cond.supply_->gnd_val_;
+    double log1_v = op_cond.supply_->vdd_val_;
+
     auto o_pins = cell.GetPins(PinDirection::OUT);
-    double log0_v = ctx_->vss_.second;
-    double log1_v = ctx_->vcc_.second;
 
     for (auto & o_pin : o_pins) {
         auto i_pins = cell.GetPins(PinDirection::IN);
@@ -43,9 +47,8 @@ bool Algorithms::GetLogicFunction(Cell &cell)
 
             Simulation sim {sim_name, &cell};
 
-            sim.SetTemp(ctx_->temp_);
-            sim.SetVcc(ctx_->vcc_);
-            sim.SetVss(ctx_->vss_);
+            sim.SetTemp(op_cond.temp_);
+            sim.SetSupply(op_cond.supply_);
 
             for (const auto & inc : ctx_->includes_)
                 sim.AddInclude(inc);

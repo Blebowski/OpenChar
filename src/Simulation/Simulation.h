@@ -12,6 +12,7 @@
 #include "Cell.h"
 #include "Stimulus.h"
 #include "Waves.h"
+#include "Supply.h"
 
 namespace open_char {
 
@@ -21,8 +22,7 @@ class Simulation {
         Simulation(std::string name, Cell *dut, double duration, double time_step);
         Simulation(std::string name, Cell *dut);
 
-        void SetVcc(std::pair<std::string, double> &v);
-        void SetVss(std::pair<std::string, double> &v);
+        void SetSupply(Supply *supply);
         void SetTemp(double temp);
 
         void AddInclude(const std::string include);
@@ -47,8 +47,7 @@ class Simulation {
         std::vector<std::string> includes_;
         std::vector<std::string> libs_;
 
-        std::pair<std::string, double> vcc_;
-        std::pair<std::string, double> vss_;
+        Supply *supply_;
 
         std::vector<std::pair<Pin*, Stimulus>> stimuli_;
 
