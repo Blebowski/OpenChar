@@ -27,7 +27,7 @@ CREATE_TCL_COMMAND(
             return TCL_ERROR;
         }
 
-        const std::string cell_name = Tcl_GetString((Tcl_Obj*)opts_["cell_name"].objv_);
+        const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
 
         std::pair<Cell&, bool> cell_p = ctx_->lib_.AddCell(cell_name);
         if (!cell_p.second) {
@@ -36,7 +36,7 @@ CREATE_TCL_COMMAND(
         }
 
         if (opts_["-output"].isSet()) {
-            const std::string inputs = Tcl_GetString((Tcl_Obj*)opts_["-output"].objv_);
+            const std::string inputs = Tcl_GetString(opts_["-output"].objv_);
 
             // TODO: Move this to some function that can process either single element or collection!
             // TODO: Handle duplicit pins here!
@@ -54,7 +54,7 @@ CREATE_TCL_COMMAND(
         }
 
         if (opts_["-input"].isSet()) {
-            const std::string inputs = Tcl_GetString((Tcl_Obj*)opts_["-input"].objv_);
+            const std::string inputs = Tcl_GetString(opts_["-input"].objv_);
 
             // TODO: Move this to some function that can process either single element or collection!
             // TODO: Handle duplicit pins here!
@@ -91,7 +91,7 @@ CREATE_TCL_COMMAND(
 
     ARG({
 
-        const std::string cell_name = Tcl_GetString((Tcl_Obj*)opts_["cell_name"].objv_);
+        const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
 
         if (!ctx_->lib_.HasCell(cell_name)) {
             error("The cell %s does not exist. Use 'define_cell' to define it.\n",
@@ -118,8 +118,8 @@ CREATE_TCL_COMMAND(
 
     ARG({
         double volts;
-        Tcl_GetDoubleFromObj(ctx_->interp_, (Tcl_Obj*)opts_["voltage_value"].objv_, &volts);
-        std::string name = Tcl_GetString((Tcl_Obj*)opts_["net_name"].objv_);
+        Tcl_GetDoubleFromObj(ctx_->interp_, opts_["voltage_value"].objv_, &volts);
+        std::string name = Tcl_GetString(opts_["net_name"].objv_);
 
         ctx_->lib_.SetDefaultSupplyVdd(name, volts);
 
@@ -140,8 +140,8 @@ CREATE_TCL_COMMAND(
 
     ARG({
         double volts;
-        Tcl_GetDoubleFromObj(ctx_->interp_, (Tcl_Obj*)opts_["voltage_value"].objv_, &volts);
-        std::string name = Tcl_GetString((Tcl_Obj*)opts_["net_name"].objv_);
+        Tcl_GetDoubleFromObj(ctx_->interp_, opts_["voltage_value"].objv_, &volts);
+        std::string name = Tcl_GetString(opts_["net_name"].objv_);
 
         ctx_->lib_.SetDefaultSupplyGnd(name, volts);
 
@@ -181,27 +181,27 @@ CREATE_TCL_COMMAND(
         }
 
         if (opts_["-supply_name"].isSet()) {
-            std::string supply_name = Tcl_GetString((Tcl_Obj*)opts_["-supply_name"].objv_);
+            std::string supply_name = Tcl_GetString(opts_["-supply_name"].objv_);
             if (!ctx_->lib_.HasSupply(supply_name)) {
                 error("Supply %s does not exists. Define it using set_vdd", supply_name);
                 return TCL_ERROR;
             }
         }
 
-        ctx_->lib_.GetOpCond().name_ = Tcl_GetString((Tcl_Obj*)opts_["-name"].objv_);
+        ctx_->lib_.GetOpCond().name_ = Tcl_GetString(opts_["-name"].objv_);
 
         double temp;
-        Tcl_GetDoubleFromObj(ctx_->interp_, (Tcl_Obj*)opts_["-temp"].objv_, &temp);
+        Tcl_GetDoubleFromObj(ctx_->interp_, opts_["-temp"].objv_, &temp);
         ctx_->lib_.GetOpCond().temp_ = temp;
 
         if (opts_["-voltage"].isSet()) {
             double volts;
-            Tcl_GetDoubleFromObj(ctx_->interp_, (Tcl_Obj*)opts_["voltage"].objv_, &volts);
+            Tcl_GetDoubleFromObj(ctx_->interp_, opts_["voltage"].objv_, &volts);
             ctx_->lib_.SetDefaultSupplyVdd(volts);
         }
 
         if (opts_["-supply_name"].isSet()) {
-            std::string supply_name = Tcl_GetString((Tcl_Obj*)opts_["-supply_name"].objv_);
+            std::string supply_name = Tcl_GetString(opts_["-supply_name"].objv_);
             Supply& supply = ctx_->lib_.GetSupply(supply_name);
             ctx_->lib_.GetOpCond().supply_ = &(supply);
         }

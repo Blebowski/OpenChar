@@ -20,7 +20,7 @@ class TclCmdOpt {
 
         bool isOptional() const;
         bool isSet() const;
-        const Tcl_Obj* objv_;
+        Tcl_Obj* objv_;
 };
 
 }
