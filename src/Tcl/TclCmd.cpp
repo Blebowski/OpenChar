@@ -45,8 +45,10 @@ void TclCmd::Help(void)
         if (!opt.isOptional())
             continue;
 
-        printf("   %-15s %-15s %-15s\n", opt.name_,
-                opt.has_value_ ? "value" : " ", opt.desc_);
+        printf("   %-15s %-15s ", opt.name_, opt.value_desc_);
+        if (opt.has_value_ && opt.value_desc_.size() > 15)
+            printf("\n   %-15s %-15s ", " ", " ");
+        printf("%-15s\n", opt.desc_);
     }
     printf("   %-15s %-15s %-15s", "-h, -help", " ", "Display this help message\n");
 

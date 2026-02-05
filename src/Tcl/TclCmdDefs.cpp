@@ -15,10 +15,9 @@ CREATE_TCL_COMMAND(
     "Define cell to be characterized.",
 
     ARG({
-        // name_                  has_value_      desc_
-        {"-input",      TclCmdOpt(true,           "Input pin or pins")},
-        {"-output",     TclCmdOpt(true,           "Output pin or pins")},
-        {"cell_name",   TclCmdOpt(false,          "Name of the cell")}
+        {"-input",      TclCmdOpt(true,         "{pin_names}",      "Input pin or pins")},
+        {"-output",     TclCmdOpt(true,         "{pin_names}",      "Output pin or pins")},
+        {"cell_name",   TclCmdOpt(false,        "cell_name",        "Name of the cell")}
         }),
     ARG({
 
@@ -80,13 +79,29 @@ CREATE_TCL_COMMAND(
 )
 
 CREATE_TCL_COMMAND(
+    DefineTemplate,
+    "define_template",
+    "Defines a template for characterization.",
+
+    ARG({
+        {"-type",         TclCmdOpt(true,       "{delay|power}",    "Type of template to be defined.")},
+        {"-index_1",      TclCmdOpt(true,       "{values}",         "List of values to be used as first index.")},
+        {"-index_2",      TclCmdOpt(true,       "{values}",         "List of values to be used as second index.")},
+        {"template_name", TclCmdOpt(true,       "",                 "Name of the template.")},
+        }),
+
+    ARG({
+        return TCL_OK;
+    })
+)
+
+CREATE_TCL_COMMAND(
     ExtractLogicTable,
     "extract_logic_table",
     "Extract logic table of a cell(s)",
 
     ARG({
-        // name_                  has_value_      desc_
-        {"cell_name",   TclCmdOpt(false,          "Name of the cell")}
+        {"cell_name",   TclCmdOpt(true,     "",           "Name of the cell")}
         }),
 
     ARG({
@@ -111,9 +126,8 @@ CREATE_TCL_COMMAND(
     "Define supply voltage and supply voltage net name",
 
     ARG({
-        // name_                      has_value_      desc_
-        {"net_name",        TclCmdOpt(true,          "Name of the supply voltage net")},
-        {"voltage_value",   TclCmdOpt(true,          "Supply voltage value")}
+        {"net_name",        TclCmdOpt(true,     "",   "Name of the supply voltage net")},
+        {"voltage_value",   TclCmdOpt(true,     "",   "Supply voltage value")}
         }),
 
     ARG({
@@ -133,9 +147,8 @@ CREATE_TCL_COMMAND(
     "Define ground voltage and ground net name",
 
     ARG({
-        // name_                      has_value_      desc_
-        {"net_name",        TclCmdOpt(true,          "Name of the ground net")},
-        {"voltage_value",   TclCmdOpt(true,          "Ground voltage value")}
+        {"net_name",        TclCmdOpt(true,     "",     "Name of the ground net")},
+        {"voltage_value",   TclCmdOpt(true,     "",     "Ground voltage value")}
         }),
 
     ARG({
@@ -155,11 +168,10 @@ CREATE_TCL_COMMAND(
     "Define operating conditions (supply volate, temperature, name)",
 
     ARG({
-        // name_                      has_value_      desc_
-        {"-name",           TclCmdOpt(true,          "Name of the operating condition.")},
-        {"-supply_name",    TclCmdOpt(true,          "Supply name set by 'set_vdd' command.")},
-        {"-temp",           TclCmdOpt(true,          "Operating temperature.")},
-        {"-voltage",        TclCmdOpt(true,          "Operating voltage.")}
+        {"-name",           TclCmdOpt(true,     "string",       "Name of the operating condition.")},
+        {"-supply_name",    TclCmdOpt(true,     "string",       "Supply name set by 'set_vdd' command.")},
+        {"-temp",           TclCmdOpt(true,     "float",        "Operating temperature.")},
+        {"-voltage",        TclCmdOpt(true,     "float",        "Operating voltage.")}
         }),
 
     ARG({
@@ -229,6 +241,7 @@ CREATE_TCL_COMMAND(
 void RegisterTclCommands(Context *ctx)
 {
     ctx->tcl_commands_.push_back({ DefineCell(ctx),             DefineCellCb });
+    ctx->tcl_commands_.push_back({ DefineTemplate(ctx),         DefineTemplateCb });
     ctx->tcl_commands_.push_back({ ExtractLogicTable(ctx),      ExtractLogicTableCb });
     ctx->tcl_commands_.push_back({ SetVdd(ctx),                 SetVddCb });
     ctx->tcl_commands_.push_back({ SetGnd(ctx),                 SetGndCb });
