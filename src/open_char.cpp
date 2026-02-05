@@ -53,12 +53,38 @@ int ShellInit(Tcl_Interp *interp)
     }
 
     const char* loop_script = R"(
-        if {[info commands history] eq ""} {
-            auto_load history
-        }
-        namespace eval my_terminal {
+        namespace path [concat [namespace path] open_char]
+        namespace eval open_char_terminal {
+            proc open_char_completer {text start end line} {
+
+                # Find all available commands
+                set matches [info commands "::open_char::${text}*"]
+
+                # Filter namespace prefix
+                set clean_matches {}
+                foreach m $matches {
+                    lappend clean_matches [string map {::open_char:: ""} $m]
+                }
+
+                # 3. Find the common prefix among all matches
+                set first [lindex $clean_matches 0]
+                set last  [lindex $clean_matches end]
+                set prefix ""
+                for {set i 0} {$i < [string length $first]} {incr i} {
+                    if {[string index $first $i] eq [string index $last $i]} {
+                        append prefix [string index $first $i]
+                    } else {
+                        break
+                    }
+                }
+
+                # Return sorted unique list
+                return [linsert $clean_matches 0 $prefix]
+            }
             proc run {} {
                 ::tclreadline::readline initialize ~/.openchar_history
+                ::tclreadline::readline builtincompleter 0
+                ::tclreadline::readline customcompleter open_char_completer
 
                 while {1} {
                     set line [::tclreadline::readline read "open_char> "]
@@ -75,7 +101,6 @@ int ShellInit(Tcl_Interp *interp)
                         history add $line
 
                         if {[catch {uplevel #0 $line} result]} {
-                            puts stderr "Error: $result"
                         } elseif {$result ne ""} {
                             puts $result
                         }
@@ -83,7 +108,7 @@ int ShellInit(Tcl_Interp *interp)
                 }
             }
         }
-        my_terminal::run
+        open_char_terminal::run
     )";
 
     if (Tcl_Eval(interp, loop_script) == TCL_ERROR) {

@@ -235,9 +235,11 @@ void RegisterTclCommands(Context *ctx)
     ctx->tcl_commands_.push_back({ SetOperatingCondition(ctx),  SetOperatingConditionCb });
     ctx->tcl_commands_.push_back({ Help(ctx),                   HelpCb });
 
-    for (const auto &p : ctx->tcl_commands_)
-        Tcl_CreateObjCommand(p.first.ctx_->interp_, p.first.name_.c_str(),
+    for (const auto &p : ctx->tcl_commands_) {
+        std::string full_name = "open_char::" + p.first.name_;
+        Tcl_CreateObjCommand(p.first.ctx_->interp_, full_name.c_str(),
                              p.second, (void*)(&(p.first)), NULL);
+    }
 }
 
 }
