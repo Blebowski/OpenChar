@@ -4,11 +4,12 @@
 
 namespace open_char {
 
-TclCmd::TclCmd(Context *ctx, std::string name, std::string desc,
+TclCmd::TclCmd(Context *ctx, std::string name, std::string desc, bool print_ret_code,
                 std::map<std::string, TclCmdOpt> opts) :
     ctx_(ctx),
     name_(name),
     desc_(desc),
+    print_ret_code_(print_ret_code),
     opts_(opts)
 {
     // Copy the string intentionally to keep it simple

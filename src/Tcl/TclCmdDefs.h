@@ -11,7 +11,7 @@ namespace open_char {
 
 #define ARG(...) __VA_ARGS__
 
-#define CREATE_TCL_COMMAND(class_name, cmd_name, desc, params, exec_rtn)                            \
+#define CREATE_TCL_COMMAND(class_name, cmd_name, desc, print_ret_code, params, exec_rtn)            \
                                                                                                     \
     class class_name : public TclCmd {                                                              \
     public:                                                                                         \
@@ -24,6 +24,7 @@ namespace open_char {
             ctx,                                                                                    \
             cmd_name,                                                                               \
             desc,                                                                                   \
+            print_ret_code,                                                                         \
             params                                                                                  \
         ) {}                                                                                        \
                                                                                                     \
@@ -40,7 +41,14 @@ namespace open_char {
             return TCL_OK;                                                                          \
         if (parse_rv != TCL_OK)                                                                     \
             return parse_rv;                                                                        \
-        return cmd->Execute();                                                                      \
+        int rv = cmd->Execute();                                                                    \
+        if (cmd->print_ret_code_) {                                                                 \
+            if (rv == TCL_OK)                                                                       \
+                printf("1\n");                                                                      \
+            else                                                                                    \
+                printf("0\n");                                                                      \
+        }                                                                                           \
+        return rv;                                                                                  \
     }                                                                                               \
 
 }

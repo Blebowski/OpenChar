@@ -13,6 +13,7 @@ CREATE_TCL_COMMAND(
     DefineCell,
     "define_cell",
     "Define cell to be characterized.",
+    true,
 
     ARG({
         {"-input",      TclCmdOpt(true,         "{pin_names}",      "Input pin or pins")},
@@ -82,6 +83,7 @@ CREATE_TCL_COMMAND(
     DefineTemplate,
     "define_template",
     "Defines a template for characterization.",
+    true,
 
     ARG({
         {"-type",         TclCmdOpt(true,       "{delay|power}",    "Type of template to be defined.")},
@@ -99,6 +101,7 @@ CREATE_TCL_COMMAND(
     ExtractLogicTable,
     "extract_logic_table",
     "Extract logic table of a cell(s)",
+    true,
 
     ARG({
         {"cell_name",   TclCmdOpt(true,     "",           "Name of the cell")}
@@ -124,6 +127,7 @@ CREATE_TCL_COMMAND(
     SetVdd,
     "set_vdd",
     "Define supply voltage and supply voltage net name",
+    true,
 
     ARG({
         {"net_name",        TclCmdOpt(true,     "",   "Name of the supply voltage net")},
@@ -145,6 +149,7 @@ CREATE_TCL_COMMAND(
     SetGnd,
     "set_gnd",
     "Define ground voltage and ground net name",
+    true,
 
     ARG({
         {"net_name",        TclCmdOpt(true,     "",     "Name of the ground net")},
@@ -166,6 +171,7 @@ CREATE_TCL_COMMAND(
     SetOperatingCondition,
     "set_operating_condition",
     "Define operating conditions (supply volate, temperature, name)",
+    true,
 
     ARG({
         {"-name",           TclCmdOpt(true,     "string",       "Name of the operating condition.")},
@@ -226,6 +232,7 @@ CREATE_TCL_COMMAND(
     Help,
     "help",
     "List all available commands",
+    false,
 
     ARG({}),
 
