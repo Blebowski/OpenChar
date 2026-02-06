@@ -49,7 +49,13 @@ int ShellInit(Tcl_Interp *interp)
 
     if (argt[ARG_FILE].present) {
         open_char::printf("Evaluating file: %s\n", argt[ARG_FILE].val);
-        Tcl_EvalFile(interp, argt[ARG_FILE].val.c_str());
+
+        std::string cmd = "namespace eval ::open_char { source {" +
+                          argt[ARG_FILE].val + "} }";
+
+        if (Tcl_Eval(interp, cmd.c_str()) == TCL_ERROR) {
+            open_char::fprintf(stderr, "Tcl Error: %s\n", Tcl_GetStringResult(interp));
+        }
     }
 
     const char* loop_script = R"(
