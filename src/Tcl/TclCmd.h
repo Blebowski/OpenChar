@@ -25,6 +25,31 @@ class TclCmd {
         std::map<std::string, TclCmdOpt> opts_;
 
         int ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv);
+
+        template <typename Func>
+        int ForEachInGroup(std::string val, Func func)
+        {
+            std::size_t start = 0;
+            int rv = TCL_OK;
+
+            while (true) {
+                size_t pos = val.find(' ', start);
+
+                if (pos == val.npos) {
+                    rv = func(val.substr(start));
+                    break;
+                }
+
+                rv = func(val.substr(start, pos - start));
+
+                if (rv != TCL_OK)
+                    return rv;
+
+                start = pos + 1;
+            }
+            return rv;
+        }
+
         void Help(void);
 };
 

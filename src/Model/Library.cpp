@@ -66,4 +66,22 @@ Supply& Library::GetSupply(std::string vdd_name)
     return supplies_[0];
 }
 
+std::pair<Template&, bool> Library::AddTemplate(std::string name)
+{
+    auto [it, inserted] = templates_.emplace(name, Template(name));
+    return {it->second, inserted};
+}
+
+bool Library::HasTemplate(std::string name)
+{
+    if (templates_.contains(name))
+        return true;
+    return false;
+}
+
+Template& Library::GetTemplate(std::string name)
+{
+    return templates_.find(name)->second;
+}
+
 }

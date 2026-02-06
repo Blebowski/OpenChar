@@ -6,21 +6,23 @@
 namespace open_char {
 
     // Data Model
+    class Cell;
+    class Context;
+    class Library;
     class LogicTable;
     class Pin;
-    class Cell;
+    class Supply;
+    class Template;
 
     // Simulation backends
     class Algorithms;
     class Stimulus;
     class Simulation;
+    class Waves;
 
     // TCL Commands
     class TclCmd;
     class TclCmdOpt;
-
-    // OpenChar run context
-    class Context;
 
     // Exposed routines;
     void RegisterTclCommands(Context *ctx);
@@ -49,6 +51,10 @@ namespace open_char {
         DC
     };
 
+    enum class TemplateKind {
+        DELAY,
+        POWER
+    };
 
 }
 

@@ -2,10 +2,8 @@
 #ifndef TCL_CMD_DEFS_H
 #define TCL_CMD_DEFS_H
 
-#include <fmt/format.h>
-#include <fmt/printf.h>
-
 #include "TclCmd.h"
+#include "Utils.h"
 
 namespace open_char {
 

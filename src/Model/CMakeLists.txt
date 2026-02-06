@@ -6,4 +6,5 @@ target_sources(lib_open_char PRIVATE
     OpCond.cpp
     Pin.cpp
     Supply.cpp
+    Template.cpp
 )

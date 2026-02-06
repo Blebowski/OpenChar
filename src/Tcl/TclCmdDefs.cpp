@@ -5,7 +5,9 @@
 #include "TclCmdDefs.h"
 #include "TclCmdOpt.h"
 #include "Supply.h"
-#include "Utils.h"
+#include "Template.h"
+
+#include "float.h"
 
 namespace open_char {
 
@@ -36,39 +38,23 @@ CREATE_TCL_COMMAND(
         }
 
         if (opts_["-output"].isSet()) {
-            const std::string inputs = Tcl_GetString(opts_["-output"].objv_);
+            const std::string s = Tcl_GetString(opts_["-output"].objv_);
 
-            // TODO: Move this to some function that can process either single element or collection!
             // TODO: Handle duplicit pins here!
-            std::size_t start = 0;
-            while (true) {
-                size_t pos = inputs.find(' ', start);
-                if (pos == inputs.npos) {
-                    cell_p.first.AddPin(inputs.substr(start), PinDirection::OUT, PinKind::DATA);
-                    break;
-                }
-                cell_p.first.AddPin(inputs.substr(start, pos - start),
-                                    PinDirection::OUT, PinKind::DATA);
-                start = pos + 1;
-            }
+            ForEachInGroup(s, [&](const std::string &val){
+                cell_p.first.AddPin(val, PinDirection::OUT, PinKind::DATA);
+                return TCL_OK;
+            });
         }
 
         if (opts_["-input"].isSet()) {
-            const std::string inputs = Tcl_GetString(opts_["-input"].objv_);
+            const std::string s = Tcl_GetString(opts_["-input"].objv_);
 
-            // TODO: Move this to some function that can process either single element or collection!
             // TODO: Handle duplicit pins here!
-            std::size_t start = 0;
-            while (true) {
-                size_t pos = inputs.find(' ', start);
-                if (pos == inputs.npos) {
-                    cell_p.first.AddPin(inputs.substr(start), PinDirection::IN, PinKind::DATA);
-                    break;
-                }
-                cell_p.first.AddPin(inputs.substr(start, pos - start),
-                                    PinDirection::IN, PinKind::DATA);
-                start = pos + 1;
-            }
+            ForEachInGroup(s, [&](const std::string &val){
+                cell_p.first.AddPin(val, PinDirection::IN, PinKind::DATA);
+                return TCL_OK;
+            });
         }
 
         Supply *supply = ctx_->lib_.GetOpCond().supply_;
@@ -93,6 +79,86 @@ CREATE_TCL_COMMAND(
         }),
 
     ARG({
+
+        if (!opts_["-type"].isSet()) {
+            error("You need to specify -type for the template.\n");
+            return TCL_ERROR;
+        }
+
+        if (!opts_["-index_1"].isSet()) {
+            error("You need to specify -index_1 for the template.\n");
+            return TCL_ERROR;
+        }
+
+        if (!opts_["template_name"].isSet()) {
+            error("You need to specify template_name for the template.\n");
+            return TCL_ERROR;
+        }
+
+        std::string type = Tcl_GetString(opts_["-type"].objv_);
+        if (type != "delay" && type != "power") {
+            error("Allowed values for -type are: 'delay' or 'power'.\n");
+            return TCL_ERROR;
+        }
+
+        std::pair<Template&, bool> template_p =
+            ctx_->lib_.AddTemplate(Tcl_GetString(opts_["template_name"].objv_));
+
+        if (!template_p.second) {
+            error("Template %s already exists.\n", template_p.first.name_);
+            return TCL_ERROR;
+        }
+
+        if (type == "delay") {
+            template_p.first.kind_ = TemplateKind::DELAY;
+        } else {
+            template_p.first.kind_ = TemplateKind::POWER;
+        }
+
+        if (opts_["-index_1"].isSet()) {
+            const std::string s = Tcl_GetString(opts_["-index_1"].objv_);
+            double min = -DBL_MAX;
+
+            ForEachInGroup(s, [&](const std::string &val){
+                double v = atof(val.c_str());
+                if (v == 0.0) {
+                    error("%s is not float value in definition of -index_1\n", val.c_str());
+                    return TCL_ERROR;
+                }
+                if (v <= min) {
+                    error("Value %f is not larger than previous value %f. "
+                          "Index values shall be monotonically increasing.\n",
+                           v, min);
+                    return TCL_ERROR;
+                }
+                min = v;
+                template_p.first.i1.push_back(atof(val.c_str()));
+                return TCL_OK;
+            });
+        }
+
+        if (opts_["-index_2"].isSet()) {
+            const std::string s = Tcl_GetString(opts_["-index_2"].objv_);
+            double min = -DBL_MAX;
+
+            ForEachInGroup(s, [&](const std::string &val){
+                double v = atof(val.c_str());
+                if (v == 0.0) {
+                    error("%s is not float value in definition of -index_2\n", val.c_str());
+                    return TCL_ERROR;
+                }
+                if (v <= min) {
+                    error("Value %f is not larger than previous value %f. "
+                          "Index values shall be monotonically increasing.\n",
+                          v, min);
+                    return TCL_ERROR;
+                }
+                min = v;
+                template_p.first.i2.push_back(atof(val.c_str()));
+                return TCL_OK;
+            });
+        }
+
         return TCL_OK;
     })
 )
