@@ -119,10 +119,11 @@ CREATE_TCL_COMMAND(
             const std::string s = Tcl_GetString(opts_["-index_1"].objv_);
             double min = -DBL_MAX;
 
-            ForEachInGroup(s, [&](const std::string &val){
-                double v = atof(val.c_str());
-                if (v == 0.0) {
-                    error("%s is not float value in definition of -index_1\n", val.c_str());
+            int rv = ForEachInGroup(s, [&](const std::string &val){
+                char *end;
+                double v = strtof(val.c_str(), &end);
+                if (*end != '\0') {
+                    error("%s is not float value in definition of -index_1\n", val);
                     return TCL_ERROR;
                 }
                 if (v <= min) {
@@ -135,16 +136,22 @@ CREATE_TCL_COMMAND(
                 template_p.first.i1.push_back(atof(val.c_str()));
                 return TCL_OK;
             });
+
+            if (rv != TCL_OK) {
+                error("-index_1 value is invalid.\n");
+                return TCL_ERROR;
+            }
         }
 
         if (opts_["-index_2"].isSet()) {
             const std::string s = Tcl_GetString(opts_["-index_2"].objv_);
             double min = -DBL_MAX;
 
-            ForEachInGroup(s, [&](const std::string &val){
-                double v = atof(val.c_str());
-                if (v == 0.0) {
-                    error("%s is not float value in definition of -index_2\n", val.c_str());
+            int rv = ForEachInGroup(s, [&](const std::string &val){
+                char *end;
+                double v = strtof(val.c_str(), &end);
+                if (*end != '\0') {
+                    error("%s is not float value in definition of -index_2\n", val);
                     return TCL_ERROR;
                 }
                 if (v <= min) {
@@ -157,6 +164,11 @@ CREATE_TCL_COMMAND(
                 template_p.first.i2.push_back(atof(val.c_str()));
                 return TCL_OK;
             });
+
+            if (rv != TCL_OK) {
+                error("-index_2 value is invalid.\n");
+                return TCL_ERROR;
+            }
         }
 
         return TCL_OK;
