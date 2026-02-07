@@ -31,9 +31,9 @@ void Simulation::AddInclude(std::string include)
     includes_.push_back(include);
 }
 
-void Simulation::AddLib(std::string lib)
+void Simulation::AddModel(std::string model)
 {
-    libs_.push_back(lib);
+    models_.push_back(model);
 }
 
 void Simulation::SetSupply(Supply *supply)
@@ -59,9 +59,9 @@ void Simulation::WriteTestBench()
 
     fprintf(f, ".title %s \n\n", name_);
 
-    fprintf(f, "* Libraries\n");
-    for (const auto &lib : libs_)
-        fprintf(f, ".lib %s\n", lib);
+    fprintf(f, "* Libraries / Models \n");
+    for (const auto &model : models_)
+        fprintf(f, ".lib %s\n", model);
     fprintf(f, "\n");
 
     fprintf(f, "* Include files\n");

@@ -183,7 +183,39 @@ CREATE_TCL_COMMAND(
             return TCL_ERROR;
         }
 
-        ctx_->algorithms_->GetLogicFunction(ctx_->lib_.GetCell(cell_name));
+        return TCL_OK;
+    })
+)
+
+CREATE_TCL_COMMAND(
+    ReadSpice,
+    "read_spice",
+    "Read SPICE netlist(s) or model deck(s)",
+    true,
+
+    ARG({
+        {"-type",           TclCmdOpt(true,     "(netlist|model)",  "Type of the file provided.")},
+        {"{spice_files}",   TclCmdOpt(true,     "",                 "Name of the supply voltage net.")}
+        }),
+
+    ARG({
+
+        std::string type = Tcl_GetString(opts_["-type"].objv_);
+        if (type != "netlist" && type != "model") {
+            error("Allowed values for -type are: 'netlist' or 'model'.\n");
+            return TCL_ERROR;
+        }
+
+        const std::string s = Tcl_GetString(opts_["-type"].objv_);
+
+        ForEachInGroup(s, [&](const std::string &val){
+            // TODO: Check existence of the file
+            if (type == "netlist")
+                ctx_->includes_.push_back(val);
+            else
+                ctx_->models_.push_back(val);
+            return TCL_OK;
+        });
 
         return TCL_OK;
     })
@@ -316,6 +348,7 @@ void RegisterTclCommands(Context *ctx)
     ctx->tcl_commands_.push_back({ DefineCell(ctx),             DefineCellCb });
     ctx->tcl_commands_.push_back({ DefineTemplate(ctx),         DefineTemplateCb });
     ctx->tcl_commands_.push_back({ ExtractLogicTable(ctx),      ExtractLogicTableCb });
+    ctx->tcl_commands_.push_back({ ReadSpice(ctx),              ReadSpiceCb });
     ctx->tcl_commands_.push_back({ SetVdd(ctx),                 SetVddCb });
     ctx->tcl_commands_.push_back({ SetGnd(ctx),                 SetGndCb });
     ctx->tcl_commands_.push_back({ SetOperatingCondition(ctx),  SetOperatingConditionCb });

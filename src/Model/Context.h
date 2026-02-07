@@ -24,7 +24,7 @@ class Context {
         // Cell library to characterize
         Library lib_;
 
-        std::vector<std::string> libs_;
+        std::vector<std::string> models_;
         std::vector<std::string> includes_;
 
         // TCL objects

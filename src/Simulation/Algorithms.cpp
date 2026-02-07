@@ -50,11 +50,11 @@ bool Algorithms::GetLogicFunction(Cell &cell)
             sim.SetTemp(op_cond.temp_);
             sim.SetSupply(op_cond.supply_);
 
-            for (const auto & inc : ctx_->includes_)
-                sim.AddInclude(inc);
+            for (const auto & include : ctx_->includes_)
+                sim.AddInclude(include);
 
-            for (const auto & lib : ctx_->libs_)
-                sim.AddLib(lib);
+            for (const auto & model : ctx_->models_)
+                sim.AddModel(model);
 
             int i_pin_index = 0;
             for (const auto & i_pin : i_pins) {

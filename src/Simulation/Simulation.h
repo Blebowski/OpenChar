@@ -26,7 +26,7 @@ class Simulation {
         void SetTemp(double temp);
 
         void AddInclude(const std::string include);
-        void AddLib(std::string lib);
+        void AddModel(std::string model);
         void AddStimuli(Pin *pin, Stimulus &&stim);
 
         int Simulate();
@@ -45,7 +45,7 @@ class Simulation {
         double time_step_;
 
         std::vector<std::string> includes_;
-        std::vector<std::string> libs_;
+        std::vector<std::string> models_;
 
         Supply *supply_;
 
