@@ -47,18 +47,7 @@ int ShellInit(Tcl_Interp *interp)
 
     open_char::RegisterTclCommands(ctx);
 
-    if (argt[ARG_FILE].present) {
-        open_char::printf("Evaluating file: %s\n", argt[ARG_FILE].val);
-
-        std::string cmd = "namespace eval ::open_char { source {" +
-                          argt[ARG_FILE].val + "} }";
-
-        if (Tcl_Eval(interp, cmd.c_str()) == TCL_ERROR) {
-            open_char::fprintf(stderr, "Tcl Error: %s\n", Tcl_GetStringResult(interp));
-        }
-    }
-
-    const char* loop_script = R"(
+    std::string cmd = R"(
         namespace path [concat [namespace path] open_char]
         namespace eval open_char_terminal {
             proc open_char_completer {text start end line} {
@@ -87,37 +76,74 @@ int ShellInit(Tcl_Interp *interp)
                 # Return sorted unique list
                 return [linsert $clean_matches 0 $prefix]
             }
+            proc execute_command {line interactive} {
+                if {$line eq "exit" || $line eq "quit"} { exit }
+
+                set trimmed [string trim $line]
+                if {[string length $trimmed] > 0} {
+                    # Add to Readline (for arrow keys)
+                    ::tclreadline::readline add $line
+
+                    # Add to Tcl History (for the 'history' command)
+                    # This makes the 'history' command actually show results
+                    history add $line
+
+                    if {$interactive == 0} {
+                        puts $line
+                        flush stdout
+                    }
+                    if {[catch {uplevel #0 $line} result]} {
+                        if {[string match "invalid command name*" $result]} {
+                            puts "Error: $result"
+                        }
+                    } elseif {$result ne ""} {
+                        puts $result
+                    }
+                }
+            }
             proc run {} {
                 ::tclreadline::readline initialize ~/.openchar_history
                 ::tclreadline::readline builtincompleter 0
                 ::tclreadline::readline customcompleter open_char_completer
+                )";
 
-                while {1} {
-                    set line [::tclreadline::readline read "open_char> "]
+    if (argt[ARG_FILE].present) {
+        cmd += open_char::sprintf(R"(
+                set script_file %s
+                if {[file exists $script_file]} {
+                    puts "Executing file: $script_file"
+                    set chan [open $script_file r]
+                    set accumulator ""
 
-                    if {$line eq "exit" || $line eq "quit"} { break }
+                    while {[gets $chan line] >= 0} {
+                        append accumulator $line "\n"
 
-                    set trimmed [string trim $line]
-                    if {[string length $trimmed] > 0} {
-                        # Add to Readline (for arrow keys)
-                        ::tclreadline::readline add $line
-
-                        # Add to Tcl History (for the 'history' command)
-                        # This makes the 'history' command actually show results
-                        history add $line
-
-                        if {[catch {uplevel #0 $line} result]} {
-                        } elseif {$result ne ""} {
-                            puts $result
+                        # Check if the current buffer is a complete Tcl command
+                        if {[info complete $accumulator]} {
+                            set cmd [string trim $accumulator]
+                            if {$cmd ne ""} {
+                                execute_command $cmd 0
+                            }
+                            set accumulator ""
                         }
                     }
+                    close $chan
+                } else {
+                    puts "Failed to open file: $script_file"
+                    exit
+                }
+                )", argt[ARG_FILE].val);
+    }
+
+    cmd += R"(  while {1} {
+                    set line [::tclreadline::readline read "open_char> "]
+                    execute_command $line 1
                 }
             }
         }
-        open_char_terminal::run
-    )";
+        open_char_terminal::run)";
 
-    if (Tcl_Eval(interp, loop_script) == TCL_ERROR) {
+    if (Tcl_Eval(interp, cmd.c_str()) == TCL_ERROR) {
         Tcl_DeleteInterp(interp);
         return TCL_ERROR;
     }
