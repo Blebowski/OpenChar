@@ -22,12 +22,14 @@ class Pin {
 
         void AddLogicTableEntry(int64_t inputs, int output);
         std::pair<int64_t, int> GetLogicTableEntry(int index);
+
+        const std::vector<std::pair<int64_t, int>>& GetLogicTable();
         void PrintLogicTable();
 
     private:
-        // Bit 63    - Result
-        // Bits 62-0 - Inputs in the order of input pins of the above cell
-        std::vector<int64_t> logic_table_;
+        // First value - Cell inputs
+        // Second value - Cell output
+        std::vector<std::pair<int64_t, int>> logic_table_;
 
 };
 

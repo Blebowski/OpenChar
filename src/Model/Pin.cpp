@@ -23,14 +23,18 @@ Pin::Pin() :
 
 void Pin::AddLogicTableEntry(int64_t inputs, int output)
 {
-    int64_t v = inputs | (((int64_t)output) << 63);
-    logic_table_.push_back(v);
+    logic_table_.push_back(std::make_pair(inputs, output));
 }
 
 std::pair<int64_t, int> Pin::GetLogicTableEntry(int index)
 {
-    int64_t v = logic_table_[index];
-    return {v & ~((int64_t)1 << 63), (v >> 63) & 0x1};
+    return logic_table_[index];
+}
+
+
+const std::vector<std::pair<int64_t, int>>& Pin::GetLogicTable()
+{
+    return logic_table_;
 }
 
 void Pin::PrintLogicTable()
@@ -51,13 +55,13 @@ void Pin::PrintLogicTable()
     for (const auto &v : logic_table_) {
         printf("|");
 
-        int64_t tmp = v;
+        int64_t tmp = v.first;
         for (size_t i = 0; i < i_pins_cnt; i++) {
             printf(" %7d |", tmp & 0x1);
             tmp >>= 1;
         }
 
-        printf(" %7d |\n", (v >> 63) & 0x1);
+        printf(" %7d |\n", v.second & 0x1);
     }
 
     PRINT_LINE(line_len)
