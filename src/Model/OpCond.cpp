@@ -5,6 +5,7 @@
 namespace open_char {
 
 OpCond::OpCond(Supply *supply) :
+    temp_(25.0),
     supply_(supply)
 {}
 

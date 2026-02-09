@@ -34,7 +34,8 @@ extern "C" {
 
 int ShellInit(Tcl_Interp *interp)
 {
-    ctx->interp_ = interp;
+    // TODO: Delete upon return!
+    ctx = new open_char::Context(interp);
 
     if (Tcl_Init(interp) == TCL_ERROR) {
         return TCL_ERROR;
@@ -202,8 +203,6 @@ int ParseArgs(int argc, char *argv[])
 
 int main(int argc, char *argv[])
 {
-    ctx = new open_char::Context;
-
     int parse_ret = ParseArgs(argc, argv);
     if (parse_ret != TCL_OK)
         return parse_ret;
@@ -215,10 +214,6 @@ int main(int argc, char *argv[])
 
     Tcl_FindExecutable(argv[0]);
     Tcl_Main(argc, argv, ShellInit);
-
-    // TODO: This is not called since "exit" is handled within Tcl_Main to exit
-    //       the code!
-    delete ctx;
 
     return 0;
 }

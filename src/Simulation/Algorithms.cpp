@@ -3,10 +3,11 @@
 #include <bit>
 
 #include "Algorithms.h"
-#include "Simulation.h"
-#include "Library.h"
-#include "Template.h"
+#include "Context.h"
 #include "DelayTable.h"
+#include "Library.h"
+#include "Simulation.h"
+#include "Template.h"
 #include "Utils.h"
 
 namespace open_char {
@@ -17,7 +18,7 @@ Algorithms::Algorithms(Context *ctx) :
 
 int Algorithms::ToLogic(Volt val)
 {
-    OpCond& op_cond = ctx_->lib_.GetOpCond();
+    OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
     if (abs(val - op_cond.supply_->vdd_val_) < 0.01)
         return 1;
     return 0;
@@ -30,7 +31,7 @@ int Algorithms::GetBit(int64_t v, size_t index)
 
 void Algorithms::MeasureLogicFunction(Cell &cell)
 {
-    OpCond &op_cond = ctx_->lib_.GetOpCond();
+    OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
     Volt log0_v = op_cond.supply_->gnd_val_;
     Volt log1_v = op_cond.supply_->vdd_val_;
 
@@ -59,10 +60,10 @@ void Algorithms::MeasureLogicFunction(Cell &cell)
             sim.SetTemp(op_cond.temp_);
             sim.SetSupply(op_cond.supply_);
 
-            for (const auto & include : ctx_->includes_)
-                sim.AddInclude(include);
+            for (const auto & netlist : ctx_->GetNetlists())
+                sim.AddInclude(netlist);
 
-            for (const auto & model : ctx_->models_)
+            for (const auto & model : ctx_->GetModels())
                 sim.AddModel(model);
 
             int i_pin_index = 0;
@@ -95,7 +96,7 @@ NanoSecond Algorithms::FindEdge(Waves &w, Pin *pin, int from)
 
     // TODO: Cross-check first and last data match the "from" and "to".
     // TODO: Add support for configurable threshold
-    Volt th = 0.5 * ctx_->lib_.GetOpCond().supply_->vdd_val_;
+    Volt th = 0.5 * ctx_->GetLibrary().GetOpCond().supply_->vdd_val_;
 
     size_t index = len - 1;
     size_t step = len / 2;
@@ -130,7 +131,7 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
 {
     Cell *cell = opin->cell_;
     auto i_pins = cell->GetPins(PinDirection::IN);
-    OpCond &op_cond = ctx_->lib_.GetOpCond();
+    OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
 
     std::string prefix = cell->name_ + "_DLY";
     size_t i = 0;
@@ -162,10 +163,10 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
             sim.SetTemp(op_cond.temp_);
             sim.SetSupply(op_cond.supply_);
 
-            for (const auto & include : ctx_->includes_)
-                sim.AddInclude(include);
+            for (const auto & netlist : ctx_->GetNetlists())
+                sim.AddInclude(netlist);
 
-            for (const auto & model : ctx_->models_)
+            for (const auto & model : ctx_->GetModels())
                 sim.AddModel(model);
 
             Volt log0_v = op_cond.supply_->gnd_val_;

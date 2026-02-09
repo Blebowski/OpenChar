@@ -8,6 +8,8 @@
 #include <cassert>
 #include <cstring>
 
+#include <tcl.h>
+
 namespace open_char {
 
 inline const char*              format_arg(const std::string& s)         { return s.c_str(); }

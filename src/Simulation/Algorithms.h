@@ -3,7 +3,8 @@
 #define ALGORITHMS_H
 
 #include "open_char.h"
-#include "Context.h"
+
+#include "Utils.h"
 
 namespace open_char {
 

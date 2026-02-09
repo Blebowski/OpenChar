@@ -19,8 +19,8 @@ CREATE_TCL_COMMAND(
 
     ARG({}),
     ARG({
-        for (auto & cell : ctx_->lib_.GetCells()) {
-            ctx_->algorithms_->CharacterizeCells(cell.second);
+        for (auto & cell : ctx_->GetLibrary().GetCells()) {
+            ctx_->GetAlgorithms().CharacterizeCells(cell.second);
         }
 
         return TCL_OK;
@@ -52,12 +52,12 @@ CREATE_TCL_COMMAND(
         }
 
         const std::string templ_name = Tcl_GetString(opts_["-delay"].objv_);
-        if (!ctx_->lib_.HasTemplate(templ_name)) {
+        if (!ctx_->GetLibrary().HasTemplate(templ_name)) {
             error("Template '%s' does not exist.", templ_name);
             return TCL_ERROR;
         }
 
-        Template& t = ctx_->lib_.GetTemplate(templ_name);
+        Template& t = ctx_->GetLibrary().GetTemplate(templ_name);
         if (t.kind_ != TemplateKind::DELAY) {
             error("Template '%s' is not a delay template.", templ_name);
             return TCL_ERROR;
@@ -65,14 +65,14 @@ CREATE_TCL_COMMAND(
 
         const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
 
-        std::pair<Cell&, bool> cell_p = ctx_->lib_.AddCell(cell_name);
+        std::pair<Cell&, bool> cell_p = ctx_->GetLibrary().AddCell(cell_name);
         if (!cell_p.second) {
             error("Cell %s is already defined\n", cell_name);
             return TCL_ERROR;
         }
 
-        cell_p.first.lib_ = &(ctx_->lib_);
-        cell_p.first.SetDelayTemplate(&(ctx_->lib_.GetTemplate(templ_name)));
+        cell_p.first.lib_ = &(ctx_->GetLibrary());
+        cell_p.first.SetDelayTemplate(&(ctx_->GetLibrary().GetTemplate(templ_name)));
 
         if (opts_["-output"].isSet()) {
             const std::string s = Tcl_GetString(opts_["-output"].objv_);
@@ -94,7 +94,7 @@ CREATE_TCL_COMMAND(
 
 
 
-        Supply *supply = ctx_->lib_.GetOpCond().supply_;
+        Supply *supply = ctx_->GetLibrary().GetOpCond().supply_;
         cell_p.first.AddPin(supply->vdd_name_, PinDirection::INOUT, PinKind::PWR);
         cell_p.first.AddPin(supply->gnd_name_, PinDirection::INOUT, PinKind::GND);
 
@@ -144,7 +144,7 @@ CREATE_TCL_COMMAND(
         }
 
         std::pair<Template&, bool> template_p =
-            ctx_->lib_.AddTemplate(Tcl_GetString(opts_["template_name"].objv_));
+            ctx_->GetLibrary().AddTemplate(Tcl_GetString(opts_["template_name"].objv_));
 
         if (!template_p.second) {
             error("Template %s already exists.\n", template_p.first.name_);
@@ -231,14 +231,14 @@ CREATE_TCL_COMMAND(
 
         const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
 
-        if (!ctx_->lib_.HasCell(cell_name)) {
+        if (!ctx_->GetLibrary().HasCell(cell_name)) {
             error("The cell %s does not exist. Use 'define_cell' to define it.\n",
                     cell_name);
             return TCL_ERROR;
         }
 
-        Cell& cell = ctx_->lib_.GetCell(cell_name);
-        ctx_->algorithms_->MeasureLogicFunction(cell);
+        Cell& cell = ctx_->GetLibrary().GetCell(cell_name);
+        ctx_->GetAlgorithms().MeasureLogicFunction(cell);
 
         return TCL_OK;
     })
@@ -258,14 +258,14 @@ CREATE_TCL_COMMAND(
 
         const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
 
-        if (!ctx_->lib_.HasCell(cell_name)) {
+        if (!ctx_->GetLibrary().HasCell(cell_name)) {
             error("The cell %s does not exist. Use 'define_cell' to define it.\n",
                     cell_name);
             return TCL_ERROR;
         }
 
-        Cell& cell = ctx_->lib_.GetCell(cell_name);
-        ctx_->algorithms_->MeasureComboDelay(cell);
+        Cell& cell = ctx_->GetLibrary().GetCell(cell_name);
+        ctx_->GetAlgorithms().MeasureComboDelay(cell);
 
         return TCL_OK;
     })
@@ -298,14 +298,14 @@ CREATE_TCL_COMMAND(
         ForEachInGroup(s, [&](const std::string &val){
             // TODO: Check existence of the file
             if (type == "netlist") {
-                ctx_->includes_.push_back(val);
+                ctx_->AddNetlist(val);
             } else {
                 std::string full_val = val;
                 if (opts_["-corner"].isSet()) {
                     full_val += " ";
                     full_val += Tcl_GetString(opts_["-corner"].objv_);
                 }
-                ctx_->models_.push_back(full_val);
+                ctx_->AddModel(full_val);
             }
             return TCL_OK;
         });
@@ -327,10 +327,10 @@ CREATE_TCL_COMMAND(
 
     ARG({
         Volt volts;
-        Tcl_GetDoubleFromObj(ctx_->interp_, opts_["voltage_value"].objv_, &volts);
+        Tcl_GetDoubleFromObj(ctx_->GetTclInterp(), opts_["voltage_value"].objv_, &volts);
         std::string name = Tcl_GetString(opts_["net_name"].objv_);
 
-        ctx_->lib_.SetDefaultSupplyVdd(name, volts);
+        ctx_->GetLibrary().SetDefaultSupplyVdd(name, volts);
 
         return TCL_OK;
     })
@@ -349,10 +349,10 @@ CREATE_TCL_COMMAND(
 
     ARG({
         Volt volts;
-        Tcl_GetDoubleFromObj(ctx_->interp_, opts_["voltage_value"].objv_, &volts);
+        Tcl_GetDoubleFromObj(ctx_->GetTclInterp(), opts_["voltage_value"].objv_, &volts);
         std::string name = Tcl_GetString(opts_["net_name"].objv_);
 
-        ctx_->lib_.SetDefaultSupplyGnd(name, volts);
+        ctx_->GetLibrary().SetDefaultSupplyGnd(name, volts);
 
         return TCL_OK;
     })
@@ -391,28 +391,28 @@ CREATE_TCL_COMMAND(
 
         if (opts_["-supply_name"].isSet()) {
             std::string supply_name = Tcl_GetString(opts_["-supply_name"].objv_);
-            if (!ctx_->lib_.HasSupply(supply_name)) {
+            if (!ctx_->GetLibrary().HasSupply(supply_name)) {
                 error("Supply %s does not exists. Define it using set_vdd", supply_name);
                 return TCL_ERROR;
             }
         }
 
-        ctx_->lib_.GetOpCond().name_ = Tcl_GetString(opts_["-name"].objv_);
+        ctx_->GetLibrary().GetOpCond().name_ = Tcl_GetString(opts_["-name"].objv_);
 
         Celsius temp;
-        Tcl_GetDoubleFromObj(ctx_->interp_, opts_["-temp"].objv_, &temp);
-        ctx_->lib_.GetOpCond().temp_ = temp;
+        Tcl_GetDoubleFromObj(ctx_->GetTclInterp(), opts_["-temp"].objv_, &temp);
+        ctx_->GetLibrary().GetOpCond().temp_ = temp;
 
         if (opts_["-voltage"].isSet()) {
             Volt volts;
-            Tcl_GetDoubleFromObj(ctx_->interp_, opts_["voltage"].objv_, &volts);
-            ctx_->lib_.SetDefaultSupplyVdd(volts);
+            Tcl_GetDoubleFromObj(ctx_->GetTclInterp(), opts_["voltage"].objv_, &volts);
+            ctx_->GetLibrary().SetDefaultSupplyVdd(volts);
         }
 
         if (opts_["-supply_name"].isSet()) {
             std::string supply_name = Tcl_GetString(opts_["-supply_name"].objv_);
-            Supply& supply = ctx_->lib_.GetSupply(supply_name);
-            ctx_->lib_.GetOpCond().supply_ = &(supply);
+            Supply& supply = ctx_->GetLibrary().GetSupply(supply_name);
+            ctx_->GetLibrary().GetOpCond().supply_ = &(supply);
         }
 
         return TCL_OK;
@@ -429,8 +429,8 @@ CREATE_TCL_COMMAND(
 
     ARG({
         // TODO: Sort alphabetically
-        for (const auto & cmd_pair : ctx_->tcl_commands_)
-            printf("%s\n", cmd_pair.first.name_);
+        for (const auto & c : ctx_->GetTclCommands())
+            printf("%s\n", c.first.name_);
 
         return TCL_OK;
     })
@@ -448,7 +448,7 @@ CREATE_TCL_COMMAND(
     ARG({
 
         std::string name = Tcl_GetString(opts_["library_name"].objv_);
-        ctx_->lib_.WriteLiberty(name);
+        ctx_->GetLibrary().WriteLiberty(name);
 
         return TCL_OK;
     })
@@ -456,22 +456,22 @@ CREATE_TCL_COMMAND(
 
 void RegisterTclCommands(Context *ctx)
 {
-    ctx->tcl_commands_.push_back({ CharacterizeLibrary(ctx),    CharacterizeLibraryCb });
-    ctx->tcl_commands_.push_back({ DefineCell(ctx),             DefineCellCb });
-    ctx->tcl_commands_.push_back({ DefineTemplate(ctx),         DefineTemplateCb });
-    ctx->tcl_commands_.push_back({ MeasureLogicTable(ctx),      MeasureLogicTableCb });
-    ctx->tcl_commands_.push_back({ MeasureComboDelays(ctx),     MeasureComboDelaysCb });
-    ctx->tcl_commands_.push_back({ ReadSpice(ctx),              ReadSpiceCb });
-    ctx->tcl_commands_.push_back({ SetVdd(ctx),                 SetVddCb });
-    ctx->tcl_commands_.push_back({ SetGnd(ctx),                 SetGndCb });
-    ctx->tcl_commands_.push_back({ SetOperatingCondition(ctx),  SetOperatingConditionCb });
-    ctx->tcl_commands_.push_back({ WriteLibrary(ctx),           WriteLibraryCb });
-    ctx->tcl_commands_.push_back({ Help(ctx),                   HelpCb });
+    ctx->AddTclCommand(CharacterizeLibrary(ctx),    CharacterizeLibraryCb );
+    ctx->AddTclCommand(DefineCell(ctx),             DefineCellCb );
+    ctx->AddTclCommand(DefineTemplate(ctx),         DefineTemplateCb );
+    ctx->AddTclCommand(MeasureLogicTable(ctx),      MeasureLogicTableCb );
+    ctx->AddTclCommand(MeasureComboDelays(ctx),     MeasureComboDelaysCb );
+    ctx->AddTclCommand(ReadSpice(ctx),              ReadSpiceCb );
+    ctx->AddTclCommand(SetVdd(ctx),                 SetVddCb );
+    ctx->AddTclCommand(SetGnd(ctx),                 SetGndCb );
+    ctx->AddTclCommand(SetOperatingCondition(ctx),  SetOperatingConditionCb );
+    ctx->AddTclCommand(WriteLibrary(ctx),           WriteLibraryCb );
+    ctx->AddTclCommand(Help(ctx),                   HelpCb );
 
-    for (const auto &p : ctx->tcl_commands_) {
-        std::string full_name = "open_char::" + p.first.name_;
-        Tcl_CreateObjCommand(p.first.ctx_->interp_, full_name.c_str(),
-                             p.second, (void*)(&(p.first)), NULL);
+    for (const auto &c : ctx->GetTclCommands()) {
+        std::string full_name = "open_char::" + c.first.name_;
+        Tcl_CreateObjCommand(c.first.ctx_->GetTclInterp(), full_name.c_str(),
+                             c.second, (void*)(&(c.first)), NULL);
     }
 }
 

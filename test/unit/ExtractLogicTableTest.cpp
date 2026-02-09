@@ -9,8 +9,8 @@ using namespace open_char;
 
 void test_inv(Context &ctx, Algorithms &algs)
 {
-    ctx.lib_.AddCell("INV");
-    Cell &c1 = ctx.lib_.GetCell("INV");
+    ctx.GetLibrary().AddCell("INV");
+    Cell &c1 = ctx.GetLibrary().GetCell("INV");
 
     c1.AddPin("Y",   PinDirection::OUT,     PinKind::DATA);
     c1.AddPin("A",   PinDirection::IN,      PinKind::DATA);
@@ -28,8 +28,8 @@ void test_inv(Context &ctx, Algorithms &algs)
 
 void test_nand2(Context &ctx, Algorithms &algs)
 {
-    ctx.lib_.AddCell("NAND2");
-    Cell &c1 = ctx.lib_.GetCell("NAND2");
+    ctx.GetLibrary().AddCell("NAND2");
+    Cell &c1 = ctx.GetLibrary().GetCell("NAND2");
 
     c1.AddPin("Y",   PinDirection::OUT,     PinKind::DATA);
     c1.AddPin("A",   PinDirection::IN,      PinKind::DATA);
@@ -54,8 +54,8 @@ void test_nand2(Context &ctx, Algorithms &algs)
 
 void test_half_adder(Context &ctx, Algorithms &algs)
 {
-    ctx.lib_.AddCell("HALF_ADDER");
-    Cell &c1 = ctx.lib_.GetCell("HALF_ADDER");
+    ctx.GetLibrary().AddCell("HALF_ADDER");
+    Cell &c1 = ctx.GetLibrary().GetCell("HALF_ADDER");
 
     c1.AddPin("CO",  PinDirection::OUT,     PinKind::DATA);
     c1.AddPin("S",   PinDirection::OUT,     PinKind::DATA);
@@ -93,10 +93,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
 
 int main()
 {
-    Context ctx;
+    Context ctx(nullptr);
     Algorithms algs(&ctx);
 
-    ctx.includes_.push_back(TEST_COMMON_DIR "/basic_gates.cdl");
+    ctx.AddNetlist(TEST_COMMON_DIR "/basic_gates.cdl");
 
     test_inv        (ctx, algs);
     test_nand2      (ctx, algs);
