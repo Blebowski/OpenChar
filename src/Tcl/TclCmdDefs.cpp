@@ -12,6 +12,24 @@
 namespace open_char {
 
 CREATE_TCL_COMMAND(
+    CharacterizeLibrary,
+    "characterize_library",
+    "Characterize all the defined cells into a library",
+    true,
+
+    ARG({}),
+    ARG({
+        auto cells = ctx_->lib_.GetCells();
+
+        for (auto & cell : cells) {
+            ctx_->algorithms_->CharacterizeCells(cell.second);
+        }
+
+        return TCL_OK;
+    })
+)
+
+CREATE_TCL_COMMAND(
     DefineCell,
     "define_cell",
     "Define cell to be characterized.",
@@ -421,6 +439,7 @@ CREATE_TCL_COMMAND(
 
 void RegisterTclCommands(Context *ctx)
 {
+    ctx->tcl_commands_.push_back({ CharacterizeLibrary(ctx),    CharacterizeLibraryCb });
     ctx->tcl_commands_.push_back({ DefineCell(ctx),             DefineCellCb });
     ctx->tcl_commands_.push_back({ DefineTemplate(ctx),         DefineTemplateCb });
     ctx->tcl_commands_.push_back({ MeasureLogicTable(ctx),      MeasureLogicTableCb });

@@ -19,6 +19,11 @@ Cell& Library::GetCell(std::string name)
     return cells_.find(name)->second;
 }
 
+std::map<std::string, Cell>& Library::GetCells()
+{
+    return cells_;
+}
+
 bool Library::HasCell(std::string name)
 {
     if (cells_.contains(name))

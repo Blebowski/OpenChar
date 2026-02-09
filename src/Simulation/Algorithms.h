@@ -12,8 +12,10 @@ class Algorithms {
     public:
         Algorithms(Context *ctx);
 
-        bool MeasureLogicFunction(Cell &cell);
-        bool MeasureComboDelay(Cell &cell);
+        void MeasureLogicFunction(Cell &cell);
+        void MeasureComboDelay(Cell &cell);
+
+        void CharacterizeCells(Cell &cell);
 
     private:
         Context *ctx_;

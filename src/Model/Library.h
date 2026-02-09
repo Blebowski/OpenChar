@@ -16,6 +16,7 @@ class Library {
         std::pair<Cell&, bool> AddCell(std::string name);
         bool HasCell(std::string name);
         Cell &GetCell(std::string name);
+        std::map<std::string, Cell>& GetCells();
 
         void SetDefaultSupplyVdd(std::string name, double val);
         void SetDefaultSupplyVdd(double val);

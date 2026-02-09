@@ -28,7 +28,7 @@ int Algorithms::GetBit(int64_t v, size_t index)
     return (v >> index) & 0x1;
 }
 
-bool Algorithms::MeasureLogicFunction(Cell &cell)
+void Algorithms::MeasureLogicFunction(Cell &cell)
 {
     OpCond &op_cond = ctx_->lib_.GetOpCond();
     Volt log0_v = op_cond.supply_->gnd_val_;
@@ -86,8 +86,6 @@ bool Algorithms::MeasureLogicFunction(Cell &cell)
     for (auto & o_pin : o_pins) {
         o_pin.PrintLogicTable();
     }
-
-    return true;
 }
 
 NanoSecond Algorithms::FindEdge(Waves &w, Pin *pin, int from)
@@ -227,7 +225,7 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
     return 0;
 }
 
-bool Algorithms::MeasureComboDelay(Cell &cell)
+void Algorithms::MeasureComboDelay(Cell &cell)
 {
     auto o_pins = cell.GetPins(PinDirection::OUT);
 
@@ -288,8 +286,12 @@ bool Algorithms::MeasureComboDelay(Cell &cell)
             MeasureOneStateDelay(&o_pin, tv.in_j, tv.in_i, tv.out_j, tv.out_i);
         }
     }
+}
 
-    return true;
+void Algorithms::CharacterizeCells(Cell &cell)
+{
+    MeasureLogicFunction(cell);
+    MeasureComboDelay(cell);
 }
 
 }
