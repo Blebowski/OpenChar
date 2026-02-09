@@ -96,16 +96,22 @@ void Simulation::WriteTestBench()
     fprintf(f, "* DUT\n", dut_title_);
     fprintf(f, "%s ", dut_title_);
 
-    for (const auto &pin_p : dut_->GetPins(PinDirection::OUT))
-        fprintf(f, "%s ", pin_p.name_);
-    for (const auto &pin_p : dut_->GetPins(PinDirection::IN))
-        fprintf(f, "%s ", pin_p.name_);
-    for (const auto &pin_p : dut_->GetPins(PinKind::PWR))
-        fprintf(f, "%s ", pin_p.name_);
-    for (const auto &pin_p : dut_->GetPins(PinKind::GND))
-        fprintf(f, "%s ", pin_p.name_);
+    for (const auto &pin : dut_->GetPins(PinDirection::OUT))
+        fprintf(f, "%s ", pin.name_);
+    for (const auto &pin : dut_->GetPins(PinDirection::IN))
+        fprintf(f, "%s ", pin.name_);
+    for (const auto &pin : dut_->GetPins(PinKind::PWR))
+        fprintf(f, "%s ", pin.name_);
+    for (const auto &pin : dut_->GetPins(PinKind::GND))
+        fprintf(f, "%s ", pin.name_);
 
     fprintf(f, "%s \n\n", dut_->name_);
+
+    fprintf(f, "* WAVEFORM DUMP\n");
+    for (const auto &pin_p : dut_->GetPins()) {
+        fprintf(f, ".SAVE %s\n", pin_p.second.name_);
+    }
+    fprintf(f, "\n");
 
     fprintf(f, ".control \n");
     if (kind_ == SimulationKind::TRAN)
