@@ -18,14 +18,32 @@ CREATE_TCL_COMMAND(
     true,
 
     ARG({
-        {"-input",      TclCmdOpt(true,         "{pin_names}",      "Input pin or pins")},
-        {"-output",     TclCmdOpt(true,         "{pin_names}",      "Output pin or pins")},
-        {"cell_name",   TclCmdOpt(false,        "cell_name",        "Name of the cell")}
+        {"-input",      TclCmdOpt(true,         "{pin_names}",      "Input pin or pins.")},
+        {"-output",     TclCmdOpt(true,         "{pin_names}",      "Output pin or pins.")},
+        {"-delay",      TclCmdOpt(true,         "delay_template",   "Name of delay template to use when characterizing the cell.")},
+        {"cell_name",   TclCmdOpt(false,        "cell_name",        "Name of the cell.")}
         }),
     ARG({
 
         if (!opts_["-input"].isSet() && !opts_["-output"].isSet()) {
             error("You need to specify at least -input or -outputs.\n");
+            return TCL_ERROR;
+        }
+
+        if (!opts_["-delay"].isSet()) {
+            error("You need to specify -delay template.\n");
+            return TCL_ERROR;
+        }
+
+        const std::string templ_name = Tcl_GetString(opts_["-delay"].objv_);
+        if (!ctx_->lib_.HasTemplate(templ_name)) {
+            error("Template '%s' does not exist.", templ_name);
+            return TCL_ERROR;
+        }
+
+        Template& t = ctx_->lib_.GetTemplate(templ_name);
+        if (t.kind_ != TemplateKind::DELAY) {
+            error("Template '%s' is not a delay template.", templ_name);
             return TCL_ERROR;
         }
 
@@ -37,9 +55,10 @@ CREATE_TCL_COMMAND(
             return TCL_ERROR;
         }
 
+        cell_p.first.SetDelayTemplate(&(ctx_->lib_.GetTemplate(templ_name)));
+
         if (opts_["-output"].isSet()) {
             const std::string s = Tcl_GetString(opts_["-output"].objv_);
-
             // TODO: Handle duplicit pins here!
             ForEachInGroup(s, [&](const std::string &val){
                 cell_p.first.AddPin(val, PinDirection::OUT, PinKind::DATA);
@@ -49,13 +68,14 @@ CREATE_TCL_COMMAND(
 
         if (opts_["-input"].isSet()) {
             const std::string s = Tcl_GetString(opts_["-input"].objv_);
-
             // TODO: Handle duplicit pins here!
             ForEachInGroup(s, [&](const std::string &val){
                 cell_p.first.AddPin(val, PinDirection::IN, PinKind::DATA);
                 return TCL_OK;
             });
         }
+
+
 
         Supply *supply = ctx_->lib_.GetOpCond().supply_;
         cell_p.first.AddPin(supply->vdd_name_, PinDirection::INOUT, PinKind::PWR);
@@ -87,6 +107,11 @@ CREATE_TCL_COMMAND(
 
         if (!opts_["-index_1"].isSet()) {
             error("You need to specify -index_1 for the template.\n");
+            return TCL_ERROR;
+        }
+
+        if (!opts_["-index_2"].isSet()) {
+            error("You need to specify -index_2 for the template.\n");
             return TCL_ERROR;
         }
 
@@ -133,7 +158,7 @@ CREATE_TCL_COMMAND(
                     return TCL_ERROR;
                 }
                 min = v;
-                template_p.first.i1.push_back(atof(val.c_str()));
+                template_p.first.index_1.push_back(atof(val.c_str()));
                 return TCL_OK;
             });
 
@@ -161,7 +186,7 @@ CREATE_TCL_COMMAND(
                     return TCL_ERROR;
                 }
                 min = v;
-                template_p.first.i2.push_back(atof(val.c_str()));
+                template_p.first.index_2.push_back(atof(val.c_str()));
                 return TCL_OK;
             });
 
@@ -176,9 +201,9 @@ CREATE_TCL_COMMAND(
 )
 
 CREATE_TCL_COMMAND(
-    ExtractLogicTable,
-    "extract_logic_table",
-    "Extract logic table of a cell(s)",
+    MeasureLogicTable,
+    "measure_logic_table",
+    "Measure logic table of a cell(s)",
     true,
 
     ARG({
@@ -195,6 +220,36 @@ CREATE_TCL_COMMAND(
             return TCL_ERROR;
         }
 
+        Cell& cell = ctx_->lib_.GetCell(cell_name);
+        ctx_->algorithms_->MeasureLogicFunction(cell);
+
+        return TCL_OK;
+    })
+)
+
+CREATE_TCL_COMMAND(
+    MeasureComboDelays,
+    "measure_combo_delays",
+    "Measure delays of combinatorial cells",
+    true,
+
+    ARG({
+        {"cell_name",   TclCmdOpt(true,     "",           "Name of the cell")}
+        }),
+
+    ARG({
+
+        const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
+
+        if (!ctx_->lib_.HasCell(cell_name)) {
+            error("The cell %s does not exist. Use 'define_cell' to define it.\n",
+                    cell_name);
+            return TCL_ERROR;
+        }
+
+        Cell& cell = ctx_->lib_.GetCell(cell_name);
+        ctx_->algorithms_->MeasureComboDelay(cell);
+
         return TCL_OK;
     })
 )
@@ -207,6 +262,7 @@ CREATE_TCL_COMMAND(
 
     ARG({
         {"-type",           TclCmdOpt(true,     "(netlist|model)",  "Type of the file provided.")},
+        {"-corner",         TclCmdOpt(true,     "corner",           "Corner in the model to be used (e.g. tt,ss,ff).")},
         {"{spice_files}",   TclCmdOpt(true,     "",                 "Name of the supply voltage net.")}
         }),
 
@@ -218,14 +274,22 @@ CREATE_TCL_COMMAND(
             return TCL_ERROR;
         }
 
-        const std::string s = Tcl_GetString(opts_["-type"].objv_);
+        // TODO: Check if corner is only specified with "model" type!
+
+        const std::string s = Tcl_GetString(opts_["{spice_files}"].objv_);
 
         ForEachInGroup(s, [&](const std::string &val){
             // TODO: Check existence of the file
-            if (type == "netlist")
+            if (type == "netlist") {
                 ctx_->includes_.push_back(val);
-            else
-                ctx_->models_.push_back(val);
+            } else {
+                std::string full_val = val;
+                if (opts_["-corner"].isSet()) {
+                    full_val += " ";
+                    full_val += Tcl_GetString(opts_["-corner"].objv_);
+                }
+                ctx_->models_.push_back(full_val);
+            }
             return TCL_OK;
         });
 
@@ -245,7 +309,7 @@ CREATE_TCL_COMMAND(
         }),
 
     ARG({
-        double volts;
+        Volt volts;
         Tcl_GetDoubleFromObj(ctx_->interp_, opts_["voltage_value"].objv_, &volts);
         std::string name = Tcl_GetString(opts_["net_name"].objv_);
 
@@ -267,7 +331,7 @@ CREATE_TCL_COMMAND(
         }),
 
     ARG({
-        double volts;
+        Volt volts;
         Tcl_GetDoubleFromObj(ctx_->interp_, opts_["voltage_value"].objv_, &volts);
         std::string name = Tcl_GetString(opts_["net_name"].objv_);
 
@@ -318,12 +382,12 @@ CREATE_TCL_COMMAND(
 
         ctx_->lib_.GetOpCond().name_ = Tcl_GetString(opts_["-name"].objv_);
 
-        double temp;
+        Celsius temp;
         Tcl_GetDoubleFromObj(ctx_->interp_, opts_["-temp"].objv_, &temp);
         ctx_->lib_.GetOpCond().temp_ = temp;
 
         if (opts_["-voltage"].isSet()) {
-            double volts;
+            Volt volts;
             Tcl_GetDoubleFromObj(ctx_->interp_, opts_["voltage"].objv_, &volts);
             ctx_->lib_.SetDefaultSupplyVdd(volts);
         }
@@ -359,7 +423,8 @@ void RegisterTclCommands(Context *ctx)
 {
     ctx->tcl_commands_.push_back({ DefineCell(ctx),             DefineCellCb });
     ctx->tcl_commands_.push_back({ DefineTemplate(ctx),         DefineTemplateCb });
-    ctx->tcl_commands_.push_back({ ExtractLogicTable(ctx),      ExtractLogicTableCb });
+    ctx->tcl_commands_.push_back({ MeasureLogicTable(ctx),      MeasureLogicTableCb });
+    ctx->tcl_commands_.push_back({ MeasureComboDelays(ctx),     MeasureComboDelaysCb });
     ctx->tcl_commands_.push_back({ ReadSpice(ctx),              ReadSpiceCb });
     ctx->tcl_commands_.push_back({ SetVdd(ctx),                 SetVddCb });
     ctx->tcl_commands_.push_back({ SetGnd(ctx),                 SetGndCb });

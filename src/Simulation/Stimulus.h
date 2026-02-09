@@ -15,23 +15,24 @@ class Stimulus {
         StimulusKind kind_;
 
         // Constant source
-        double volage_;
+        Volt volage_;
 
         // Pulse source
-        double v1_;
-        double v2_;
+        Volt v1_;
+        Volt v2_;
 
         // All in femto-seconds
-        double t_delay_;
-        double t_rise_;
-        double t_fall_;
-        double pulse_width_;
-        double period_;
-        double num_pulses_;
+        NanoSecond t_delay_;
+        NanoSecond t_rise_;
+        NanoSecond t_fall_;
+        NanoSecond pulse_width_;
+        NanoSecond period_;
+        int num_pulses_;
 
-        Stimulus(double voltage);
-        Stimulus(double v1, double v2, double t_delay, double t_rise, double t_fall,
-                 double pulse_width, double period, double num_pulses);
+        Stimulus(Volt voltage);
+        Stimulus(NanoSecond v1, NanoSecond v2, NanoSecond t_delay, NanoSecond t_rise,
+                 NanoSecond t_fall, NanoSecond pulse_width, NanoSecond period,
+                 int num_pulses);
 };
 
 }

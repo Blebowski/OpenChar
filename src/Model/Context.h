@@ -24,6 +24,7 @@ class Context {
         // Cell library to characterize
         Library lib_;
 
+        // Analog inputs
         std::vector<std::string> models_;
         std::vector<std::string> includes_;
 

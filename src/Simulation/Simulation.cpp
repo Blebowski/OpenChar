@@ -10,20 +10,11 @@
 
 namespace open_char {
 
-Simulation::Simulation(std::string name, Cell *dut, double duration, double time_step) :
+Simulation::Simulation(std::string name, Cell *dut, SimulationKind kind) :
     name_(name),
-    kind_(SimulationKind::TRAN),
+    kind_(kind),
     dut_(dut),
-    duration_(duration),
-    time_step_(time_step)
-{}
-
-Simulation::Simulation(std::string name, Cell *dut) :
-    name_(name),
-    kind_(SimulationKind::DC),
-    dut_(dut),
-    duration_(0),
-    time_step_(0)
+    duration_(10)
 {}
 
 void Simulation::AddInclude(std::string include)
@@ -41,7 +32,7 @@ void Simulation::SetSupply(Supply *supply)
     supply_ = supply;
 }
 
-void Simulation::SetTemp(double temp)
+void Simulation::SetTemp(Celsius temp)
 {
     temp_ = temp;
 }
@@ -49,6 +40,11 @@ void Simulation::SetTemp(double temp)
 void Simulation::AddStimuli(Pin *pin, Stimulus &&stim)
 {
     stimuli_.push_back(std::pair<Pin*, Stimulus>(pin, stim));
+}
+
+void Simulation::AddLoad(Pin *pin, PicoFarad cap)
+{
+    loads_.push_back(std::pair<Pin *,PicoFarad>(pin, cap));
 }
 
 void Simulation::WriteTestBench()
@@ -86,8 +82,14 @@ void Simulation::WriteTestBench()
         if (v.kind_ == StimulusKind::CONSTANT)
             fprintf(f, "%f\n", v.volage_);
         else
-            fprintf(f, "PULSE(%f %f %f %f %f %f)\n", v.v1_, v.v2_, v.t_delay_, v.t_rise_,
+            fprintf(f, "PULSE(%fV %fV %fNS %fNS %fNS %fNS)\n", v.v1_, v.v2_, v.t_delay_, v.t_rise_,
                     v.t_fall_, v.pulse_width_, v.period_, v.num_pulses_);
+    }
+    fprintf(f, "\n");
+
+    fprintf(f, "* Loads\n");
+    for (const auto &l : loads_) {
+        fprintf(f, "C%s %s %s %fpF\n", l.first->name_, l.first->name_, supply_->gnd_name_, l.second);
     }
     fprintf(f, "\n");
 
@@ -107,7 +109,7 @@ void Simulation::WriteTestBench()
 
     fprintf(f, ".control \n");
     if (kind_ == SimulationKind::TRAN)
-        fprintf(f, "     tran %fFS %fFS\n", duration_, time_step_);
+        fprintf(f, "     tran %s %fNS\n", duration_, time_step_);
     else if (kind_ == SimulationKind::DC)
         fprintf(f, "     DC VGnd 0 0 0.1\n");
 

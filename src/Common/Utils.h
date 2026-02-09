@@ -87,6 +87,8 @@ void warning(const std::string &fmt, const Args&... args)
     std::printf("\n");
 }
 
+#define PRINT_LINE(len) printf("%s\n", std::string(len, '-'));
+
 }
 
 #endif

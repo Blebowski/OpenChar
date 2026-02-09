@@ -34,4 +34,14 @@ size_t Cell::GetPinsCount(PinDirection direction)
                         });
 }
 
+Template* Cell::GetDelayTemplate()
+{
+    return d_template_;
+}
+
+void Cell::SetDelayTemplate(Template *d_template)
+{
+    d_template_ = d_template;
+}
+
 }

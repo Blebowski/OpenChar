@@ -6,8 +6,6 @@
 
 namespace open_char {
 
-#define PRINT_LINE(len) printf("%s\n", std::string(len, '-'));
-
 Pin::Pin(Cell *cell, std::string name, PinDirection direction, PinKind kind) :
     cell_(cell),
     name_(name),
@@ -35,6 +33,11 @@ std::pair<int64_t, int> Pin::GetLogicTableEntry(int index)
 const std::vector<std::pair<int64_t, int>>& Pin::GetLogicTable()
 {
     return logic_table_;
+}
+
+void Pin::SetDelayTable(DelayTable &&delay_table)
+{
+    delay_table_ = delay_table;
 }
 
 void Pin::PrintLogicTable()

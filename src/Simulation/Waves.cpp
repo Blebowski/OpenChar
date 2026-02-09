@@ -67,8 +67,8 @@ Waves::Waves(std::string path)
         MOVE_TILL_CHAR(curr);
 
         std::string key;
-        if (strncmp(curr, "time ", 5) == 5) {
-            key = std::string(curr);
+        if (strncmp(curr, "time", 4) == 0) {
+            key = "time";
         } else {
             while (*curr != '(')
                 curr++;
@@ -83,14 +83,23 @@ Waves::Waves(std::string path)
                 c = toupper(c);
         }
 
-        data_[key] = std::vector<double>();
-        data_[key].reserve(n_points);
+        data_[key] = std::pair<std::vector<double>, WaveKind>();
+        data_[key].first.reserve(n_points);
         sig_names.push_back(key);
 
         MOVE_TILL_SPACE(curr);
         MOVE_TILL_CHAR(curr);
 
-        data_kind_[key] = std::string(curr);
+        std::string curr_str = curr;
+        curr_str.erase(std::remove(curr_str.begin(), curr_str.end(), '\n'), curr_str.end());
+        if (curr_str == "time")
+            data_[key].second = WaveKind::TIME;
+        else if (curr_str == "voltage")
+            data_[key].second = WaveKind::VOLTAGE;
+        else if (curr_str == "current")
+            data_[key].second = WaveKind::CURRENT;
+        else
+            error("Invalid wave kind: '%s'\n", curr_str);
     }
 
     // TODO: Check line read OK
@@ -102,9 +111,13 @@ Waves::Waves(std::string path)
     for (size_t sample = 0; sample < n_points; sample++) {
         for (const auto &sig_name : sig_names) {
             double val;
-            // TODO: Check size of double was read properly!
             fread(&val, sizeof(double), 1, f);
-            data_[sig_name].push_back(val);
+
+            if (sig_name == "time")
+                val *= 1E9;
+
+            // TODO: Convert current values to MiliAmps
+            data_[sig_name].first.push_back(val);
         }
     }
 
@@ -138,16 +151,36 @@ void Waves::Print()
 
     PRINT_LINE(total);
 
-    for (size_t i = 0; i < data_.begin()->second.size(); i++) {
+    for (size_t i = 0; i < data_.begin()->second.first.size(); i++) {
         printf("|");
         for (const auto &sig : data_) {
             std::string fmt_str = sprintf(" %%%d.4f |", lens[sig.first]);
-            printf(fmt_str, sig.second[i]);
+            printf(fmt_str, sig.second.first[i]);
         }
         printf(" \n");
     }
 
     PRINT_LINE(total);
+}
+
+const std::vector<double>& Waves::GetData(const std::string &name)
+{
+    return data_[name].first;
+}
+
+double Waves::GetDataAtIndex(const std::string &name, size_t index)
+{
+    return data_[name].first[index];
+}
+
+WaveKind Waves::GetKind(const std::string &name)
+{
+    return data_[name].second;
+}
+
+size_t Waves::GetDataLen()
+{
+    return data_.cbegin()->second.first.size();
 }
 
 }

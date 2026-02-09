@@ -13,12 +13,12 @@ class Supply {
 
     public:
         std::string vdd_name_;
-        double vdd_val_;
+        Volt vdd_val_;
 
         std::string gnd_name_;
-        double gnd_val_;
+        Volt gnd_val_;
 
-        Supply(std::string vdd_name, double vdd_val, std::string gnd_name, double gnd_val);
+        Supply(std::string vdd_name, Volt vdd_val, std::string gnd_name, Volt gnd_val);
 };
 
 }

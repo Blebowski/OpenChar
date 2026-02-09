@@ -19,15 +19,15 @@ namespace open_char {
 class Simulation {
 
     public:
-        Simulation(std::string name, Cell *dut, double duration, double time_step);
-        Simulation(std::string name, Cell *dut);
+        Simulation(std::string name, Cell *dut, SimulationKind kind);
 
         void SetSupply(Supply *supply);
-        void SetTemp(double temp);
+        void SetTemp(Celsius temp);
 
         void AddInclude(const std::string include);
         void AddModel(std::string model);
         void AddStimuli(Pin *pin, Stimulus &&stim);
+        void AddLoad(Pin *pin, PicoFarad cap);
 
         int Simulate();
         Waves ReadWaves();
@@ -38,11 +38,13 @@ class Simulation {
         const SimulationKind kind_;
         Cell * const dut_;
 
-        double temp_;
+        Celsius temp_;
 
-        // Transient simulation details - always in femto-seconds
-        double duration_;
-        double time_step_;
+        NanoSecond duration_;
+
+        // TODO: Precision may be configurable either manually by user,
+        //       or somehow determine based on quickness of response.
+        const std::string time_step_ = "100FS";
 
         std::vector<std::string> includes_;
         std::vector<std::string> models_;
@@ -50,6 +52,7 @@ class Simulation {
         Supply *supply_;
 
         std::vector<std::pair<Pin*, Stimulus>> stimuli_;
+        std::vector<std::pair<Pin*, PicoFarad>> loads_;
 
         const std::string testbench_ = "tb.cdl";
         const std::string dut_title_ = "XDUT";

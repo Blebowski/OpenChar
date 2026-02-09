@@ -6,13 +6,14 @@
 
 namespace open_char {
 
-    Stimulus::Stimulus(double voltage) :
+    Stimulus::Stimulus(Volt voltage) :
         kind_(StimulusKind::CONSTANT),
         volage_(voltage)
     {};
 
-    Stimulus::Stimulus(double v1, double v2, double t_delay, double t_rise, double t_fall,
-                       double pulse_width, double period, double num_pulses):
+    Stimulus::Stimulus(NanoSecond v1, NanoSecond v2, NanoSecond t_delay, NanoSecond t_rise,
+                       NanoSecond t_fall, NanoSecond pulse_width, NanoSecond period,
+                       int num_pulses):
         kind_(StimulusKind::PULSE),
         v1_(v1),
         v2_(v2),

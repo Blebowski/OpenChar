@@ -20,8 +20,13 @@ class Waves {
         std::string title_;
         std::string plot_name_;
 
-        std::map<std::string, std::vector<double>> data_;
-        std::map<std::string, std::string> data_kind_;
+        const std::vector<double>& GetData(const std::string &name);
+        size_t GetDataLen();
+        double GetDataAtIndex(const std::string &name, size_t index);
+        WaveKind GetKind(const std::string &name);
+
+    private:
+        std::map<std::string, std::pair<std::vector<double>, WaveKind>> data_;
 };
 
 }

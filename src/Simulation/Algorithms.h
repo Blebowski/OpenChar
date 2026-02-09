@@ -12,11 +12,16 @@ class Algorithms {
     public:
         Algorithms(Context *ctx);
 
-        bool GetLogicFunction(Cell &cell);
+        bool MeasureLogicFunction(Cell &cell);
+        bool MeasureComboDelay(Cell &cell);
 
     private:
         Context *ctx_;
-        int ToLogic(double val);
+        int ToLogic(Volt val);
+        int GetBit(int64_t v, size_t index);
+        NanoSecond FindEdge(Waves &w, Pin *pin, int from);
+        int MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
+                                 int out_from, int out_to);
 };
 
 }

@@ -13,7 +13,7 @@ class OpCond {
 
     public:
         std::string name_;
-        double temp_;
+        Celsius temp_;
         Supply *supply_;
 
         OpCond(Supply *supply);

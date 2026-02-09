@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "open_char.h"
+#include "DelayTable.h"
 
 namespace open_char {
 
@@ -23,6 +24,8 @@ class Pin {
         void AddLogicTableEntry(int64_t inputs, int output);
         std::pair<int64_t, int> GetLogicTableEntry(int index);
 
+        void SetDelayTable(DelayTable &&delay_table);
+
         const std::vector<std::pair<int64_t, int>>& GetLogicTable();
         void PrintLogicTable();
 
@@ -30,6 +33,8 @@ class Pin {
         // First value - Cell inputs
         // Second value - Cell output
         std::vector<std::pair<int64_t, int>> logic_table_;
+
+        DelayTable delay_table_;
 
 };
 

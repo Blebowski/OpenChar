@@ -8,6 +8,7 @@ namespace open_char {
     // Data Model
     class Cell;
     class Context;
+    class DelayTable;
     class Library;
     class LogicTable;
     class Pin;
@@ -55,6 +56,20 @@ namespace open_char {
         DELAY,
         POWER
     };
+
+    enum class WaveKind {
+        TIME,
+        VOLTAGE,
+        CURRENT
+    };
+
+    typedef double Celsius;
+    typedef double Volt;
+    typedef double NanoSecond;
+    typedef double MiliAmp;
+    typedef double PicoFarad;
+    typedef double KiloOhm;
+    typedef double NanoWatt;
 
 }
 

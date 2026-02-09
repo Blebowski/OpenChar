@@ -41,8 +41,12 @@ class Cell {
 
         size_t GetPinsCount(PinDirection direction);
 
+        Template* GetDelayTemplate();
+        void SetDelayTemplate(Template *d_template);
+
     private:
         std::map<std::string, Pin> pins_;
+        Template *d_template_;
 
 };
 

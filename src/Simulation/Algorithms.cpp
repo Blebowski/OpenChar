@@ -1,8 +1,12 @@
 
 
+#include <bit>
+
 #include "Algorithms.h"
 #include "Simulation.h"
 #include "Library.h"
+#include "Template.h"
+#include "DelayTable.h"
 #include "Utils.h"
 
 namespace open_char {
@@ -11,19 +15,24 @@ Algorithms::Algorithms(Context *ctx) :
     ctx_(ctx)
 {}
 
-int Algorithms::ToLogic(double val)
+int Algorithms::ToLogic(Volt val)
 {
     OpCond& op_cond = ctx_->lib_.GetOpCond();
-    if (abs(val - op_cond.supply_->vdd_val_) < 0.05)
+    if (abs(val - op_cond.supply_->vdd_val_) < 0.01)
         return 1;
     return 0;
 }
 
-bool Algorithms::GetLogicFunction(Cell &cell)
+int Algorithms::GetBit(int64_t v, size_t index)
+{
+    return (v >> index) & 0x1;
+}
+
+bool Algorithms::MeasureLogicFunction(Cell &cell)
 {
     OpCond &op_cond = ctx_->lib_.GetOpCond();
-    double log0_v = op_cond.supply_->gnd_val_;
-    double log1_v = op_cond.supply_->vdd_val_;
+    Volt log0_v = op_cond.supply_->gnd_val_;
+    Volt log1_v = op_cond.supply_->vdd_val_;
 
     auto o_pins = cell.GetPins(PinDirection::OUT);
 
@@ -37,7 +46,7 @@ bool Algorithms::GetLogicFunction(Cell &cell)
 
         for (size_t ipin_vect = 0; ipin_vect < n_sims; ipin_vect++) {
 
-            std::string sim_name = cell.name_ + "_GET_LOGIC_FUNC";
+            std::string sim_name = cell.name_ + "_LOG_FNC";
             size_t input = ipin_vect;
 
             for (const auto & i_pin : i_pins) {
@@ -45,7 +54,7 @@ bool Algorithms::GetLogicFunction(Cell &cell)
                 input >>= 1;
             }
 
-            Simulation sim {sim_name, &cell};
+            Simulation sim {sim_name, &cell, SimulationKind::DC};
 
             sim.SetTemp(op_cond.temp_);
             sim.SetSupply(op_cond.supply_);
@@ -57,24 +66,227 @@ bool Algorithms::GetLogicFunction(Cell &cell)
                 sim.AddModel(model);
 
             int i_pin_index = 0;
-            for (const auto & i_pin : i_pins) {
+            for (auto & i_pin : i_pins) {
                 size_t i_pin_val = ((ipin_vect >> i_pin_index) & 0x1);
                 sim.AddStimuli((Pin*)&i_pin, Stimulus((i_pin_val == 1) ? log1_v : log0_v));
 
                 i_pin_index++;
             }
 
+            // TODO: Propagate error
             sim.Simulate();
 
             Waves w = sim.ReadWaves();
             w.Print();
 
-            o_pin.AddLogicTableEntry(ipin_vect, ToLogic(w.data_[o_pin.name_][0]));
+            o_pin.AddLogicTableEntry(ipin_vect, ToLogic(w.GetDataAtIndex(o_pin.name_, 0)));
         }
     }
 
     for (auto & o_pin : o_pins) {
         o_pin.PrintLogicTable();
+    }
+
+    return true;
+}
+
+NanoSecond Algorithms::FindEdge(Waves &w, Pin *pin, int from)
+{
+    size_t len = w.GetDataLen();
+    const std::vector<Volt>& d = w.GetData(pin->name_);
+
+    // TODO: Cross-check first and last data match the "from" and "to".
+    // TODO: Add support for configurable threshold
+    Volt th = 0.5 * ctx_->lib_.GetOpCond().supply_->vdd_val_;
+
+    size_t index = len - 1;
+    size_t step = len / 2;
+
+    while (step > 0) {
+        Volt v = d[index];
+
+        if (v > th) {
+            if (from == 0) {
+                index -= step;
+            } else {
+                index += step;
+            }
+        } else {
+            if (from == 0) {
+                index += step;
+            } else {
+                index -= step;
+            }
+        }
+
+        step /= 2;
+    }
+
+    // TODO: Move this down to Waves
+    const std::vector<NanoSecond>& t = w.GetData("time");
+    return t[index];
+}
+
+int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
+                                     int out_from, int out_to)
+{
+    Cell *cell = opin->cell_;
+    auto i_pins = cell->GetPins(PinDirection::IN);
+    OpCond &op_cond = ctx_->lib_.GetOpCond();
+
+    std::string prefix = cell->name_ + "_DLY";
+    size_t i = 0;
+    for (const auto & i_pin : i_pins) {
+        prefix = sprintf("%s_%s%d%d", prefix, i_pin.name_, GetBit(in_from, i), GetBit(in_to, i));
+        i++;
+    }
+
+    Template *templ = cell->GetDelayTemplate();
+
+    DelayTable delay_table;
+    delay_table.in_from_ = in_from;
+    delay_table.in_to_ = in_to;
+    delay_table.out_from_ = out_from;
+    delay_table.out_to_ = out_to;
+    delay_table.pin_ = opin;
+
+    int i_tran = 0;
+    for (const NanoSecond in_tran : templ->index_1) {
+
+        delay_table.delay_.push_back(std::vector<NanoSecond>());
+
+        int i_cap = 0;
+        for (const PicoFarad out_cap : templ->index_2) {
+
+            std::string sim_name = sprintf("%s_TRAN_%f_CAP_%f", prefix, in_tran, out_cap);
+
+            Simulation sim {sim_name, cell, SimulationKind::TRAN};
+            sim.SetTemp(op_cond.temp_);
+            sim.SetSupply(op_cond.supply_);
+
+            for (const auto & include : ctx_->includes_)
+                sim.AddInclude(include);
+
+            for (const auto & model : ctx_->models_)
+                sim.AddModel(model);
+
+            Volt log0_v = op_cond.supply_->gnd_val_;
+            Volt log1_v = op_cond.supply_->vdd_val_;
+
+            int i = 0;
+            Pin *tran_pin = nullptr;
+            int tran_from = 0;
+
+            for (auto & i_pin : i_pins) {
+
+                int from = GetBit(in_from, i);
+                int to = GetBit(in_to, i);
+
+                if (from == to) {
+                    sim.AddStimuli((Pin*)&i_pin, Stimulus((from == 1) ? log1_v : log0_v));
+                } else {
+                    // TODO: Refine
+                    Stimulus edge (
+                        (from == 1) ? log1_v : log0_v,
+                         ( to == 1) ? log1_v : log0_v,
+                         1,
+                         in_tran,
+                         in_tran,
+                         10,
+                         10,
+                         1
+                    );
+                    sim.AddStimuli((Pin*)&i_pin, std::move(edge));
+                    tran_pin = &i_pin;
+                    tran_from = from;
+                }
+
+                i++;
+            }
+
+            sim.AddLoad(opin, out_cap);
+
+            // TODO: Propagate error
+            sim.Simulate();
+            Waves w = sim.ReadWaves();
+
+            assert(tran_pin != nullptr);
+            NanoSecond in_edge  = FindEdge(w, tran_pin, tran_from);
+            NanoSecond out_edge = FindEdge(w, opin, out_from);
+
+            delay_table.delay_[i_tran].push_back(out_edge - in_edge);
+            i_cap++;
+        }
+
+        i_tran++;
+    }
+
+    delay_table.Print();
+    opin->SetDelayTable(std::move(delay_table));
+
+    return 0;
+}
+
+bool Algorithms::MeasureComboDelay(Cell &cell)
+{
+    auto o_pins = cell.GetPins(PinDirection::OUT);
+
+    for (auto & o_pin : o_pins) {
+
+        struct test_vect {
+            int64_t     in_i;
+            int         out_i;
+            int64_t     in_j;
+            int         out_j;
+        };
+        std::vector<test_vect> test_vects;
+
+        // Measure test vectors with output different and only one
+        // input different
+        int i = 0;
+        for (auto & row_i : o_pin.GetLogicTable()) {
+            int64_t row_i_in = row_i.first;
+            int row_i_out = row_i.second;
+
+            int j = 0;
+            for (auto & row_j : o_pin.GetLogicTable()) {
+                int64_t row_j_in = row_j.first;
+                int row_j_out = row_j.second;
+
+                if (j <= i) {
+                    j++;
+                    continue;
+                }
+
+                if (row_j_out == row_i_out) {
+                    j++;
+                    continue;
+                }
+
+                int64_t diff = row_i_in ^ row_j_in;
+                if (std::popcount((unsigned long)diff) != 1) {
+                    j++;
+                    continue;
+                }
+
+                test_vect tv = {
+                    .in_i   = row_i_in,
+                    .out_i  = row_i_out,
+                    .in_j   = row_j_in,
+                    .out_j  = row_j_out
+                };
+                test_vects.push_back(tv);
+
+                j++;
+            }
+            i++;
+        }
+
+        // Simulate all test vectors - Both directions
+        for (const auto & tv : test_vects) {
+            MeasureOneStateDelay(&o_pin, tv.in_i, tv.in_j, tv.out_i, tv.out_j);
+            MeasureOneStateDelay(&o_pin, tv.in_j, tv.in_i, tv.out_j, tv.out_i);
+        }
     }
 
     return true;
