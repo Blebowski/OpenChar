@@ -1,7 +1,9 @@
 
 #include "open_char.h"
+
 #include "Pin.h"
 #include "Cell.h"
+#include "Library.h"
 #include "Utils.h"
 
 namespace open_char {
@@ -35,9 +37,9 @@ const std::vector<std::pair<int64_t, int>>& Pin::GetLogicTable()
     return logic_table_;
 }
 
-void Pin::SetDelayTable(DelayTable &&delay_table)
+void Pin::AddDelayTable(DelayTable delay_table)
 {
-    delay_table_ = delay_table;
+    delay_tables_.push_back(delay_table);
 }
 
 void Pin::PrintLogicTable()
@@ -68,6 +70,60 @@ void Pin::PrintLogicTable()
     }
 
     PRINT_LINE(line_len)
+}
+
+void Pin::WriteLiberty(FILE *f, size_t tab)
+{
+    switch (kind_) {
+    case PinKind::PWR:
+        TAB_FPRINTF(tab, f, "pg_pin (%s) {\n", name_);
+        tab++;
+        TAB_FPRINTF(tab, f, "voltage_name : %s ;\n", cell_->lib_->GetOpCond().supply_->vdd_name_);
+        TAB_FPRINTF(tab, f, "pg_type : primary_power ;\n");
+        tab--;
+        TAB_FPRINTF(tab, f, "} /* end pg_pin */\n");
+        break;
+
+    case PinKind::GND:
+        TAB_FPRINTF(tab, f, "pg_pin (%s) {\n", name_);
+        tab++;
+        TAB_FPRINTF(tab, f, "voltage_name : %s ;\n", cell_->lib_->GetOpCond().supply_->gnd_name_);
+        TAB_FPRINTF(tab, f, "pg_type : primary_ground ;\n");
+        tab--;
+        TAB_FPRINTF(tab, f, "} /* end pg_pin */\n");
+        break;
+
+    case PinKind::DATA:
+        TAB_FPRINTF(tab, f, "pin (%s) {\n", name_);
+        tab++;
+
+        switch (direction_) {
+        case PinDirection::IN:
+            TAB_FPRINTF(tab, f, "direction : input ;\n");
+            break;
+        case PinDirection::OUT:
+            TAB_FPRINTF(tab, f, "direction : output ;\n");
+            break;
+        default:
+            // TODO: Introduce printable enum class ?
+            error("Unhandled pin_direction\n");
+        }
+
+        TAB_FPRINTF(tab, f, "capacitance : 0.0 ;\n");
+
+        if (direction_ == PinDirection::OUT) {
+            for (auto & delay_table : delay_tables_) {
+                delay_table.WriteLiberty(f, tab);
+            }
+        }
+
+        tab--;
+        TAB_FPRINTF(tab, f, "} /* end pin */\n");
+        break;
+
+    default:
+        break;
+    }
 }
 
 }

@@ -1,5 +1,6 @@
 
 #include "Library.h"
+#include "Utils.h"
 
 namespace open_char {
 
@@ -87,6 +88,26 @@ bool Library::HasTemplate(std::string name)
 Template& Library::GetTemplate(std::string name)
 {
     return templates_.find(name)->second;
+}
+
+void Library::WriteLiberty(const std::string &name)
+{
+    FILE *f = fopen(name.c_str(), "w");
+
+    TAB_FPRINTF(0, f, "library (%s) {\n", name);
+
+    size_t tab = 1;
+
+    TAB_FPRINTF(tab, f, "technology : cmos ; \n");
+    TAB_FPRINTF(tab, f, "delay_mode : table_lookup ; \n");
+
+    op_cond_.WriteLiberty(f, tab);
+
+    for (auto & cell : cells_) {
+        cell.second.WriteLiberty(f, tab);
+    }
+
+    TAB_FPRINTF(0, f, "} /* end library */\n", name);
 }
 
 }

@@ -14,6 +14,7 @@ class Pin {
 
     public:
         Cell *cell_;
+
         const std::string name_;
         const PinDirection direction_;
         const PinKind kind_;
@@ -24,17 +25,20 @@ class Pin {
         void AddLogicTableEntry(int64_t inputs, int output);
         std::pair<int64_t, int> GetLogicTableEntry(int index);
 
-        void SetDelayTable(DelayTable &&delay_table);
+        // TODO: Avoid copying here
+        void AddDelayTable(DelayTable delay_table);
 
         const std::vector<std::pair<int64_t, int>>& GetLogicTable();
         void PrintLogicTable();
+
+        void WriteLiberty(FILE *f, size_t tab);
 
     private:
         // First value - Cell inputs
         // Second value - Cell output
         std::vector<std::pair<int64_t, int>> logic_table_;
 
-        DelayTable delay_table_;
+        std::vector<DelayTable> delay_tables_;
 
 };
 

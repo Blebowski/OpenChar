@@ -17,6 +17,8 @@ class OpCond {
         Supply *supply_;
 
         OpCond(Supply *supply);
+
+        void WriteLiberty(FILE *f, size_t tab);
 };
 
 }

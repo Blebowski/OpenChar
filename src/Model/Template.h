@@ -16,8 +16,8 @@ class Template {
 
         const std::string name_;
         TemplateKind kind_;
-        std::vector<double> index_1;
-        std::vector<double> index_2;
+        std::vector<double> index_1_;
+        std::vector<double> index_2_;
 
 };
 

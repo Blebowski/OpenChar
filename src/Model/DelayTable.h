@@ -5,7 +5,6 @@
 #include <vector>
 
 #include "open_char.h"
-#include "Utils.h"
 
 namespace open_char {
 
@@ -13,9 +12,12 @@ class DelayTable {
 
     public:
         DelayTable();
+        std::pair<Pin *,EdgeKind> GetRelatedPin();
         void Print();
+        void WriteLiberty(FILE *f, size_t tab);
 
         Pin *pin_;
+        Template *template_;
 
         int64_t in_from_;
         int64_t in_to_;

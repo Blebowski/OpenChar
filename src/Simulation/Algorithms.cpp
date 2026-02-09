@@ -149,12 +149,12 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
     delay_table.pin_ = opin;
 
     int i_tran = 0;
-    for (const NanoSecond in_tran : templ->index_1) {
+    for (const NanoSecond in_tran : templ->index_1_) {
 
         delay_table.delay_.push_back(std::vector<NanoSecond>());
 
         int i_cap = 0;
-        for (const PicoFarad out_cap : templ->index_2) {
+        for (const PicoFarad out_cap : templ->index_2_) {
 
             std::string sim_name = sprintf("%s_TRAN_%f_CAP_%f", prefix, in_tran, out_cap);
 
@@ -219,17 +219,16 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
         i_tran++;
     }
 
+    delay_table.template_ = templ;
     delay_table.Print();
-    opin->SetDelayTable(std::move(delay_table));
+    opin->AddDelayTable(delay_table);
 
     return 0;
 }
 
 void Algorithms::MeasureComboDelay(Cell &cell)
 {
-    auto o_pins = cell.GetPins(PinDirection::OUT);
-
-    for (auto & o_pin : o_pins) {
+    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
 
         struct test_vect {
             int64_t     in_i;

@@ -19,9 +19,7 @@ CREATE_TCL_COMMAND(
 
     ARG({}),
     ARG({
-        auto cells = ctx_->lib_.GetCells();
-
-        for (auto & cell : cells) {
+        for (auto & cell : ctx_->lib_.GetCells()) {
             ctx_->algorithms_->CharacterizeCells(cell.second);
         }
 
@@ -73,6 +71,7 @@ CREATE_TCL_COMMAND(
             return TCL_ERROR;
         }
 
+        cell_p.first.lib_ = &(ctx_->lib_);
         cell_p.first.SetDelayTemplate(&(ctx_->lib_.GetTemplate(templ_name)));
 
         if (opts_["-output"].isSet()) {
@@ -176,7 +175,7 @@ CREATE_TCL_COMMAND(
                     return TCL_ERROR;
                 }
                 min = v;
-                template_p.first.index_1.push_back(atof(val.c_str()));
+                template_p.first.index_1_.push_back(atof(val.c_str()));
                 return TCL_OK;
             });
 
@@ -204,7 +203,7 @@ CREATE_TCL_COMMAND(
                     return TCL_ERROR;
                 }
                 min = v;
-                template_p.first.index_2.push_back(atof(val.c_str()));
+                template_p.first.index_2_.push_back(atof(val.c_str()));
                 return TCL_OK;
             });
 
@@ -437,6 +436,24 @@ CREATE_TCL_COMMAND(
     })
 )
 
+CREATE_TCL_COMMAND(
+    WriteLibrary,
+    "write_library",
+    "Write all the defined cells into a library",
+    true,
+
+    ARG({
+        {"library_name",            TclCmdOpt(true,     "string",       "Output library name.")},
+        }),
+    ARG({
+
+        std::string name = Tcl_GetString(opts_["library_name"].objv_);
+        ctx_->lib_.WriteLiberty(name);
+
+        return TCL_OK;
+    })
+)
+
 void RegisterTclCommands(Context *ctx)
 {
     ctx->tcl_commands_.push_back({ CharacterizeLibrary(ctx),    CharacterizeLibraryCb });
@@ -448,6 +465,7 @@ void RegisterTclCommands(Context *ctx)
     ctx->tcl_commands_.push_back({ SetVdd(ctx),                 SetVddCb });
     ctx->tcl_commands_.push_back({ SetGnd(ctx),                 SetGndCb });
     ctx->tcl_commands_.push_back({ SetOperatingCondition(ctx),  SetOperatingConditionCb });
+    ctx->tcl_commands_.push_back({ WriteLibrary(ctx),           WriteLibraryCb });
     ctx->tcl_commands_.push_back({ Help(ctx),                   HelpCb });
 
     for (const auto &p : ctx->tcl_commands_) {

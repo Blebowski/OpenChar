@@ -1,6 +1,10 @@
 
 
+#include "Cell.h"
 #include "DelayTable.h"
+#include "Pin.h"
+#include "Template.h"
+#include "Utils.h"
 
 namespace open_char {
 
@@ -29,6 +33,92 @@ void DelayTable::Print()
     }
 
     PRINT_LINE(width)
+}
+
+std::pair<Pin *, EdgeKind> DelayTable::GetRelatedPin()
+{
+    int64_t diff = in_from_ ^ in_to_;
+
+    // Must have exactly one bit set -> One pin transitioning
+    assert (IS_POWER_OF_2(diff));
+
+    int pos = __builtin_ctzll(diff);
+    Pin *rel_pin = nullptr;
+
+    int i = 0;
+    for (auto &p : pin_->cell_->GetPins(PinDirection::IN)) {
+        if (i == pos) {
+            rel_pin = &(p);
+        }
+        i++;
+    }
+    assert(rel_pin != nullptr);
+
+    EdgeKind kind = ((in_to_ >> pos) & 0x1) ? EdgeKind::RISING : EdgeKind::FALLING;
+
+    return {rel_pin, kind};
+}
+
+void DelayTable::WriteLiberty(FILE *f, size_t tab)
+{
+    TAB_FPRINTF(tab, f, "timing () {\n");
+    tab++;
+
+    std::pair<Pin *, EdgeKind> pp = GetRelatedPin();
+    TAB_FPRINTF(tab, f, "related_pin : %s ;\n", pp.first->name_);
+
+    if (pp.second == EdgeKind::RISING) {
+        TAB_FPRINTF(tab, f, "cell_rise() {\n");
+    } else {
+        TAB_FPRINTF(tab, f, "cell_fall() {\n");
+    }
+
+    tab++;
+
+    // TODO: Move to the template !
+    TAB_FPRINTF(tab, f, "index_1 (\"");
+
+    size_t i = 0;
+    for (const auto & v : template_->index_1_) {
+        fprintf(f, "%f%s", v, (i < template_->index_1_.size() - 1) ? ", " : "");
+        i++;
+    }
+    fprintf(f, "\")\n");
+
+    TAB_FPRINTF(tab, f, "index_2 (\"");
+    i = 0;
+    for (const auto & v : template_->index_2_) {
+        fprintf(f, "%f%s", v, (i < template_->index_2_.size() - 1) ? ", " : "");
+        i++;
+    }
+    fprintf(f, "\")\n");
+
+    TAB_FPRINTF(tab, f, "values ( \\\n");
+    tab++;
+
+    for (const auto & row : delay_) {
+        TAB_FPRINTF(tab, f, "\"");
+        size_t i = 0;
+        for (const NanoSecond & d : row) {
+            fprintf(f, "%f%s", d, (i < row.size() - 1) ? ", " : "");
+            i++;
+        }
+        fprintf(f, "\" \\\n");
+    }
+
+    tab--;
+    TAB_FPRINTF(tab, f, ") ;\n");
+
+    tab--;
+
+    if (pp.second == EdgeKind::RISING) {
+        TAB_FPRINTF(tab, f, "} /* end cell_rise */\n");
+    } else {
+        TAB_FPRINTF(tab, f, "} /* end cell_fall */\n");
+    }
+
+    tab--;
+    TAB_FPRINTF(tab, f, "} /* end timing */\n");
 }
 
 }

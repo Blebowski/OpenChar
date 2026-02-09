@@ -89,6 +89,13 @@ void warning(const std::string &fmt, const Args&... args)
 
 #define PRINT_LINE(len) printf("%s\n", std::string(len, '-'));
 
+#define TAB_FPRINTF(size, f, ...) do {                          \
+                fprintf(f, "%s", std::string(2 * size, ' '));   \
+                fprintf(f, __VA_ARGS__);                        \
+            } while (0)
+
+#define IS_POWER_OF_2(x) (((x) > 0) && (((x) & ((x) - 1)) == 0))
+
 }
 
 #endif

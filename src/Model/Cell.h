@@ -13,6 +13,8 @@ namespace open_char {
 class Cell {
 
     public:
+        Library* lib_;
+
         const std::string name_;
 
         Cell(std::string name);
@@ -43,6 +45,8 @@ class Cell {
 
         Template* GetDelayTemplate();
         void SetDelayTemplate(Template *d_template);
+
+        void WriteLiberty(FILE *f, size_t tab);
 
     private:
         std::map<std::string, Pin> pins_;

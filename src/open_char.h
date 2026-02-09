@@ -63,6 +63,11 @@ namespace open_char {
         CURRENT
     };
 
+    enum class EdgeKind {
+        RISING,
+        FALLING
+    };
+
     typedef double Celsius;
     typedef double Volt;
     typedef double NanoSecond;

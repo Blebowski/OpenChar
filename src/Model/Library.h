@@ -31,6 +31,8 @@ class Library {
 
         OpCond& GetOpCond();
 
+        void WriteLiberty(const std::string &name);
+
     private:
         std::map<std::string, Cell> cells_;
         std::vector<Supply> supplies_;
