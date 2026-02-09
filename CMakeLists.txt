@@ -21,7 +21,7 @@ find_library(TCLREADLINE_LIB NAMES tclreadline REQUIRED)
 ###############################################################################
 # Build
 ###############################################################################
-add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wno-format-security -O2)
+add_compile_options(-Wall -Wextra -Wpedantic -Wconversion -Wno-format-security -O2 -g)
 
 add_subdirectory(src)
 add_subdirectory(test)
