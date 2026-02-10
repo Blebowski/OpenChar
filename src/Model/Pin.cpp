@@ -78,7 +78,8 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
     case PinKind::PWR:
         TAB_FPRINTF(tab, f, "pg_pin (%s) {\n", name_);
         tab++;
-        TAB_FPRINTF(tab, f, "voltage_name : %s ;\n", cell_->lib_->GetOpCond().supply_->GetVddName());
+        TAB_FPRINTF(tab, f, "voltage_name : %s ;\n",
+                            cell_->GetLibrary()->GetOpCond().supply_->GetVddName());
         TAB_FPRINTF(tab, f, "pg_type : primary_power ;\n");
         tab--;
         TAB_FPRINTF(tab, f, "} /* end pg_pin */\n");
@@ -87,7 +88,8 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
     case PinKind::GND:
         TAB_FPRINTF(tab, f, "pg_pin (%s) {\n", name_);
         tab++;
-        TAB_FPRINTF(tab, f, "voltage_name : %s ;\n", cell_->lib_->GetOpCond().supply_->GetGndName());
+        TAB_FPRINTF(tab, f, "voltage_name : %s ;\n",
+                            cell_->GetLibrary()->GetOpCond().supply_->GetGndName());
         TAB_FPRINTF(tab, f, "pg_type : primary_ground ;\n");
         tab--;
         TAB_FPRINTF(tab, f, "} /* end pg_pin */\n");

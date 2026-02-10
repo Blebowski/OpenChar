@@ -107,11 +107,11 @@ void Simulation::WriteTestBench()
     for (const auto &pin : dut_->GetPins(PinKind::GND))
         fprintf(f, "%s ", pin.name_);
 
-    fprintf(f, "%s \n\n", dut_->name_);
+    fprintf(f, "%s \n\n", dut_->GetName());
 
     fprintf(f, "* WAVEFORM DUMP\n");
-    for (const auto &pin_p : dut_->GetPins()) {
-        fprintf(f, ".SAVE %s\n", pin_p.second.name_);
+    for (const auto &pin : dut_->GetPins()) {
+        fprintf(f, ".SAVE %s\n", pin.name_);
     }
     fprintf(f, "\n");
 

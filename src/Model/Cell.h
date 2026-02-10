@@ -13,15 +13,17 @@ namespace open_char {
 class Cell {
 
     public:
-        Cell(std::string name);
+        Cell(std::string name, Library *library);
 
-        Library* lib_;
-        const std::string name_;
+        Library* GetLibrary();
+        const std::string& GetName();
 
         std::pair<Pin&, bool> AddPin(std::string name, PinDirection direction, PinKind kind);
-        std::map<std::string, Pin>& GetPins();
-
         Pin& GetPin(std::string name);
+
+        auto GetPins() {
+            return std::views::values(pins_);
+        };
 
         auto GetPins(PinDirection direction) {
             auto filtered = std::views::filter(pins_,
@@ -49,9 +51,10 @@ class Cell {
         void WriteLiberty(FILE *f, size_t tab);
 
     private:
+        const std::string name_;
+        Library* library_;
         std::map<std::string, Pin> pins_;
         Template *d_template_;
-
 };
 
 }

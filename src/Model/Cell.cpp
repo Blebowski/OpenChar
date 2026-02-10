@@ -7,9 +7,21 @@
 
 namespace open_char {
 
-Cell::Cell(std::string name) :
-    name_(name)
+Cell::Cell(std::string name, Library *library) :
+    name_(name),
+    library_(library)
 {};
+
+Library* Cell::GetLibrary()
+{
+    assert(library_ != nullptr);
+    return library_;
+}
+
+const std::string& Cell::GetName()
+{
+    return name_;
+}
 
 std::pair<Pin&, bool> Cell::AddPin(std::string name, PinDirection direction, PinKind kind)
 {
@@ -20,11 +32,6 @@ std::pair<Pin&, bool> Cell::AddPin(std::string name, PinDirection direction, Pin
 Pin& Cell::GetPin(std::string name)
 {
     return pins_[name];
-}
-
-std::map<std::string, Pin>& Cell::GetPins()
-{
-    return pins_;
 }
 
 size_t Cell::GetPinsCount(PinDirection direction)

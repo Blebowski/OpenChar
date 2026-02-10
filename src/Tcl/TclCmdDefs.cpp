@@ -71,7 +71,6 @@ CREATE_TCL_COMMAND(
             return TCL_ERROR;
         }
 
-        cell.lib_ = &(ctx_->GetLibrary());
         cell.SetDelayTemplate(&(ctx_->GetLibrary().GetTemplate(templ_name)));
 
         if (opts_["-output"].isSet()) {

@@ -11,7 +11,7 @@ Library::Library() :
 
 std::pair<Cell&, bool> Library::AddCell(std::string name)
 {
-    auto [it, inserted] = cells_.emplace(name, Cell(name));
+    auto [it, inserted] = cells_.emplace(name, Cell(name, this));
     return {it->second, inserted};
 }
 

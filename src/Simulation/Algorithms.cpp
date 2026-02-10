@@ -47,7 +47,7 @@ void Algorithms::MeasureLogicFunction(Cell &cell)
 
         for (size_t ipin_vect = 0; ipin_vect < n_sims; ipin_vect++) {
 
-            std::string sim_name = cell.name_ + "_LOG_FNC";
+            std::string sim_name = cell.GetName() + "_LOG_FNC";
             size_t input = ipin_vect;
 
             for (const auto & i_pin : i_pins) {
@@ -133,7 +133,7 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
     auto i_pins = cell->GetPins(PinDirection::IN);
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
 
-    std::string prefix = cell->name_ + "_DLY";
+    std::string prefix = cell->GetName() + "_DLY";
     size_t i = 0;
     for (const auto & i_pin : i_pins) {
         prefix = sprintf("%s_%s%d%d", prefix, i_pin.name_, GetBit(in_from, i), GetBit(in_to, i));
