@@ -12,7 +12,7 @@ namespace open_char {
 class Template {
 
     public:
-        Template(std::string &name);
+        Template(std::string name);
 
         const std::string name_;
         TemplateKind kind_;

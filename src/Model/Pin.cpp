@@ -31,7 +31,6 @@ std::pair<int64_t, int> Pin::GetLogicTableEntry(int index)
     return logic_table_[index];
 }
 
-
 const std::vector<std::pair<int64_t, int>>& Pin::GetLogicTable()
 {
     return logic_table_;
@@ -40,6 +39,11 @@ const std::vector<std::pair<int64_t, int>>& Pin::GetLogicTable()
 void Pin::AddDelayTable(DelayTable delay_table)
 {
     delay_tables_.push_back(delay_table);
+}
+
+std::vector<DelayTable>& Pin::GetDelayTables()
+{
+    return delay_tables_;
 }
 
 void Pin::PrintLogicTable()

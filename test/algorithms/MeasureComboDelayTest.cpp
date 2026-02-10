@@ -1,0 +1,77 @@
+
+#include "open_char.h"
+#include "Context.h"
+#include "Template.h"
+#include "Algorithms.h"
+
+#include <cassert>
+
+using namespace open_char;
+
+void test_inv(Context &ctx, Algorithms &algs)
+{
+    ctx.GetLibrary().AddCell("INV");
+    Cell &c1 = ctx.GetLibrary().GetCell("INV");
+
+    Template t("MY_TEMP");
+    t.index_1_ = {0.01, 0.1};
+    t.index_2_ = {0.02, 0.3};
+
+    c1.SetDelayTemplate(&t);
+
+    c1.AddPin("Y",   PinDirection::OUT,     PinKind::DATA);
+    c1.AddPin("A",   PinDirection::IN,      PinKind::DATA);
+    c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
+    c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
+
+    algs.MeasureLogicFunction(c1);
+    algs.MeasureComboDelay(c1);
+
+    Pin& pin = c1.GetPin("Y");
+
+    std::vector<DelayTable>& dts = pin.GetDelayTables();
+
+    // Default numbers for basic NMOS and PMOS in NGSPICE
+    assert (dts[0].GetDelays()[0][0] > 0.18 && dts[0].GetDelays()[0][0] < 0.19);
+    assert (dts[0].GetDelays()[0][1] > 2.72 && dts[0].GetDelays()[0][1] < 2.73);
+    assert (dts[0].GetDelays()[1][0] > 0.20 && dts[0].GetDelays()[1][0] < 0.21);
+    assert (dts[0].GetDelays()[1][1] > 2.74 && dts[0].GetDelays()[1][1] < 2.75);
+
+    assert (dts[1].GetDelays()[0][0] > 0.09 && dts[1].GetDelays()[0][0] < 0.10);
+    assert (dts[1].GetDelays()[0][1] > 1.36 && dts[1].GetDelays()[0][1] < 1.37);
+    assert (dts[1].GetDelays()[1][0] > 0.10 && dts[1].GetDelays()[1][0] < 0.11);
+    assert (dts[1].GetDelays()[1][1] > 1.38 && dts[1].GetDelays()[1][1] < 1.39);
+
+    /*
+    2: Inputs from: 00000000
+    2: Inputs to:   00000001
+    2: Output from:        1
+    2: Output to:          0
+    2: ---------------------
+    2: | 0.18370 | 2.72810 |
+    2: | 0.20030 | 2.74330 |
+    2: ---------------------
+
+    2: ---------------------
+    2: Inputs from: 00000001
+    2: Inputs to:   00000000
+    2: Output from:        0
+    2: Output to:          1
+    2: ---------------------
+    2: | 0.09270 | 1.36610 |
+    2: | 0.10830 | 1.38110 |
+    2: ---------------------
+    */
+}
+
+int main()
+{
+    Context ctx(nullptr);
+    Algorithms algs(&ctx);
+
+    ctx.AddNetlist(TEST_COMMON_DIR "/basic_gates.cdl");
+
+    test_inv        (ctx, algs);
+
+    return 0;
+}

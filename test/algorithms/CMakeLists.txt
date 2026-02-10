@@ -1,0 +1,3 @@
+
+OPEN_CHAR_TEST(ExtractLogicTableTest)
+OPEN_CHAR_TEST(MeasureComboDelayTest)

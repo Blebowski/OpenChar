@@ -27,6 +27,7 @@ class Pin {
 
         // TODO: Avoid copying here
         void AddDelayTable(DelayTable delay_table);
+        std::vector<DelayTable>& GetDelayTables();
 
         const std::vector<std::pair<int64_t, int>>& GetLogicTable();
         void PrintLogicTable();
