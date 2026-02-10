@@ -68,15 +68,16 @@ void Simulation::WriteTestBench()
     fprintf(f, ".temp %f\n", temp_);
 
     fprintf(f, "* Power Supply\n");
-    fprintf(f, "Vpwr %s %s %f\n",  supply_->vdd_name_, supply_->gnd_name_, supply_->vdd_val_);
-    fprintf(f, "VGnd %s GND %f\n\n", supply_->gnd_name_, supply_->gnd_val_);
+    fprintf(f, "Vpwr %s %s %f\n",  supply_->GetVddName(), supply_->GetGndName(),
+                                   supply_->GetVddVoltage());
+    fprintf(f, "VGnd %s GND %f\n\n", supply_->GetGndName(), supply_->GetGndVoltage());
 
     fprintf(f, "* Stimuli\n");
     for (const auto &s : stimuli_) {
         if (s.first == nullptr)
             continue;
 
-        fprintf(f, "V%s %s %s ", s.first->name_, s.first->name_, supply_->gnd_name_);
+        fprintf(f, "V%s %s %s ", s.first->name_, s.first->name_, supply_->GetGndName());
 
         const Stimulus &v = s.second;
         if (v.kind_ == StimulusKind::CONSTANT)
@@ -89,7 +90,8 @@ void Simulation::WriteTestBench()
 
     fprintf(f, "* Loads\n");
     for (const auto &l : loads_) {
-        fprintf(f, "C%s %s %s %fpF\n", l.first->name_, l.first->name_, supply_->gnd_name_, l.second);
+        fprintf(f, "C%s %s %s %fpF\n", l.first->name_, l.first->name_,
+                                       supply_->GetGndName(), l.second);
     }
     fprintf(f, "\n");
 

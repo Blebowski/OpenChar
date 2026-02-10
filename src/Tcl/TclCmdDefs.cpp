@@ -65,20 +65,20 @@ CREATE_TCL_COMMAND(
 
         const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
 
-        std::pair<Cell&, bool> cell_p = ctx_->GetLibrary().AddCell(cell_name);
-        if (!cell_p.second) {
+        auto [cell, was_added] = ctx_->GetLibrary().AddCell(cell_name);
+        if (!was_added) {
             error("Cell %s is already defined\n", cell_name);
             return TCL_ERROR;
         }
 
-        cell_p.first.lib_ = &(ctx_->GetLibrary());
-        cell_p.first.SetDelayTemplate(&(ctx_->GetLibrary().GetTemplate(templ_name)));
+        cell.lib_ = &(ctx_->GetLibrary());
+        cell.SetDelayTemplate(&(ctx_->GetLibrary().GetTemplate(templ_name)));
 
         if (opts_["-output"].isSet()) {
             const std::string s = Tcl_GetString(opts_["-output"].objv_);
             // TODO: Handle duplicit pins here!
             ForEachInGroup(s, [&](const std::string &val){
-                cell_p.first.AddPin(val, PinDirection::OUT, PinKind::DATA);
+                cell.AddPin(val, PinDirection::OUT, PinKind::DATA);
                 return TCL_OK;
             });
         }
@@ -87,16 +87,14 @@ CREATE_TCL_COMMAND(
             const std::string s = Tcl_GetString(opts_["-input"].objv_);
             // TODO: Handle duplicit pins here!
             ForEachInGroup(s, [&](const std::string &val){
-                cell_p.first.AddPin(val, PinDirection::IN, PinKind::DATA);
+                cell.AddPin(val, PinDirection::IN, PinKind::DATA);
                 return TCL_OK;
             });
         }
 
-
-
         Supply *supply = ctx_->GetLibrary().GetOpCond().supply_;
-        cell_p.first.AddPin(supply->vdd_name_, PinDirection::INOUT, PinKind::PWR);
-        cell_p.first.AddPin(supply->gnd_name_, PinDirection::INOUT, PinKind::GND);
+        cell.AddPin(supply->GetVddName(), PinDirection::INOUT, PinKind::PWR);
+        cell.AddPin(supply->GetGndName(), PinDirection::INOUT, PinKind::GND);
 
         return TCL_OK;
     })

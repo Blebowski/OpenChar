@@ -15,7 +15,7 @@ void OpCond::WriteLiberty(FILE *f, size_t tab)
 
     tab++;
     TAB_FPRINTF(tab, f, "process : 1.00 ;\n");
-    TAB_FPRINTF(tab, f, "voltage : %f ;\n", supply_->vdd_val_);
+    TAB_FPRINTF(tab, f, "voltage : %f ;\n", supply_->GetVddVoltage());
     TAB_FPRINTF(tab, f, "temperature : %f ;\n", temp_);
     tab--;
 

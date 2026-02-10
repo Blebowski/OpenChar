@@ -13,11 +13,11 @@ namespace open_char {
 class Cell {
 
     public:
-        Library* lib_;
+        Cell(std::string name);
 
+        Library* lib_;
         const std::string name_;
 
-        Cell(std::string name);
         std::pair<Pin&, bool> AddPin(std::string name, PinDirection direction, PinKind kind);
         std::map<std::string, Pin>& GetPins();
 

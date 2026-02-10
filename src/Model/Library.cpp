@@ -39,25 +39,25 @@ OpCond& Library::GetOpCond()
 
 void Library::SetDefaultSupplyVdd(std::string name, double val)
 {
-    supplies_[0].vdd_name_ = name;
-    supplies_[0].vdd_val_ = val;
+    supplies_[0].SetVddName(name);
+    supplies_[0].SetVddVoltage(val);
 }
 
 void Library::SetDefaultSupplyVdd(double val)
 {
-    supplies_[0].vdd_val_ = val;
+    supplies_[0].SetVddVoltage(val);
 }
 
 void Library::SetDefaultSupplyGnd(std::string name, double val)
 {
-    supplies_[0].gnd_name_ = name;
-    supplies_[0].gnd_val_ = val;
+    supplies_[0].SetGndName(name);
+    supplies_[0].SetGndVoltage(val);
 }
 
 bool Library::HasSupply(std::string vdd_name)
 {
-    for (const auto &sup : supplies_) {
-        if (sup.vdd_name_ == vdd_name)
+    for (auto &sup : supplies_) {
+        if (sup.GetVddName() == vdd_name)
             return true;
     }
     return false;
@@ -66,7 +66,7 @@ bool Library::HasSupply(std::string vdd_name)
 Supply& Library::GetSupply(std::string vdd_name)
 {
     for (auto &sup : supplies_) {
-        if (sup.vdd_name_ == vdd_name)
+        if (sup.GetVddName() == vdd_name)
             return sup;
     }
     return supplies_[0];
