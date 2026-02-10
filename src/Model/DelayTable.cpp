@@ -8,12 +8,31 @@
 
 namespace open_char {
 
-DelayTable::DelayTable()
+DelayTable::DelayTable(Pin *pin, Template *templ, int64_t in_from,
+                       int64_t in_to, int out_from, int out_to) :
+    pin_(pin),
+    template_(templ),
+    in_from_(in_from),
+    in_to_(in_to),
+    out_from_(out_from),
+    out_to_(out_to)
 {}
+
+void DelayTable::AddDelay(size_t row, NanoSecond delay)
+{
+    while (delays_.size() <= row)
+        delays_.push_back(std::vector<NanoSecond>());
+    delays_[row].push_back(delay);
+}
+
+std::vector<std::vector<NanoSecond>>& DelayTable::GetDelays()
+{
+    return delays_;
+}
 
 void DelayTable::Print()
 {
-    size_t width = delay_[0].size() * 10 + 1;
+    size_t width = delays_[0].size() * 10 + 1;
 
     PRINT_LINE(width)
 
@@ -24,7 +43,7 @@ void DelayTable::Print()
 
     PRINT_LINE(width)
 
-    for (const auto &row : delay_) {
+    for (const auto &row : delays_) {
         printf("|");
         for (const auto & cell: row) {
             printf(" %7.5f |", cell);
@@ -96,7 +115,7 @@ void DelayTable::WriteLiberty(FILE *f, size_t tab)
     TAB_FPRINTF(tab, f, "values ( \\\n");
     tab++;
 
-    for (const auto & row : delay_) {
+    for (const auto & row : delays_) {
         TAB_FPRINTF(tab, f, "\"");
         size_t i = 0;
         for (const NanoSecond & d : row) {

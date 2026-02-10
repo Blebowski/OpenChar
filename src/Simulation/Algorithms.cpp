@@ -141,18 +141,10 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
     }
 
     Template *templ = cell->GetDelayTemplate();
-
-    DelayTable delay_table;
-    delay_table.in_from_ = in_from;
-    delay_table.in_to_ = in_to;
-    delay_table.out_from_ = out_from;
-    delay_table.out_to_ = out_to;
-    delay_table.pin_ = opin;
+    DelayTable delay_table(opin, templ, in_from, in_to, out_from, out_to);
 
     int i_tran = 0;
     for (const NanoSecond in_tran : templ->index_1_) {
-
-        delay_table.delay_.push_back(std::vector<NanoSecond>());
 
         int i_cap = 0;
         for (const PicoFarad out_cap : templ->index_2_) {
@@ -213,14 +205,13 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
             NanoSecond in_edge  = FindEdge(w, tran_pin, tran_from);
             NanoSecond out_edge = FindEdge(w, opin, out_from);
 
-            delay_table.delay_[i_tran].push_back(out_edge - in_edge);
+            delay_table.AddDelay(i_tran, out_edge - in_edge);
             i_cap++;
         }
 
         i_tran++;
     }
 
-    delay_table.template_ = templ;
     delay_table.Print();
     opin->AddDelayTable(delay_table);
 
