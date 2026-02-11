@@ -1,0 +1,61 @@
+
+Features:
+- Add "run directory", don't run always in current directory
+- Propagate Error code from simulation
+- Resolve simulation getting stuck -> WBU some timeout ?
+- Parse TCL values as TCL expression -> Supports variables and expression in arguments
+- Measure output transition
+- Make 1->0 , 0->1 logic level points configurable.
+- Make transition (30-70) points configurable.
+- Respect input transition between transition points not 0 - 100.
+- Move access to "variable" at time to the "wave" object.
+- Parallelize simulation by creating Simulation pool.
+- Recognize logic function:
+    - Do "sum of products", or "product of sums".
+    - Apply de-morgan law -> Handles OR or AND.
+    - Some special recognition for XOR ?
+    - Other logic functions can be SOP or POS based on output prevalence.
+- Measure input capacitance of pin (Frequency sweep vs. RC transient measure) ?
+- Detect non-monotonic behavior in the output ? How to do it fast ?
+- Measure leakage -> Per logic state with no switching.
+- Measure static consumption -> Per logic state -> Does it differ from leakage in Liberty ?
+- Measure transition power -> Integrate current ?
+- Support Flip-flops and latches:
+    - CK -> Q output delay
+    - Setup / Hold measurement
+    - Async pins -> out arc measurement
+    - How to generate the logic function here properly ?
+    - Can we recognize clock polarity automatically ? I think yes!
+    - Can we recognize polarity of async pins such as reset / set ? I think too.
+    - Specify by hand: clock, data, async, enable
+- Support clock gating cells:
+    - Recognize type of gating from simulation.
+    - Measure Clock gating check -> How to recognize this messed up ??
+- Simple "database" dumper and reader:
+    - Store data model
+    - Store Simulation results (compress on the fly due to size).
+- Verilog writer
+    - First step - With UDPs, no timing for starters
+    - Optionally behavioral description
+    - Second step - Dump specify blocks with delays and timing checks.
+- VHDL writer
+    - First step - Behavioral logic only
+    - Secon step - Add VITAL writer
+
+
+Wishlist:
+- Support Scan cells -> Way too many unknowns ATM, need some study
+- Support IO cells -> kind-off like combo-cells -> Need to deal with three-state
+- Support one_hot muxes, and three-state cells -> Need to figure out how this works in Liberty.
+- Support SRAM cells -> Likely performance limiting thing, but lets try brute-force ? Easy to parallelize.
+- Support "Analog" pin / block -> Create dummy liberty with capacitance only.
+- Support multi-voltage domain cells: Level-shifters, power-switches, etc... -> Need to study how this
+  works in Liberty.
+
+
+Tests:
+
+1. Simulation Unit Tests
+2. Data model Tests
+3. Liberty Writer Tests
+4. End-to-end tests (TCL script vs. output liberty)
