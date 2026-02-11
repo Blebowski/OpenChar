@@ -91,7 +91,7 @@ CREATE_TCL_COMMAND(
             });
         }
 
-        Supply *supply = ctx_->GetLibrary().GetOpCond().supply_;
+        Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
         cell.AddPin(supply->GetVddName(), PinDirection::INOUT, PinKind::PWR);
         cell.AddPin(supply->GetGndName(), PinDirection::INOUT, PinKind::GND);
 
@@ -394,11 +394,12 @@ CREATE_TCL_COMMAND(
             }
         }
 
-        ctx_->GetLibrary().GetOpCond().name_ = Tcl_GetString(opts_["-name"].objv_);
+        OpCond &op = ctx_->GetLibrary().GetOpCond();
+        op.SetName(Tcl_GetString(opts_["-name"].objv_));
 
         Celsius temp;
         Tcl_GetDoubleFromObj(ctx_->GetTclInterp(), opts_["-temp"].objv_, &temp);
-        ctx_->GetLibrary().GetOpCond().temp_ = temp;
+        op.SetTemperature(temp);
 
         if (opts_["-voltage"].isSet()) {
             Volt volts;
@@ -409,7 +410,7 @@ CREATE_TCL_COMMAND(
         if (opts_["-supply_name"].isSet()) {
             std::string supply_name = Tcl_GetString(opts_["-supply_name"].objv_);
             Supply& supply = ctx_->GetLibrary().GetSupply(supply_name);
-            ctx_->GetLibrary().GetOpCond().supply_ = &(supply);
+            op.SetSupply(&(supply));
         }
 
         return TCL_OK;

@@ -19,7 +19,7 @@ Algorithms::Algorithms(Context *ctx) :
 int Algorithms::ToLogic(Volt val)
 {
     OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
-    if (abs(val - op_cond.supply_->GetVddVoltage()) < 0.01)
+    if (abs(val - op_cond.GetSupply()->GetVddVoltage()) < 0.01)
         return 1;
     return 0;
 }
@@ -32,8 +32,8 @@ int Algorithms::GetBit(int64_t v, size_t index)
 void Algorithms::MeasureLogicFunction(Cell &cell)
 {
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
-    Volt log0_v = op_cond.supply_->GetGndVoltage();
-    Volt log1_v = op_cond.supply_->GetVddVoltage();
+    Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
+    Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
 
     auto o_pins = cell.GetPins(PinDirection::OUT);
 
@@ -57,8 +57,8 @@ void Algorithms::MeasureLogicFunction(Cell &cell)
 
             Simulation sim {sim_name, &cell, SimulationKind::DC};
 
-            sim.SetTemp(op_cond.temp_);
-            sim.SetSupply(op_cond.supply_);
+            sim.SetTemp(op_cond.GetTemperature());
+            sim.SetSupply(op_cond.GetSupply());
 
             for (const auto & netlist : ctx_->GetNetlists())
                 sim.AddInclude(netlist);
@@ -96,7 +96,7 @@ NanoSecond Algorithms::FindEdge(Waves &w, Pin *pin, int from)
 
     // TODO: Cross-check first and last data match the "from" and "to".
     // TODO: Add support for configurable threshold
-    Volt th = 0.5 * ctx_->GetLibrary().GetOpCond().supply_->GetVddVoltage();
+    Volt th = 0.5 * ctx_->GetLibrary().GetOpCond().GetSupply()->GetVddVoltage();
 
     size_t index = len - 1;
     size_t step = len / 2;
@@ -152,8 +152,8 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
             std::string sim_name = sprintf("%s_TRAN_%f_CAP_%f", prefix, in_tran, out_cap);
 
             Simulation sim {sim_name, cell, SimulationKind::TRAN};
-            sim.SetTemp(op_cond.temp_);
-            sim.SetSupply(op_cond.supply_);
+            sim.SetTemp(op_cond.GetTemperature());
+            sim.SetSupply(op_cond.GetSupply());
 
             for (const auto & netlist : ctx_->GetNetlists())
                 sim.AddInclude(netlist);
@@ -161,8 +161,8 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
             for (const auto & model : ctx_->GetModels())
                 sim.AddModel(model);
 
-            Volt log0_v = op_cond.supply_->GetGndVoltage();
-            Volt log1_v = op_cond.supply_->GetVddVoltage();
+            Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
+            Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
 
             int i = 0;
             Pin *tran_pin = nullptr;
