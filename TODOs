@@ -34,6 +34,7 @@ Features:
 - Simple "database" dumper and reader:
     - Store data model
     - Store Simulation results (compress on the fly due to size).
+- Add CCS model support.
 - Verilog writer
     - First step - With UDPs, no timing for starters
     - Optionally behavioral description
@@ -41,6 +42,8 @@ Features:
 - VHDL writer
     - First step - Behavioral logic only
     - Secon step - Add VITAL writer
+- Detect weird cases
+    - E.g. Pin value does not start / end in expected value as per simulation.
 
 
 Wishlist:
