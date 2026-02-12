@@ -5,17 +5,28 @@
 
 #include "open_char.h"
 
+#include "Context.h"
 #include "Utils.h"
 #include "Simulation.h"
 
 namespace open_char {
 
-Simulation::Simulation(std::string name, Cell *dut, SimulationKind kind) :
+Simulation::Simulation(Context *ctx, std::string name, Cell *dut, SimulationKind kind) :
     name_(name),
     kind_(kind),
     dut_(dut),
     duration_(10)
-{}
+{
+    // TODO: Handle exceptions where creating Run directory fails!
+    std::filesystem::path run_dir(ctx->GetVariables().GetRunDirectory());
+    std::filesystem::create_directory(run_dir);
+
+    std::filesystem::path cell_dir = run_dir / dut->GetName();
+    std::filesystem::create_directory(cell_dir);
+
+    sim_dir_ = cell_dir / name;
+    std::filesystem::create_directory(sim_dir_);
+}
 
 void Simulation::AddInclude(std::string include)
 {
@@ -49,8 +60,7 @@ void Simulation::AddLoad(Pin *pin, PicoFarad cap)
 
 void Simulation::WriteTestBench()
 {
-    std::filesystem::path sim_dir(name_);
-    std::string tb_path =  sim_dir / testbench_;
+    std::string tb_path =  sim_dir_ / testbench_;
     FILE *f = fopen(tb_path.c_str(), "w");
 
     fprintf(f, ".title %s \n\n", name_);
@@ -121,7 +131,7 @@ void Simulation::WriteTestBench()
     else if (kind_ == SimulationKind::DC)
         fprintf(f, "     DC VGnd 0 0 0.1\n");
 
-    std::filesystem::path wave = sim_dir / wave_file_;
+    std::filesystem::path wave = sim_dir_ / wave_file_;
     fprintf(f, "     write %s all\n", wave);
 
     fprintf(f, "     exit\n");
@@ -133,14 +143,10 @@ void Simulation::WriteTestBench()
 
 int Simulation::Simulate()
 {
-    // TODO: Check exists and check created OK!
-    std::filesystem::path sim_dir(name_);
-    std::filesystem::create_directory(sim_dir);
-
     WriteTestBench();
 
-    std::filesystem::path tb_path = sim_dir / testbench_;
-    std::filesystem::path log_path = sim_dir / log_file_;
+    std::filesystem::path tb_path = sim_dir_ / testbench_;
+    std::filesystem::path log_path = sim_dir_ / log_file_;
 
     // TODO: Redirect also Error output!
     std::string cmd = sprintf("ngspice %s > %s", tb_path.c_str(), log_path.c_str());
@@ -150,8 +156,7 @@ int Simulation::Simulate()
 
 Waves Simulation::ReadWaves()
 {
-    std::filesystem::path sim_dir(name_);
-    std::filesystem::path wave = sim_dir / wave_file_;
+    std::filesystem::path wave = sim_dir_ / wave_file_;
 
     return Waves(wave);
 }

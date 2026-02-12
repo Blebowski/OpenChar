@@ -8,4 +8,5 @@ target_sources(lib_open_char PRIVATE
     Pin.cpp
     Supply.cpp
     Template.cpp
+    Variables.cpp
 )

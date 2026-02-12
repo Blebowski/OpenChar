@@ -31,7 +31,7 @@ namespace open_char {
         exec_rtn                                                                                    \
     }                                                                                               \
                                                                                                     \
-    int class_name##Cb(void *data, Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)              \
+    static int class_name##Cb(void *data, Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)       \
     {                                                                                               \
         class_name *cmd = (class_name *) data;                                                      \
         int parse_rv = cmd->ParseArgs(interp, objc, objv);                                          \

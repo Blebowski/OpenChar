@@ -47,6 +47,7 @@ int ShellInit(Tcl_Interp *interp)
     }
 
     open_char::RegisterTclCommands(ctx);
+    open_char::CreateTclVariables(ctx);
 
     std::string cmd = R"(
         namespace path [concat [namespace path] open_char]

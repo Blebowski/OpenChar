@@ -27,6 +27,7 @@ namespace open_char {
 
     // Exposed routines;
     void RegisterTclCommands(Context *ctx);
+    void CreateTclVariables(Context *ctx);
 
     enum class PinDirection {
         IN,

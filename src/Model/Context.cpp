@@ -57,4 +57,9 @@ Tcl_Interp* Context::GetTclInterp()
     return tcl_interp_;
 }
 
+Variables& Context::GetVariables()
+{
+    return variables_;
+}
+
 }

@@ -19,7 +19,7 @@ namespace open_char {
 class Simulation {
 
     public:
-        Simulation(std::string name, Cell *dut, SimulationKind kind);
+        Simulation(Context *ctx, std::string name, Cell *dut, SimulationKind kind);
 
         void SetSupply(Supply *supply);
         void SetTemp(Celsius temp);
@@ -58,6 +58,8 @@ class Simulation {
         const std::string dut_title_ = "XDUT";
         const std::string wave_file_ = "data.raw";
         const std::string log_file_ = "sim.log";
+
+        std::filesystem::path sim_dir_;
 
         void WriteTestBench();
 };

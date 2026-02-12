@@ -9,6 +9,7 @@
 #include "TclCmd.h"
 #include "Algorithms.h"
 #include "Library.h"
+#include "Variables.h"
 
 namespace open_char {
 
@@ -32,6 +33,8 @@ class Context {
         const std::vector<std::string>& GetModels();
         const std::vector<std::string>& GetNetlists();
 
+        Variables &GetVariables();
+
     private:
         // Cell library to characterize
         Library library_;
@@ -45,6 +48,9 @@ class Context {
 
         // Registered TCL commands
         std::vector<std::pair<TclCmd, Tcl_ObjCmdProc*>> tcl_commands_;
+
+        // TCL variables
+        Variables variables_;
 
         // TCL interpreter
         Tcl_Interp* tcl_interp_;
