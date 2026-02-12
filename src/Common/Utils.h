@@ -98,6 +98,9 @@ void warning(const std::string &fmt, const Args&... args)
 
 #define IS_POWER_OF_2(x) (((x) > 0) && (((x) & ((x) - 1)) == 0))
 
+#define COMPARE_THRESHOLD 0.000000000001
+#define COMPARE_FLOATS(a, b) (((a - b) < COMPARE_THRESHOLD) && ((a - b) > - COMPARE_THRESHOLD))
+
 }
 
 #endif

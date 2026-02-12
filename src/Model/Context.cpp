@@ -54,6 +54,7 @@ std::vector<std::pair<TclCmd, Tcl_ObjCmdProc*>>& Context::GetTclCommands()
 
 Tcl_Interp* Context::GetTclInterp()
 {
+    assert(tcl_interp_ != nullptr);
     return tcl_interp_;
 }
 
