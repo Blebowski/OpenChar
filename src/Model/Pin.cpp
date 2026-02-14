@@ -99,7 +99,7 @@ Expression *Pin::GetLogicFunction()
 void Pin::PrintLogicFunction()
 {
     printf("%s: ", name_);
-    func_->Print();
+    func_->Print(stdout);
     printf("\n");
 }
 
@@ -136,6 +136,11 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
             break;
         case PinDirection::OUT:
             TAB_FPRINTF(tab, f, "direction : output ;\n");
+            if (func_ != nullptr) {
+                TAB_FPRINTF(tab, f, "function : \"");
+                func_->Print(f);
+                fprintf(f, "\";\n");
+            }
             break;
         default:
             // TODO: Introduce printable enum class ?

@@ -16,7 +16,7 @@ class Expression {
         ~Expression();
 
         void Simplify();
-        void Print();
+        void Print(FILE *fd);
 
         ExpressionKind GetKind();
         Expression *GetLhs();

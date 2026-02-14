@@ -152,7 +152,7 @@ int Expression::GetConstValue()
     return const_val_;
 }
 
-void Expression::Print()
+void Expression::Print(FILE *fd)
 {
     char op = ' ';
     if (kind_ == ExpressionKind::AND) {
@@ -166,7 +166,7 @@ void Expression::Print()
     switch (kind_) {
     case ExpressionKind::TERM:
         assert(pin_ != nullptr);
-        printf("%s", pin_->name_);
+        fprintf(fd, "%s", pin_->name_);
         break;
 
     case ExpressionKind::AND:
@@ -176,37 +176,37 @@ void Expression::Print()
         assert(rhs_ != nullptr);
 
         if (lhs_->kind_ != ExpressionKind::TERM && lhs_->kind_ != ExpressionKind::NOT) {
-            printf("(");
+            fprintf(fd, "(");
         }
-        lhs_->Print();
+        lhs_->Print(fd);
         if (lhs_->kind_ != ExpressionKind::TERM && lhs_->kind_ != ExpressionKind::NOT) {
-            printf(")");
+            fprintf(fd, ")");
         }
-        printf(" %c ", op);
+        fprintf(fd, " %c ", op);
         if (rhs_->kind_ != ExpressionKind::TERM && rhs_->kind_ != ExpressionKind::NOT) {
-            printf("(");
+            fprintf(fd, "(");
         }
-        rhs_->Print();
+        rhs_->Print(fd);
         if (rhs_->kind_ != ExpressionKind::TERM && rhs_->kind_ != ExpressionKind::NOT) {
-            printf(")");
+            fprintf(fd, ")");
         }
         break;
 
     case ExpressionKind::NOT:
         assert(lhs_ != nullptr);
 
-        printf("!");
+        fprintf(fd, "!");
         if (lhs_->kind_ != ExpressionKind::TERM) {
-            printf("(");
+            fprintf(fd, "(");
         }
-        lhs_->Print();
+        lhs_->Print(fd);
         if (lhs_->kind_ != ExpressionKind::TERM) {
-            printf(")");
+            fprintf(fd, ")");
         }
         break;
 
     case ExpressionKind::CONSTANT:
-        printf("%d", const_val_);
+        fprintf(fd, "%d", const_val_);
         break;
     }
 }
