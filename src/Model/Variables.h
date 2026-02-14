@@ -16,6 +16,8 @@ class Variables {
 
         std::string SetVariable(std::string name, std::string value);
         std::string GetVariable(std::string name);
+        double GetDoubleVariable(std::string name);
+        int GetIntVariable(std::string name);
 
         void PrintVariables();
 

@@ -102,6 +102,22 @@ std::string Variables::GetVariable(std::string name)
     return v.s_val;
 }
 
+double Variables::GetDoubleVariable(std::string name)
+{
+    Var& v = variables_[name];
+    assert (v.kind == VarKind::DOUBLE);
+
+    return v.d_val;
+}
+
+int Variables::GetIntVariable(std::string name)
+{
+    Var& v = variables_[name];
+    assert (v.kind == VarKind::INT);
+
+    return v.i_val;
+}
+
 void Variables::PrintVariables()
 {
     for (const auto &r : variables_) {
