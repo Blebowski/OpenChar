@@ -5,7 +5,6 @@ Features:
 - Parse TCL values as TCL expression -> Supports variables and expression in arguments
 - Adjust simulation duration and/or precision based on initial run.
 - Measure output transition
-- Make 1->0 , 0->1 logic level points configurable.
 - Make transition (30-70) points configurable.
 - Respect input transition between transition points not 0 - 100.
 - Move access to "variable" at time to the "wave" object.

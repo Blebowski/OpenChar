@@ -89,14 +89,13 @@ void Algorithms::MeasureLogicFunction(Cell &cell)
     }
 }
 
-NanoSecond Algorithms::FindEdge(Waves &w, Pin *pin, int from)
+NanoSecond Algorithms::FindEdge(Waves &w, Pin *pin, int from, double threshold)
 {
     size_t len = w.GetDataLen();
     const std::vector<Volt>& d = w.GetData(pin->name_);
 
     // TODO: Cross-check first and last data match the "from" and "to".
-    // TODO: Add support for configurable threshold
-    Volt th = 0.5 * ctx_->GetLibrary().GetOpCond().GetSupply()->GetVddVoltage();
+    Volt th = threshold * ctx_->GetLibrary().GetOpCond().GetSupply()->GetVddVoltage();
 
     size_t index = len - 1;
     size_t step = len / 2;
@@ -202,8 +201,15 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
             Waves w = sim.ReadWaves();
 
             assert(tran_pin != nullptr);
-            NanoSecond in_edge  = FindEdge(w, tran_pin, tran_from);
-            NanoSecond out_edge = FindEdge(w, opin, out_from);
+
+            Variables &vars = ctx_->GetVariables();
+            double in_th = (tran_from == 0) ? vars.GetDoubleVariable("delay_in_rise") :
+                                              vars.GetDoubleVariable("delay_in_fall");
+            double out_th = (out_from == 0) ? vars.GetDoubleVariable("delay_out_rise") :
+                                              vars.GetDoubleVariable("delay_out_fall");
+
+            NanoSecond in_edge  = FindEdge(w, tran_pin, tran_from, in_th);
+            NanoSecond out_edge = FindEdge(w, opin, out_from, out_th);
 
             delay_table.AddDelay(i_tran, out_edge - in_edge);
             i_cap++;

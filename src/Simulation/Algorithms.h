@@ -23,7 +23,7 @@ class Algorithms {
         Context *ctx_;
         int ToLogic(Volt val);
         int GetBit(int64_t v, size_t index);
-        NanoSecond FindEdge(Waves &w, Pin *pin, int from);
+        NanoSecond FindEdge(Waves &w, Pin *pin, int from, double threshold);
         int MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
                                  int out_from, int out_to);
 };
