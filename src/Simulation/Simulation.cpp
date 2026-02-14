@@ -18,7 +18,7 @@ Simulation::Simulation(Context *ctx, std::string name, Cell *dut, SimulationKind
     duration_(10)
 {
     // TODO: Handle exceptions where creating Run directory fails!
-    std::filesystem::path run_dir(ctx->GetVariables().GetRunDirectory());
+    std::filesystem::path run_dir(ctx->GetVariables().GetVariable("run_directory"));
     std::filesystem::create_directory(run_dir);
 
     std::filesystem::path cell_dir = run_dir / dut->GetName();

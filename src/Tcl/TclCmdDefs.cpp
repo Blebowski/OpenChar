@@ -312,6 +312,20 @@ CREATE_TCL_COMMAND(
 )
 
 CREATE_TCL_COMMAND(
+    ReportAppVars,
+    "report_app_vars",
+    "Report application variables and their values",
+    true,
+
+    ARG({}),
+
+    ARG({
+        ctx_->GetVariables().PrintVariables();
+        return TCL_OK;
+    })
+)
+
+CREATE_TCL_COMMAND(
     SetVdd,
     "set_vdd",
     "Define supply voltage and supply voltage net name",
@@ -460,6 +474,7 @@ void RegisterTclCommands(Context *ctx)
     ctx->AddTclCommand(MeasureLogicTable(ctx),      MeasureLogicTableCb );
     ctx->AddTclCommand(MeasureComboDelays(ctx),     MeasureComboDelaysCb );
     ctx->AddTclCommand(ReadSpice(ctx),              ReadSpiceCb );
+    ctx->AddTclCommand(ReportAppVars(ctx),          ReportAppVarsCb );
     ctx->AddTclCommand(SetVdd(ctx),                 SetVddCb );
     ctx->AddTclCommand(SetGnd(ctx),                 SetGndCb );
     ctx->AddTclCommand(SetOperatingCondition(ctx),  SetOperatingConditionCb );

@@ -3,6 +3,7 @@
 #define VARIABLES_H
 
 #include <string>
+#include <map>
 
 #include "open_char.h"
 
@@ -13,11 +14,27 @@ class Variables {
     public:
         Variables();
 
-        std::string GetRunDirectory();
-        void SetRunDirectory(std::string &run_directory);
+        std::string SetVariable(std::string name, std::string value);
+        std::string GetVariable(std::string name);
+
+        void PrintVariables();
 
     private:
-        std::string run_directory_;
+
+        enum class VarKind {
+            STRING,
+            INT,
+            DOUBLE
+        };
+
+        struct Var {
+            VarKind     kind;
+            std::string s_val;
+            int         i_val;
+            double      d_val;
+        } ;
+
+        std::map<std::string, Var> variables_;
 };
 
 }
