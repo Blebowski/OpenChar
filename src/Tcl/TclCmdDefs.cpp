@@ -215,60 +215,6 @@ CREATE_TCL_COMMAND(
 )
 
 CREATE_TCL_COMMAND(
-    MeasureLogicTable,
-    "measure_logic_table",
-    "Measure logic table of a cell(s)",
-    true,
-
-    ARG({
-        {"cell_name",   TclCmdOpt(true,     "",           "Name of the cell")}
-        }),
-
-    ARG({
-
-        const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
-
-        if (!ctx_->GetLibrary().HasCell(cell_name)) {
-            error("The cell %s does not exist. Use 'define_cell' to define it.\n",
-                    cell_name);
-            return TCL_ERROR;
-        }
-
-        Cell& cell = ctx_->GetLibrary().GetCell(cell_name);
-        ctx_->GetAlgorithms().MeasureLogicFunction(cell);
-
-        return TCL_OK;
-    })
-)
-
-CREATE_TCL_COMMAND(
-    MeasureComboDelays,
-    "measure_combo_delays",
-    "Measure delays of combinatorial cells",
-    true,
-
-    ARG({
-        {"cell_name",   TclCmdOpt(true,     "",           "Name of the cell")}
-        }),
-
-    ARG({
-
-        const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
-
-        if (!ctx_->GetLibrary().HasCell(cell_name)) {
-            error("The cell %s does not exist. Use 'define_cell' to define it.\n",
-                    cell_name);
-            return TCL_ERROR;
-        }
-
-        Cell& cell = ctx_->GetLibrary().GetCell(cell_name);
-        ctx_->GetAlgorithms().MeasureComboDelay(cell);
-
-        return TCL_OK;
-    })
-)
-
-CREATE_TCL_COMMAND(
     ReadSpice,
     "read_spice",
     "Read SPICE netlist(s) or model deck(s)",
@@ -471,8 +417,6 @@ void RegisterTclCommands(Context *ctx)
     ctx->AddTclCommand(CharacterizeLibrary(ctx),    CharacterizeLibraryCb );
     ctx->AddTclCommand(DefineCell(ctx),             DefineCellCb );
     ctx->AddTclCommand(DefineTemplate(ctx),         DefineTemplateCb );
-    ctx->AddTclCommand(MeasureLogicTable(ctx),      MeasureLogicTableCb );
-    ctx->AddTclCommand(MeasureComboDelays(ctx),     MeasureComboDelaysCb );
     ctx->AddTclCommand(ReadSpice(ctx),              ReadSpiceCb );
     ctx->AddTclCommand(ReportAppVars(ctx),          ReportAppVarsCb );
     ctx->AddTclCommand(SetVdd(ctx),                 SetVddCb );
