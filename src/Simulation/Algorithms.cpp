@@ -279,9 +279,50 @@ void Algorithms::MeasureComboDelay(Cell &cell)
     }
 }
 
+void Algorithms::CalculateLogicFunctions(Cell &cell)
+{
+    for (auto &opin : cell.GetPins(PinDirection::OUT)) {
+        auto &log_table = opin.GetLogicTable();
+        assert(log_table.size() > 0);
+
+        Expression *fnc_e = new Expression(ExpressionKind::CONSTANT, 0);
+
+        for (const auto &lt_entry : log_table) {
+            int output = lt_entry.second;
+
+            Expression* row_e = new Expression(ExpressionKind::CONSTANT, 1);
+
+            // Sum of Products
+            if (output == 0)
+                continue;
+
+            int64_t inputs = lt_entry.first;
+
+            int i = 0;
+            for (auto &ipin : cell.GetPins(PinDirection::IN)) {
+                int val = (inputs >> i) & 0x1;
+
+                Expression *e_rhs = new Expression(ExpressionKind::TERM, &ipin);
+                if (val == 0) {
+                    e_rhs = new Expression(ExpressionKind::NOT, e_rhs);
+                }
+                row_e = new Expression(ExpressionKind::AND, row_e, e_rhs);
+                i++;
+            }
+
+            fnc_e = new Expression(ExpressionKind::OR, fnc_e, row_e);
+        }
+
+        fnc_e->Simplify();
+        opin.SetLogicFunction(fnc_e);
+        opin.PrintLogicFunction();
+    }
+}
+
 void Algorithms::CharacterizeCells(Cell &cell)
 {
     MeasureLogicFunction(cell);
+    CalculateLogicFunctions(cell);
     MeasureComboDelay(cell);
 }
 

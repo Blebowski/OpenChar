@@ -12,14 +12,23 @@ Pin::Pin(Cell *cell, std::string name, PinDirection direction, PinKind kind) :
     cell_(cell),
     name_(name),
     direction_(direction),
-    kind_(kind)
+    kind_(kind),
+    func_(nullptr)
 {}
 
 Pin::Pin() :
+    cell_(nullptr),
     name_(""),
     direction_(PinDirection::IN),
-    kind_(PinKind::DATA)
+    kind_(PinKind::DATA),
+    func_(nullptr)
 {}
+
+Pin::~Pin()
+{
+    if (func_ != nullptr)
+        delete func_;
+}
 
 void Pin::AddLogicTableEntry(int64_t inputs, int output)
 {
@@ -74,6 +83,24 @@ void Pin::PrintLogicTable()
     }
 
     PRINT_LINE(line_len)
+}
+
+void Pin::SetLogicFunction(Expression *e)
+{
+    func_ = e;
+}
+
+Expression *Pin::GetLogicFunction()
+{
+    assert (func_ != nullptr);
+    return func_;
+}
+
+void Pin::PrintLogicFunction()
+{
+    printf("%s: ", name_);
+    func_->Print();
+    printf("\n");
 }
 
 void Pin::WriteLiberty(FILE *f, size_t tab)

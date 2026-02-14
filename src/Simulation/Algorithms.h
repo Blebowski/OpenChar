@@ -15,6 +15,7 @@ class Algorithms {
 
         void MeasureLogicFunction(Cell &cell);
         void MeasureComboDelay(Cell &cell);
+        void CalculateLogicFunctions(Cell &cell);
 
         void CharacterizeCells(Cell &cell);
 

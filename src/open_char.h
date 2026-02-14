@@ -69,6 +69,15 @@ namespace open_char {
         FALLING
     };
 
+    enum class ExpressionKind {
+        AND,
+        OR,
+        XOR,
+        NOT,
+        TERM,
+        CONSTANT
+    };
+
     typedef double Celsius;
     typedef double Volt;
     typedef double NanoSecond;

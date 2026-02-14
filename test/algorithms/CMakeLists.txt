@@ -1,3 +1,4 @@
 
-OPEN_CHAR_TEST(ExtractLogicTableTest)
+OPEN_CHAR_TEST(MeasureLogicTableTest)
+OPEN_CHAR_TEST(CalculateLogicFunctionTest)
 OPEN_CHAR_TEST(MeasureComboDelayTest)

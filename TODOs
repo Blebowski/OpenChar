@@ -11,7 +11,6 @@ Features:
 - Move access to "variable" at time to the "wave" object.
 - Parallelize simulation by creating Simulation pool.
 - Recognize logic function:
-    - Do "sum of products", or "product of sums".
     - Apply de-morgan law -> Handles OR or AND.
     - Some special recognition for XOR ?
     - Other logic functions can be SOP or POS based on output prevalence.

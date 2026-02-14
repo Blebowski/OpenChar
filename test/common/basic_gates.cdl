@@ -13,6 +13,15 @@ MP0 Y A n2 0 nmos w=1u l=0.18u
 MP1 n2 B 0 0 nmos w=1u l=0.18u
 .ends
 
+.subckt AND2 Z A B VDD VSS
+MN0 net1 A net2 VSS nmos w=1u l=0.2u
+MN2 Z net1 VSS VSS nmos w=1u l=0.2u
+MN1 net2 B VSS VSS nmos w=1u l=0.2u
+MP0 VDD A net1 VDD pmos w=1u l=0.2u
+MP1 VDD B net1 VDD pmos w=1u l=0.2u
+MP2 VDD net1 Z VDD pmos w=1u l=0.2u
+.ends AND2
+
 .subckt HALF_ADDER CO S A B VDD VSS
 MP0 VDD A net01 VDD pmos w=0.12u l=0.06u
 MP1 VDD B net01 VDD pmos w=0.12u l=0.06u
@@ -28,5 +37,5 @@ MN3 net05 B VSS VSS nmos w=0.12u l=0.06u
 MN4 net03 net01 net05 VSS nmos w=0.12u l=0.06u
 MN5 S net03 VSS VSS nmos w=0.20u l=0.06u
 MN6 CO net01 VSS VSS nmos w=0.20u l=0.06u
-.ends ADHM1UM
+.ends HALF_ADDER
 
