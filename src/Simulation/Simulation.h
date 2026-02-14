@@ -58,6 +58,7 @@ class Simulation {
         const std::string dut_title_ = "XDUT";
         const std::string wave_file_ = "data.raw";
         const std::string log_file_ = "sim.log";
+        const std::string std_out_file_ = "stdout.log";
 
         std::filesystem::path sim_dir_;
 

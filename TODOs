@@ -1,7 +1,6 @@
 
 Features:
 - Propagate Error code from simulation
-- Resolve simulation getting stuck -> WBU some timeout ?
 - Parse TCL values as TCL expression -> Supports variables and expression in arguments
 - Adjust simulation duration and/or precision based on initial run.
 - Measure output transition

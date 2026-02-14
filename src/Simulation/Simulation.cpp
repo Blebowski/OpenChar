@@ -125,17 +125,11 @@ void Simulation::WriteTestBench()
     }
     fprintf(f, "\n");
 
-    fprintf(f, ".control \n");
     if (kind_ == SimulationKind::TRAN)
-        fprintf(f, "     tran %s %fNS\n", duration_, time_step_);
+        fprintf(f, ".TRAN %s %fNS\n", duration_, time_step_);
     else if (kind_ == SimulationKind::DC)
-        fprintf(f, "     DC VGnd 0 0 0.1\n");
+        fprintf(f, ".DC VGnd 0 0 0.1\n");
 
-    std::filesystem::path wave = sim_dir_ / wave_file_;
-    fprintf(f, "     write %s all\n", wave);
-
-    fprintf(f, "     exit\n");
-    fprintf(f, ".endc\n");
     fprintf(f, ".end\n");
 
     fclose(f);
@@ -147,18 +141,21 @@ int Simulation::Simulate()
 
     std::filesystem::path tb_path = sim_dir_ / testbench_;
     std::filesystem::path log_path = sim_dir_ / log_file_;
+    std::filesystem::path wave_path = sim_dir_ / wave_file_;
+    std::filesystem::path stdout_path = sim_dir_ / std_out_file_;
 
-    // TODO: Redirect also Error output!
-    std::string cmd = sprintf("ngspice %s > %s", tb_path.c_str(), log_path.c_str());
+    std::string cmd = sprintf("ngspice %s -b -r %s -o %s > %s 2>&1", tb_path.c_str(),
+                                wave_path.c_str(), log_path.c_str(), stdout_path.c_str());
 
-    return system(cmd.c_str());
+    int exit_code = system(cmd.c_str());
+    return exit_code;
 }
 
 Waves Simulation::ReadWaves()
 {
-    std::filesystem::path wave = sim_dir_ / wave_file_;
+    std::filesystem::path wave_path = sim_dir_ / wave_file_;
 
-    return Waves(wave);
+    return Waves(wave_path);
 }
 
 }
