@@ -35,33 +35,33 @@ void test_inv(Context &ctx, Algorithms &algs)
     assert (dts[0].GetDelays()[0][0] > 0.18 && dts[0].GetDelays()[0][0] < 0.19);
     assert (dts[0].GetDelays()[0][1] > 2.72 && dts[0].GetDelays()[0][1] < 2.73);
     assert (dts[0].GetDelays()[1][0] > 0.20 && dts[0].GetDelays()[1][0] < 0.21);
-    assert (dts[0].GetDelays()[1][1] > 2.74 && dts[0].GetDelays()[1][1] < 2.75);
+    assert (dts[0].GetDelays()[1][1] > 2.75 && dts[0].GetDelays()[1][1] < 2.76);
 
     assert (dts[1].GetDelays()[0][0] > 0.09 && dts[1].GetDelays()[0][0] < 0.10);
     assert (dts[1].GetDelays()[0][1] > 1.36 && dts[1].GetDelays()[0][1] < 1.37);
-    assert (dts[1].GetDelays()[1][0] > 0.10 && dts[1].GetDelays()[1][0] < 0.11);
+    assert (dts[1].GetDelays()[1][0] > 0.11 && dts[1].GetDelays()[1][0] < 0.12);
     assert (dts[1].GetDelays()[1][1] > 1.38 && dts[1].GetDelays()[1][1] < 1.39);
 
     /*
-    2: Inputs from: 00000000
-    2: Inputs to:   00000001
-    2: Output from:        1
-    2: Output to:          0
-    2: ---------------------
-    2: | 0.18370 | 2.72810 |
-    2: | 0.20030 | 2.74330 |
-    2: ---------------------
-
-    2: ---------------------
-    2: Inputs from: 00000001
-    2: Inputs to:   00000000
-    2: Output from:        0
-    2: Output to:          1
-    2: ---------------------
-    2: | 0.09270 | 1.36610 |
-    2: | 0.10830 | 1.38110 |
-    2: ---------------------
+    Inputs from: 00000000
+    Inputs to:   00000001
+    Output from:        1
+    Output to:          0
+    ---------------------
+    | 0.18410 | 2.72870 |
+    | 0.20790 | 2.75010 |
+    ---------------------
+    ---------------------
+    Inputs from: 00000001
+    Inputs to:   00000000
+    Output from:        0
+    Output to:          1
+    ---------------------
+    | 0.09330 | 1.36650 |
+    | 0.11510 | 1.38750 |
+    ---------------------
     */
+
 }
 
 int main()

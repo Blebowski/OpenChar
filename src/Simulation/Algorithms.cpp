@@ -172,18 +172,35 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
                 int from = GetBit(in_from, i);
                 int to = GetBit(in_to, i);
 
+                assert((from == 0 && to == 1) | (from == 1 && to == 0));
+
                 if (from == to) {
                     sim.AddStimuli((Pin*)&i_pin, Stimulus((from == 1) ? log1_v : log0_v));
                 } else {
+
+                    NanoSecond in_tran_cor = in_tran;
+                    Variables &vars = ctx_->GetVariables();
+
+                    // Assumes linear ramp
+                    if (from == 0) {
+                        double slew_lower_rise = vars.GetDoubleVariable("slew_lower_rise");
+                        double slew_upper_rise = vars.GetDoubleVariable("slew_upper_rise");
+                        in_tran_cor *= (1 + slew_lower_rise + (1 - slew_upper_rise));
+                    } else {
+                        double slew_lower_fall = vars.GetDoubleVariable("slew_lower_fall");
+                        double slew_upper_fall = vars.GetDoubleVariable("slew_upper_fall");
+                        in_tran_cor *= (1 + slew_lower_fall + (1 - slew_upper_fall));
+                    }
+
                     // TODO: Refine
                     Stimulus edge (
                         (from == 1) ? log1_v : log0_v,
                          ( to == 1) ? log1_v : log0_v,
                          1,
-                         in_tran,
-                         in_tran,
-                         10,
-                         10,
+                         in_tran_cor,
+                         in_tran_cor,
+                         100,
+                         100,
                          1
                     );
                     sim.AddStimuli((Pin*)&i_pin, std::move(edge));

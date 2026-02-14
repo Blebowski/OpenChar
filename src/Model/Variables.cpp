@@ -50,6 +50,38 @@ Variables::Variables() :
                 .i_val = 0,
                 .d_val = 0.5
             }
+        },
+        {"slew_lower_fall",
+            {
+                .kind = VarKind::DOUBLE,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0.2
+            }
+        },
+        {"slew_upper_fall",
+            {
+                .kind = VarKind::DOUBLE,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0.8
+            }
+        },
+        {"slew_lower_rise",
+            {
+                .kind = VarKind::DOUBLE,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0.2
+            }
+        },
+        {"slew_upper_rise",
+            {
+                .kind = VarKind::DOUBLE,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0.8
+            }
         }
     })
 {}
