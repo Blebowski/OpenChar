@@ -11,7 +11,7 @@ namespace open_char {
 class Library {
 
     public:
-        Library();
+        Library(Context *ctx);
 
         std::pair<Cell&, bool> AddCell(std::string name);
         bool HasCell(std::string name);
@@ -38,6 +38,7 @@ class Library {
         std::vector<Supply> supplies_;
         OpCond op_cond_;
         std::map<std::string, Template> templates_;
+        Context *ctx_;
 
 };
 

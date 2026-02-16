@@ -5,6 +5,7 @@
 namespace open_char {
 
 Context::Context(Tcl_Interp* tcl_interp) :
+    library_(this),
     algorithms_(this),
     tcl_interp_(tcl_interp)
 {}

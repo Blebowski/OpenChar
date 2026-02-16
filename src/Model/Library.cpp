@@ -1,12 +1,16 @@
 
+#include <bits/stdc++.h>
+
+#include "Context.h"
 #include "Library.h"
 #include "Utils.h"
 
 namespace open_char {
 
-Library::Library() :
+Library::Library(Context *ctx) :
     supplies_({{"VDD", 1.2, "VSS", 0}}),
-    op_cond_(&supplies_[0])
+    op_cond_(&supplies_[0]),
+    ctx_(ctx)
 {}
 
 std::pair<Cell&, bool> Library::AddCell(std::string name)
@@ -107,6 +111,26 @@ void Library::WriteLiberty(const std::string &name)
     TAB_FPRINTF(tab, f, "pulling_resistance_unit : \"1kohm\";\n");
     TAB_FPRINTF(tab, f, "time_unit : \"1ns\";\n");
     TAB_FPRINTF(tab, f, "voltage_unit : \"1V\";\n");
+
+    Variables& v = ctx_->GetVariables();
+
+    TAB_FPRINTF(tab, f, "input_threshold_pct_fall : %.0f;\n",
+                        std::round(v.GetDoubleVariable("delay_in_fall") * 100.0));
+    TAB_FPRINTF(tab, f, "input_threshold_pct_rise : %.0f;\n",
+                        std::round(v.GetDoubleVariable("delay_in_rise") * 100.0));
+    TAB_FPRINTF(tab, f, "output_threshold_pct_fall : %.0f;\n",
+                        std::round(v.GetDoubleVariable("delay_out_fall") * 100.0));
+    TAB_FPRINTF(tab, f, "output_threshold_pct_rise : %.0f;\n",
+                        std::round(v.GetDoubleVariable("delay_out_rise") * 100.0));
+
+    TAB_FPRINTF(tab, f, "slew_lower_threshold_pct_fall : %.0f;\n",
+                        std::round(v.GetDoubleVariable("slew_lower_fall") * 100.0));
+    TAB_FPRINTF(tab, f, "slew_lower_threshold_pct_rise : %.0f;\n",
+                        std::round(v.GetDoubleVariable("slew_lower_rise") * 100.0));
+    TAB_FPRINTF(tab, f, "slew_upper_threshold_pct_fall : %.0f;\n",
+                        std::round(v.GetDoubleVariable("slew_upper_fall") * 100.0));
+    TAB_FPRINTF(tab, f, "slew_upper_threshold_pct_rise : %.0f;\n",
+                        std::round(v.GetDoubleVariable("slew_upper_rise") * 100.0));
 
     op_cond_.WriteLiberty(f, tab);
 
