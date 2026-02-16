@@ -13,7 +13,7 @@ class Algorithms {
     public:
         Algorithms(Context *ctx);
 
-        void MeasureLogicFunction(Cell &cell);
+        void MeasureLogicTableAndLeakage(Cell &cell);
         void MeasureComboDelay(Cell &cell);
         void CalculateLogicFunctions(Cell &cell);
 
@@ -23,6 +23,7 @@ class Algorithms {
         Context *ctx_;
         int ToLogic(Volt val);
         int GetBit(int64_t v, size_t index);
+        NanoWatt ComputePower(MicroAmp i, Volt v);
         NanoSecond FindEdge(Waves &w, Pin *pin, int from, double threshold);
         int MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
                                  int out_from, int out_to);

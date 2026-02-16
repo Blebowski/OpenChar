@@ -78,9 +78,10 @@ void Simulation::WriteTestBench()
     fprintf(f, ".temp %f\n", temp_);
 
     fprintf(f, "* Power Supply\n");
-    fprintf(f, "Vpwr %s %s %f\n",  supply_->GetVddName(), supply_->GetGndName(),
-                                   supply_->GetVddVoltage());
-    fprintf(f, "VGnd %s GND %f\n\n", supply_->GetGndName(), supply_->GetGndVoltage());
+    fprintf(f, "V%s %s %s %f\n", supply_->GetVddName(), supply_->GetVddName(),
+                                 supply_->GetGndName(), supply_->GetVddVoltage());
+    fprintf(f, "V%s %s GND %f\n\n", supply_->GetGndName(), supply_->GetGndName(),
+                                    supply_->GetGndVoltage());
 
     fprintf(f, "* Stimuli\n");
     for (const auto &s : stimuli_) {
@@ -123,12 +124,13 @@ void Simulation::WriteTestBench()
     for (const auto &pin : dut_->GetPins()) {
         fprintf(f, ".SAVE %s\n", pin.name_);
     }
+    fprintf(f, ".SAVE i(V%s)\n", supply_->GetVddName());
     fprintf(f, "\n");
 
     if (kind_ == SimulationKind::TRAN)
         fprintf(f, ".TRAN %s %fNS\n", duration_, time_step_);
     else if (kind_ == SimulationKind::DC)
-        fprintf(f, ".DC VGnd 0 0 0.1\n");
+        fprintf(f, ".DC V%s 0 0 0.1\n", supply_->GetGndName());
 
     fprintf(f, ".end\n");
 

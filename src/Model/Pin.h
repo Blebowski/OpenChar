@@ -44,7 +44,6 @@ class Pin {
         // First value - Cell inputs
         // Second value - Cell output
         std::vector<std::pair<int64_t, int>> logic_table_;
-
         std::vector<DelayTable> delay_tables_;
 
         Expression *func_;

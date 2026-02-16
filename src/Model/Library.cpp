@@ -98,8 +98,15 @@ void Library::WriteLiberty(const std::string &name)
 
     size_t tab = 1;
 
-    TAB_FPRINTF(tab, f, "technology : cmos ; \n");
-    TAB_FPRINTF(tab, f, "delay_mode : table_lookup ; \n");
+    // TODO: Make units configurable!
+    TAB_FPRINTF(tab, f, "technology : cmos ;\n");
+    TAB_FPRINTF(tab, f, "delay_mode : table_lookup ;\n");
+    TAB_FPRINTF(tab, f, "capacitive_load_unit (1,pf);\n");
+    TAB_FPRINTF(tab, f, "current_unit : \"1nA\";\n");
+    TAB_FPRINTF(tab, f, "leakage_power_unit : \"1nW\";\n");
+    TAB_FPRINTF(tab, f, "pulling_resistance_unit : \"1kohm\";\n");
+    TAB_FPRINTF(tab, f, "time_unit : \"1ns\";\n");
+    TAB_FPRINTF(tab, f, "voltage_unit : \"1V\";\n");
 
     op_cond_.WriteLiberty(f, tab);
 

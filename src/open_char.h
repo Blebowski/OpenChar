@@ -53,15 +53,14 @@ namespace open_char {
         DC
     };
 
+    enum class WaveKind {
+        TIME,
+        VSWEEP
+    };
+
     enum class TemplateKind {
         DELAY,
         POWER
-    };
-
-    enum class WaveKind {
-        TIME,
-        VOLTAGE,
-        CURRENT
     };
 
     enum class EdgeKind {
@@ -81,7 +80,7 @@ namespace open_char {
     typedef double Celsius;
     typedef double Volt;
     typedef double NanoSecond;
-    typedef double MiliAmp;
+    typedef double MicroAmp;
     typedef double PicoFarad;
     typedef double KiloOhm;
     typedef double NanoWatt;

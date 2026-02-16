@@ -68,7 +68,11 @@ Waves::Waves(std::string path)
 
         std::string key;
         if (strncmp(curr, "time", 4) == 0) {
-            key = "time";
+            kind_ = WaveKind::TIME;
+            reference_.reserve(n_points);
+        } else if (strncmp(curr, "v(v-sweep)", 10) == 0) {
+            kind_ = WaveKind::VSWEEP;
+            reference_.reserve(n_points);
         } else {
             while (*curr != '(')
                 curr++;
@@ -81,25 +85,27 @@ Waves::Waves(std::string path)
             key = std::string(start + 1 , curr - start - 1);
             for (auto & c: key)
                 c = toupper(c);
+
+            MOVE_TILL_SPACE(curr);
+            MOVE_TILL_CHAR(curr);
+
+            std::string curr_str = curr;
+            curr_str.erase(std::remove(curr_str.begin(), curr_str.end(), '\n'), curr_str.end());
+            if (curr_str == "voltage") {
+                sig_names.push_back(key);
+                voltages_[key] = std::pair<size_t, std::vector<double>>();
+                voltages_[key].first = i;
+                voltages_[key].second.reserve(n_points);
+            } else if (curr_str == "current") {
+                // Current always measured through voltage sources with "V" prefix and named equally as the node
+                key.erase(0, 1);
+                sig_names.push_back(key);
+                currents_[key] = std::pair<size_t, std::vector<double>>();
+                currents_[key].first = i;
+                currents_[key].second.reserve(n_points);
+            } else
+                error("Invalid wave kind: '%s'\n", curr_str);
         }
-
-        data_[key] = std::pair<std::vector<double>, WaveKind>();
-        data_[key].first.reserve(n_points);
-        sig_names.push_back(key);
-
-        MOVE_TILL_SPACE(curr);
-        MOVE_TILL_CHAR(curr);
-
-        std::string curr_str = curr;
-        curr_str.erase(std::remove(curr_str.begin(), curr_str.end(), '\n'), curr_str.end());
-        if (curr_str == "time")
-            data_[key].second = WaveKind::TIME;
-        else if (curr_str == "voltage")
-            data_[key].second = WaveKind::VOLTAGE;
-        else if (curr_str == "current")
-            data_[key].second = WaveKind::CURRENT;
-        else
-            error("Invalid wave kind: '%s'\n", curr_str);
     }
 
     // TODO: Check line read OK
@@ -109,17 +115,46 @@ Waves::Waves(std::string path)
     free(line);
 
     for (size_t sample = 0; sample < n_points; sample++) {
+
+        // Assume first read is always reference -> True for NGSPICE TRAN and DC!
+        double val;
+        fread(&val, sizeof(double), 1, f);
+
+        // Convert to nanoseconds
+        if (kind_ == WaveKind::TIME)
+            val *= 1E9;
+
+        reference_[sample] = val;
+
+        size_t i = 1;
         for (const auto &sig_name : sig_names) {
             double val;
             fread(&val, sizeof(double), 1, f);
 
-            if (sig_name == "time")
-                val *= 1E9;
+            if (currents_.contains(sig_name)) {
+                if (currents_[sig_name].first == i) {
+                    // Convert to microamps
+                    val *= 1E6;
+                    currents_[sig_name].second.push_back(val);
+                }
+            }
 
-            // TODO: Convert current values to MiliAmps
-            data_[sig_name].first.push_back(val);
+            if (voltages_.contains(sig_name)) {
+                if (voltages_[sig_name].first == i) {
+                    voltages_[sig_name].second.push_back(val);
+                }
+            }
+
+            i++;
         }
     }
+
+    // Croscheck simulator dumps equal lenghts for all members
+    size_t first_len = voltages_.cbegin()->second.second.size();
+    for (const auto & sig : voltages_)
+        assert(first_len == sig.second.second.size());
+    for (const auto & sig : currents_)
+        assert(first_len == sig.second.second.size());
 
     fclose(f);
 }
@@ -127,35 +162,35 @@ Waves::Waves(std::string path)
 void Waves::Print()
 {
     std::map<std::string, size_t> lens;
-    size_t total = 0;
+    size_t total = 24; // TODO: Adjust first column to number of samples!
 
-    for (const auto &sig : data_) {
-        size_t col_width = sig.first.size();
-
-        if (col_width < 8)
-            col_width = 8;
-
-        lens[sig.first] = col_width;
-        total += col_width + 3;
-    }
-    total += 1;
+    total += voltages_.size() * 12;
+    total += currents_.size() * 12;
+    total += 2;
 
     PRINT_LINE(total);
 
-    printf("|");
-    for (const auto &sig : data_) {
-        std::string fmt_str = sprintf(" %%%ds |", lens[sig.first]);
-        printf(fmt_str, sig.first);
+    // TODO: Print various reference based on analysis type!
+    printf("|      Index | Reference |");
+    for (const auto &sig : voltages_) {
+        printf(" %9s |", "V(" + sig.first + ")");
+    }
+    for (const auto &sig : currents_) {
+        printf(" %9s |", "I(" + sig.first + ")");
     }
     printf(" \n");
 
     PRINT_LINE(total);
 
-    for (size_t i = 0; i < data_.begin()->second.first.size(); i++) {
-        printf("|");
-        for (const auto &sig : data_) {
-            std::string fmt_str = sprintf(" %%%d.4f |", lens[sig.first]);
-            printf(fmt_str, sig.second.first[i]);
+    for (size_t i = 0; i < voltages_.begin()->second.second.size(); i++) {
+        printf("| %10d | %9f |", i, reference_[i]);
+        for (const auto &sig : voltages_) {
+            std::string fmt_str = sprintf(" %%%d.7f |", lens[sig.first]);
+            printf(fmt_str, sig.second.second[i]);
+        }
+        for (const auto &sig : currents_) {
+            std::string fmt_str = sprintf(" %%%d.7f |", lens[sig.first]);
+            printf(fmt_str, sig.second.second[i]);
         }
         printf(" \n");
     }
@@ -163,24 +198,22 @@ void Waves::Print()
     PRINT_LINE(total);
 }
 
-const std::vector<double>& Waves::GetData(const std::string &name)
+const std::vector<Volt>& Waves::GetVoltage(const std::string &node_name)
 {
-    return data_[name].first;
+    assert (voltages_.contains(node_name));
+    return voltages_[node_name].second;
 }
 
-double Waves::GetDataAtIndex(const std::string &name, size_t index)
+const std::vector<MicroAmp>& Waves::GetCurrent(const std::string &node_name)
 {
-    return data_[name].first[index];
+    assert (currents_.contains(node_name));
+    return currents_[node_name].second;
 }
 
-WaveKind Waves::GetKind(const std::string &name)
+NanoSecond Waves::GetTimeAtIndex(size_t index)
 {
-    return data_[name].second;
-}
-
-size_t Waves::GetDataLen()
-{
-    return data_.cbegin()->second.first.size();
+    assert (kind_ == WaveKind::TIME);
+    return reference_[index];
 }
 
 }

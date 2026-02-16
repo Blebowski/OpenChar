@@ -19,7 +19,7 @@ void test_and2(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.MeasureLogicFunction(c1);
+    algs.MeasureLogicTableAndLeakage(c1);
     algs.CalculateLogicFunctions(c1);
 
     Expression *e = c1.GetPin("Z").GetLogicFunction();
@@ -50,7 +50,7 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.MeasureLogicFunction(c1);
+    algs.MeasureLogicTableAndLeakage(c1);
     algs.CalculateLogicFunctions(c1);
 
     //    <--11-->   <--r1-->

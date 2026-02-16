@@ -12,6 +12,12 @@ Cell::Cell(std::string name, Library *library) :
     library_(library)
 {};
 
+Cell::~Cell()
+{
+    for (const auto & lkg : leakage_table_)
+        delete lkg.first;
+}
+
 Library* Cell::GetLibrary()
 {
     assert(library_ != nullptr);
@@ -52,12 +58,28 @@ void Cell::SetDelayTemplate(Template *d_template)
     d_template_ = d_template;
 }
 
+void Cell::AddLeakageTableEntry(Expression *e, NanoWatt pwr)
+{
+    leakage_table_.push_back(std::make_pair(e, pwr));
+}
+
 void Cell::WriteLiberty(FILE *f, size_t tab)
 {
     TAB_FPRINTF(tab, f, "cell (%s) {\n", name_);
     tab++;
 
     TAB_FPRINTF(tab, f, "area: 0.00\n");
+
+    for (auto & lkg : leakage_table_) {
+        TAB_FPRINTF(tab, f, "leakage_power () {\n");
+        tab++;
+        TAB_FPRINTF(tab, f, "value : %f;\n", lkg.second);
+        TAB_FPRINTF(tab, f, "when : \"");
+        lkg.first->Print(f);
+        fprintf(f, "\";\n");
+        tab--;
+        TAB_FPRINTF(tab, f, "} /* end leakage_power */\n");
+    }
 
     for (auto & pin : GetPins(PinKind::PWR)) {
         pin.WriteLiberty(f, tab);

@@ -20,13 +20,16 @@ class Waves {
         std::string title_;
         std::string plot_name_;
 
-        const std::vector<double>& GetData(const std::string &name);
-        size_t GetDataLen();
-        double GetDataAtIndex(const std::string &name, size_t index);
-        WaveKind GetKind(const std::string &name);
+        const std::vector<Volt>& GetVoltage(const std::string &node_name);
+        const std::vector<MicroAmp>& GetCurrent(const std::string &node_name);
+
+        NanoSecond GetTimeAtIndex(size_t index);
 
     private:
-        std::map<std::string, std::pair<std::vector<double>, WaveKind>> data_;
+        std::map<std::string, std::pair<size_t, std::vector<Volt>>> voltages_;
+        std::map<std::string, std::pair<size_t, std::vector<MicroAmp>>> currents_;
+        std::vector<double> reference_;
+        WaveKind kind_;
 };
 
 }

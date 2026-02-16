@@ -29,7 +29,12 @@ int Algorithms::GetBit(int64_t v, size_t index)
     return (v >> index) & 0x1;
 }
 
-void Algorithms::MeasureLogicFunction(Cell &cell)
+NanoWatt Algorithms::ComputePower(MicroAmp i, Volt v)
+{
+    return i * v * 1E3;
+}
+
+void Algorithms::MeasureLogicTableAndLeakage(Cell &cell)
 {
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
     Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -37,6 +42,7 @@ void Algorithms::MeasureLogicFunction(Cell &cell)
 
     auto o_pins = cell.GetPins(PinDirection::OUT);
 
+    bool first_opin = true;
     for (auto & o_pin : o_pins) {
         auto i_pins = cell.GetPins(PinDirection::IN);
         size_t i_pins_len = cell.GetPinsCount(PinDirection::IN);
@@ -47,7 +53,7 @@ void Algorithms::MeasureLogicFunction(Cell &cell)
 
         for (size_t ipin_vect = 0; ipin_vect < n_sims; ipin_vect++) {
 
-            std::string sim_name = "LOG_FNC";
+            std::string sim_name = "LOG_TBL_LKG";
             size_t input = ipin_vect;
 
             for (const auto & i_pin : i_pins) {
@@ -80,8 +86,30 @@ void Algorithms::MeasureLogicFunction(Cell &cell)
             Waves w = sim.ReadWaves();
             w.Print();
 
-            o_pin.AddLogicTableEntry(ipin_vect, ToLogic(w.GetDataAtIndex(o_pin.name_, 0)));
+            // Output value upon logic inputs
+            o_pin.AddLogicTableEntry(ipin_vect, ToLogic(w.GetVoltage(o_pin.name_)[0]));
+
+            // Leakage power upon this input combination
+            if (first_opin) {
+                Supply *s = op_cond.GetSupply();
+                NanoWatt lkg = Algorithms::ComputePower(
+                                w.GetCurrent(s->GetVddName())[0], s->GetVddVoltage());
+
+                Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
+                int v = ipin_vect;
+                for (auto & i_pin : i_pins) {
+                    Expression *tmp = new Expression(ExpressionKind::TERM, &(i_pin));
+                    if ((v & 0x1) == 0) {
+                        tmp = new Expression(ExpressionKind::NOT, tmp);
+                    }
+                    e = new Expression(ExpressionKind::AND, e, tmp);
+                    v >>= 1;
+                }
+                e->Simplify();
+                cell.AddLeakageTableEntry(e, lkg);
+            }
         }
+        first_opin = false;
     }
 
     for (auto & o_pin : o_pins) {
@@ -91,10 +119,11 @@ void Algorithms::MeasureLogicFunction(Cell &cell)
 
 NanoSecond Algorithms::FindEdge(Waves &w, Pin *pin, int from, double threshold)
 {
-    size_t len = w.GetDataLen();
-    const std::vector<Volt>& d = w.GetData(pin->name_);
+    const std::vector<Volt>& d = w.GetVoltage(pin->name_);
+    size_t len = d.size();
 
     // TODO: Cross-check first and last data match the "from" and "to".
+
     Volt th = threshold * ctx_->GetLibrary().GetOpCond().GetSupply()->GetVddVoltage();
 
     size_t index = len - 1;
@@ -120,9 +149,7 @@ NanoSecond Algorithms::FindEdge(Waves &w, Pin *pin, int from, double threshold)
         step /= 2;
     }
 
-    // TODO: Move this down to Waves
-    const std::vector<NanoSecond>& t = w.GetData("time");
-    return t[index];
+    return w.GetTimeAtIndex(index);
 }
 
 int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
@@ -172,11 +199,11 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
                 int from = GetBit(in_from, i);
                 int to = GetBit(in_to, i);
 
-                assert((from == 0 && to == 1) | (from == 1 && to == 0));
-
                 if (from == to) {
                     sim.AddStimuli((Pin*)&i_pin, Stimulus((from == 1) ? log1_v : log0_v));
                 } else {
+
+                    assert((from == 0 && to == 1) | (from == 1 && to == 0));
 
                     NanoSecond in_tran_cor = in_tran;
                     Variables &vars = ctx_->GetVariables();
@@ -344,7 +371,7 @@ void Algorithms::CalculateLogicFunctions(Cell &cell)
 
 void Algorithms::CharacterizeCells(Cell &cell)
 {
-    MeasureLogicFunction(cell);
+    MeasureLogicTableAndLeakage(cell);
     CalculateLogicFunctions(cell);
     MeasureComboDelay(cell);
 }

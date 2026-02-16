@@ -24,7 +24,7 @@ void test_inv(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.MeasureLogicFunction(c1);
+    algs.MeasureLogicTableAndLeakage(c1);
     algs.MeasureComboDelay(c1);
 
     Pin& pin = c1.GetPin("Y");
