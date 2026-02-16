@@ -117,14 +117,14 @@ void Algorithms::MeasureLogicTableAndLeakage(Cell &cell)
     }
 }
 
-NanoSecond Algorithms::FindEdge(Waves &w, Pin *pin, int from, double threshold)
+NanoSecond Algorithms::FindVoltage(Waves &w, Pin *pin, int from, Volt v)
 {
     const std::vector<Volt>& d = w.GetVoltage(pin->name_);
     size_t len = d.size();
 
     // TODO: Cross-check first and last data match the "from" and "to".
 
-    Volt th = threshold * ctx_->GetLibrary().GetOpCond().GetSupply()->GetVddVoltage();
+    Volt th = v * ctx_->GetLibrary().GetOpCond().GetSupply()->GetVddVoltage();
 
     size_t index = len - 1;
     size_t step = len / 2;
@@ -196,20 +196,21 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
 
             for (auto & i_pin : i_pins) {
 
-                int from = GetBit(in_from, i);
-                int to = GetBit(in_to, i);
+                int in_from_bit = GetBit(in_from, i);
+                int in_to_bit = GetBit(in_to, i);
 
-                if (from == to) {
-                    sim.AddStimuli((Pin*)&i_pin, Stimulus((from == 1) ? log1_v : log0_v));
+                if (in_from_bit == in_to_bit) {
+                    sim.AddStimuli((Pin*)&i_pin, Stimulus((in_from_bit == 1) ? log1_v : log0_v));
                 } else {
 
-                    assert((from == 0 && to == 1) | (from == 1 && to == 0));
+                    assert((in_from_bit == 0 && in_to_bit == 1) |
+                           (in_from_bit == 1 && in_to_bit == 0));
 
                     NanoSecond in_tran_cor = in_tran;
                     Variables &vars = ctx_->GetVariables();
 
                     // Assumes linear ramp
-                    if (from == 0) {
+                    if (in_from_bit == 0) {
                         double slew_lower_rise = vars.GetDoubleVariable("slew_lower_rise");
                         double slew_upper_rise = vars.GetDoubleVariable("slew_upper_rise");
                         in_tran_cor *= (1 + slew_lower_rise + (1 - slew_upper_rise));
@@ -221,8 +222,8 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
 
                     // TODO: Refine
                     Stimulus edge (
-                        (from == 1) ? log1_v : log0_v,
-                         ( to == 1) ? log1_v : log0_v,
+                        (in_from_bit == 1) ? log1_v : log0_v,
+                          (in_to_bit == 1) ? log1_v : log0_v,
                          1,
                          in_tran_cor,
                          in_tran_cor,
@@ -232,7 +233,7 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
                     );
                     sim.AddStimuli((Pin*)&i_pin, std::move(edge));
                     tran_pin = &i_pin;
-                    tran_from = from;
+                    tran_from = in_from_bit;
                 }
 
                 i++;
@@ -245,17 +246,30 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
             Waves w = sim.ReadWaves();
 
             assert(tran_pin != nullptr);
-
             Variables &vars = ctx_->GetVariables();
+
+            // Calculate output delay
+
             double in_th = (tran_from == 0) ? vars.GetDoubleVariable("delay_in_rise") :
                                               vars.GetDoubleVariable("delay_in_fall");
             double out_th = (out_from == 0) ? vars.GetDoubleVariable("delay_out_rise") :
                                               vars.GetDoubleVariable("delay_out_fall");
 
-            NanoSecond in_edge  = FindEdge(w, tran_pin, tran_from, in_th);
-            NanoSecond out_edge = FindEdge(w, opin, out_from, out_th);
-
+            NanoSecond in_edge  = FindVoltage(w, tran_pin, tran_from, in_th);
+            NanoSecond out_edge = FindVoltage(w, opin, out_from, out_th);
             delay_table.AddDelay(i_tran, out_edge - in_edge);
+
+            // Calculate output transition
+            double upp_th = (out_from == 0) ? vars.GetDoubleVariable("slew_upper_rise") :
+                                              vars.GetDoubleVariable("slew_upper_fall");
+            double low_th = (out_from == 0) ? vars.GetDoubleVariable("slew_lower_rise") :
+                                              vars.GetDoubleVariable("slew_lower_fall");
+
+            NanoSecond low  = FindVoltage(w, tran_pin, tran_from, low_th);
+            NanoSecond high = FindVoltage(w, tran_pin, tran_from, upp_th);
+
+            delay_table.AddTransition(i_tran, (out_from == 0) ? high - low : low - high);
+
             i_cap++;
         }
 

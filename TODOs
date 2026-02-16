@@ -3,8 +3,6 @@ Features:
 - Propagate Error code from simulation
 - Parse TCL values as TCL expression -> Supports variables and expression in arguments
 - Adjust simulation duration and/or precision based on initial run.
-- Measure output transition
-- Move access to "variable" at time to the "wave" object.
 - Parallelize simulation by creating Simulation pool.
 - Recognize logic function:
     - Apply de-morgan law -> Handles OR or AND.
@@ -12,8 +10,6 @@ Features:
     - Other logic functions can be SOP or POS based on output prevalence.
 - Measure input capacitance of pin (Frequency sweep vs. RC transient measure) ?
 - Detect non-monotonic behavior in the output ? How to do it fast ?
-- Measure leakage -> Per logic state with no switching.
-- Measure static consumption -> Per logic state -> Does it differ from leakage in Liberty ?
 - Measure transition power -> Integrate current ?
 - Support Flip-flops and latches:
     - CK -> Q output delay

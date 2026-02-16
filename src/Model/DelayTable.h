@@ -20,6 +20,9 @@ class DelayTable {
         void AddDelay(size_t row, NanoSecond delay);
         std::vector<std::vector<NanoSecond>>& GetDelays();
 
+        void AddTransition(size_t row, NanoSecond transition);
+        std::vector<std::vector<NanoSecond>>& GetTransitions();
+
     private:
         std::pair<Pin *,EdgeKind> GetRelatedPin();
 
@@ -27,6 +30,7 @@ class DelayTable {
         Template *template_;
 
         std::vector<std::vector<NanoSecond>> delays_;
+        std::vector<std::vector<NanoSecond>> transitions_;
 
         int64_t in_from_;
         int64_t in_to_;

@@ -30,6 +30,18 @@ std::vector<std::vector<NanoSecond>>& DelayTable::GetDelays()
     return delays_;
 }
 
+void DelayTable::AddTransition(size_t row, NanoSecond transition)
+{
+    while (transitions_.size() <= row)
+        transitions_.push_back(std::vector<NanoSecond>());
+    transitions_[row].push_back(transition);
+}
+
+std::vector<std::vector<NanoSecond>>& DelayTable::GetTransitions()
+{
+    return transitions_;
+}
+
 void DelayTable::Print()
 {
     size_t width = delays_[0].size() * 10 + 1;
@@ -83,7 +95,7 @@ void DelayTable::WriteLiberty(FILE *f, size_t tab)
     TAB_FPRINTF(tab, f, "timing () {\n");
     tab++;
 
-    std::pair<Pin *, EdgeKind> pp = GetRelatedPin();
+    std::pair<Pin*, EdgeKind> pp = GetRelatedPin();
     TAB_FPRINTF(tab, f, "related_pin : %s ;\n", pp.first->name_);
 
     if (pp.second == EdgeKind::RISING) {
@@ -94,23 +106,7 @@ void DelayTable::WriteLiberty(FILE *f, size_t tab)
 
     tab++;
 
-    // TODO: Move to the template !
-    TAB_FPRINTF(tab, f, "index_1 (\"");
-
-    size_t i = 0;
-    for (const auto & v : template_->index_1_) {
-        fprintf(f, "%f%s", v, (i < template_->index_1_.size() - 1) ? ", " : "");
-        i++;
-    }
-    fprintf(f, "\")\n");
-
-    TAB_FPRINTF(tab, f, "index_2 (\"");
-    i = 0;
-    for (const auto & v : template_->index_2_) {
-        fprintf(f, "%f%s", v, (i < template_->index_2_.size() - 1) ? ", " : "");
-        i++;
-    }
-    fprintf(f, "\")\n");
+    template_->WriteLiberty(tab, f);
 
     TAB_FPRINTF(tab, f, "values ( \\\n");
     tab++;
@@ -137,6 +133,35 @@ void DelayTable::WriteLiberty(FILE *f, size_t tab)
     }
 
     tab--;
+
+    if (pp.second == EdgeKind::RISING) {
+        TAB_FPRINTF(tab, f, "rise_transition() {\n");
+    } else {
+        TAB_FPRINTF(tab, f, "fall_transition() {\n");
+    }
+
+    tab++;
+
+    template_->WriteLiberty(tab, f);
+
+    TAB_FPRINTF(tab, f, "values ( \\\n");
+    tab++;
+
+    for (const auto & row : transitions_) {
+        TAB_FPRINTF(tab, f, "\"");
+        size_t i = 0;
+        for (const NanoSecond & d : row) {
+            fprintf(f, "%f%s", d, (i < row.size() - 1) ? ", " : "");
+            i++;
+        }
+        fprintf(f, "\" \\\n");
+    }
+
+    tab--;
+    TAB_FPRINTF(tab, f, ") ;\n");
+
+    tab--;
+
     TAB_FPRINTF(tab, f, "} /* end timing */\n");
 }
 
