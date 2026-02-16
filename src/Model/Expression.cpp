@@ -74,6 +74,69 @@ void Expression::Invalidate()
     rhs_ = nullptr;
 }
 
+void Expression::DeMorgan()
+{
+    if (kind_ != ExpressionKind::NOT) {
+        return;
+    }
+
+    assert(lhs_ != nullptr);
+
+    if (lhs_->kind_ == ExpressionKind::AND) {
+
+        assert (lhs_->lhs_ != nullptr);
+        assert (lhs_->rhs_ != nullptr);
+
+        if (lhs_->lhs_->kind_ != ExpressionKind::NOT)
+            return;
+        if (lhs_->rhs_->kind_ != ExpressionKind::NOT)
+            return;
+
+        assert(lhs_->lhs_->lhs_ != nullptr);
+        assert(lhs_->rhs_->lhs_ != nullptr);
+
+        Expression *lhs_buf = lhs_->lhs_->lhs_;
+        Expression *rhs_buf = lhs_->rhs_->lhs_;
+
+        lhs_->lhs_->Invalidate();
+        delete lhs_->lhs_;
+        lhs_->rhs_->Invalidate();
+        delete lhs_->rhs_;
+        lhs_->Invalidate();
+        delete lhs_;
+
+        kind_ = ExpressionKind::OR;
+        lhs_ = lhs_buf;
+        rhs_ = rhs_buf;
+
+    } else if (lhs_->kind_ == ExpressionKind::OR) {
+        assert (lhs_->lhs_ != nullptr);
+        assert (lhs_->rhs_ != nullptr);
+
+        if (lhs_->lhs_->kind_ != ExpressionKind::NOT)
+            return;
+        if (lhs_->rhs_->kind_ != ExpressionKind::NOT)
+            return;
+
+        assert(lhs_->lhs_->lhs_ != nullptr);
+        assert(lhs_->rhs_->lhs_ != nullptr);
+
+        Expression *lhs_buf = lhs_->lhs_->lhs_;
+        Expression *rhs_buf = lhs_->rhs_->lhs_;
+
+        lhs_->lhs_->Invalidate();
+        delete lhs_->lhs_;
+        lhs_->rhs_->Invalidate();
+        delete lhs_->rhs_;
+        lhs_->Invalidate();
+        delete lhs_;
+
+        kind_ = ExpressionKind::AND;
+        lhs_ = lhs_buf;
+        rhs_ = rhs_buf;
+    }
+}
+
 void Expression::ConstFold()
 {
     switch (kind_) {
@@ -120,6 +183,7 @@ void Expression::Simplify()
         rhs_->Simplify();
 
     ConstFold();
+    DeMorgan();
 }
 
 ExpressionKind Expression::GetKind()

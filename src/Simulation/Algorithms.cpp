@@ -51,7 +51,7 @@ void Algorithms::MeasureLogicTableAndLeakage(Cell &cell)
         for (size_t i = 0; i < i_pins_len; i++)
             n_sims *= 2;
 
-        for (size_t ipin_vect = 0; ipin_vect < n_sims; ipin_vect++) {
+        for (int64_t ipin_vect = 0; ipin_vect < static_cast<int64_t>(n_sims); ipin_vect++) {
 
             std::string sim_name = "LOG_TBL_LKG";
             size_t input = ipin_vect;
@@ -96,7 +96,7 @@ void Algorithms::MeasureLogicTableAndLeakage(Cell &cell)
                                 w.GetCurrent(s->GetVddName())[0], s->GetVddVoltage());
 
                 Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
-                int v = ipin_vect;
+                size_t v = ipin_vect;
                 for (auto & i_pin : i_pins) {
                     Expression *tmp = new Expression(ExpressionKind::TERM, &(i_pin));
                     if ((v & 0x1) == 0) {
@@ -343,43 +343,96 @@ void Algorithms::MeasureComboDelay(Cell &cell)
     }
 }
 
+void Algorithms::SumOfProducts(Cell& cell, Pin& opin)
+{
+    Expression *fnc_e = new Expression(ExpressionKind::CONSTANT, 0);
+
+    for (auto &lt_entry : opin.GetLogicTable()) {
+        int output = lt_entry.second;
+
+        Expression* row_e = new Expression(ExpressionKind::CONSTANT, 1);
+
+        if (output == 0)
+            continue;
+
+        int64_t inputs = lt_entry.first;
+
+        int i = 0;
+        for (auto &ipin : cell.GetPins(PinDirection::IN)) {
+            int val = (inputs >> i) & 0x1;
+
+            Expression *e_rhs = new Expression(ExpressionKind::TERM, &ipin);
+            if (val == 0) {
+                e_rhs = new Expression(ExpressionKind::NOT, e_rhs);
+            }
+            row_e = new Expression(ExpressionKind::AND, row_e, e_rhs);
+            i++;
+        }
+
+        fnc_e = new Expression(ExpressionKind::OR, fnc_e, row_e);
+    }
+
+    fnc_e->Simplify();
+    opin.SetLogicFunction(fnc_e);
+    opin.PrintLogicFunction();
+}
+
+void Algorithms::ProductOfSums(Cell& cell, Pin& opin)
+{
+    Expression *fnc_e = new Expression(ExpressionKind::CONSTANT, 1);
+
+    for (const auto &lt_entry : opin.GetLogicTable()) {
+        int output = lt_entry.second;
+
+        Expression* row_e = new Expression(ExpressionKind::CONSTANT, 0);
+
+        if (output == 1)
+            continue;
+
+        int64_t inputs = lt_entry.first;
+
+        int i = 0;
+        for (auto &ipin : cell.GetPins(PinDirection::IN)) {
+            int val = (inputs >> i) & 0x1;
+
+            Expression *e_rhs = new Expression(ExpressionKind::TERM, &ipin);
+            if (val == 1) {
+                e_rhs = new Expression(ExpressionKind::NOT, e_rhs);
+            }
+            row_e = new Expression(ExpressionKind::OR, row_e, e_rhs);
+            i++;
+        }
+
+        fnc_e = new Expression(ExpressionKind::AND, fnc_e, row_e);
+    }
+
+    fnc_e->Simplify();
+    opin.SetLogicFunction(fnc_e);
+    opin.PrintLogicFunction();
+}
+
 void Algorithms::CalculateLogicFunctions(Cell &cell)
 {
     for (auto &opin : cell.GetPins(PinDirection::OUT)) {
         auto &log_table = opin.GetLogicTable();
         assert(log_table.size() > 0);
 
-        Expression *fnc_e = new Expression(ExpressionKind::CONSTANT, 0);
+        size_t n_zeros = 0;
+        size_t n_ones = 0;
 
-        for (const auto &lt_entry : log_table) {
-            int output = lt_entry.second;
-
-            Expression* row_e = new Expression(ExpressionKind::CONSTANT, 1);
-
-            // Sum of Products
-            if (output == 0)
-                continue;
-
-            int64_t inputs = lt_entry.first;
-
-            int i = 0;
-            for (auto &ipin : cell.GetPins(PinDirection::IN)) {
-                int val = (inputs >> i) & 0x1;
-
-                Expression *e_rhs = new Expression(ExpressionKind::TERM, &ipin);
-                if (val == 0) {
-                    e_rhs = new Expression(ExpressionKind::NOT, e_rhs);
-                }
-                row_e = new Expression(ExpressionKind::AND, row_e, e_rhs);
-                i++;
-            }
-
-            fnc_e = new Expression(ExpressionKind::OR, fnc_e, row_e);
+        for (const auto & row : log_table) {
+            assert (row.second == 0 || row.second == 1);
+            if (row.second == 1)
+                n_ones++;
+            if (row.second == 0)
+                n_zeros++;
         }
 
-        fnc_e->Simplify();
-        opin.SetLogicFunction(fnc_e);
-        opin.PrintLogicFunction();
+        if (n_ones > n_zeros) {
+            ProductOfSums(cell, opin);
+        } else {
+            SumOfProducts(cell, opin);
+        }
     }
 }
 

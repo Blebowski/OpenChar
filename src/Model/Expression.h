@@ -27,6 +27,7 @@ class Expression {
     private:
         void Copy(Expression *e);
         void ConstFold();
+        void DeMorgan();
         void Invalidate();
 
         const char and_op = '&';
