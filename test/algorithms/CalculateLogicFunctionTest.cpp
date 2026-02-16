@@ -53,44 +53,21 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     algs.MeasureLogicTableAndLeakage(c1);
     algs.CalculateLogicFunctions(c1);
 
-    //    <--11-->   <--r1-->
-    //    l1l1 l1r1  r1l1  r1r1
-    // S: (A & !B) | (!A & B)
+    // S: A ^ B
     Expression *e = c1.GetPin("S").GetLogicFunction();
 
-    assert (e->GetKind() == ExpressionKind::OR);
+    assert (e->GetKind() == ExpressionKind::XOR);
     Expression *l1 = e->GetLhs();
     Expression *r1 = e->GetRhs();
 
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    // r1
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    assert (r1->GetKind() == ExpressionKind::AND);
+    assert (l1 != nullptr);
+    assert (r1 != nullptr);
 
-    Expression *r1r1 = r1->GetRhs();
-    assert (r1r1->GetKind() == ExpressionKind::TERM);
-    assert (r1r1->GetPin() == &c1.GetPin("B"));
+    assert (l1->GetKind() == ExpressionKind::TERM);
+    assert (r1->GetKind() == ExpressionKind::TERM);
 
-    Expression *r1l1 = r1->GetLhs();
-    assert (r1l1->GetKind() == ExpressionKind::NOT);
-    Expression *r1l1l1 = r1l1->GetLhs();
-    assert (r1l1l1->GetKind() == ExpressionKind::TERM);
-    assert (r1l1l1->GetPin() == &c1.GetPin("A"));
-
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    // l1
-    ///////////////////////////////////////////////////////////////////////////////////////////////
-    assert (l1->GetKind() == ExpressionKind::AND);
-
-    Expression *l1r1 = l1->GetRhs();
-    assert (l1r1->GetKind() == ExpressionKind::NOT);
-    Expression *l1r1l1 = l1r1->GetLhs();
-    assert (l1r1l1->GetKind() == ExpressionKind::TERM);
-    assert (l1r1l1->GetPin() == &c1.GetPin("B"));
-
-    Expression *l1l1 = l1->GetLhs();
-    assert (l1l1->GetKind() == ExpressionKind::TERM);
-    assert (l1l1->GetPin() == &c1.GetPin("A"));
+    assert (l1->GetPin() == &c1.GetPin("A"));
+    assert (r1->GetPin() == &c1.GetPin("B"));
 }
 
 int main()

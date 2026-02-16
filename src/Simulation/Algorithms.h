@@ -6,6 +6,7 @@
 
 #include "open_char.h"
 
+#include "Expression.h"
 #include "Utils.h"
 
 namespace open_char {
@@ -27,8 +28,9 @@ class Algorithms {
         int GetBit(int64_t v, size_t index);
         NanoWatt ComputePower(MicroAmp i, Volt v);
         NanoSecond FindVoltage(Waves &w, Pin *pin, int from, Volt v);
-        void SumOfProducts(Cell& cell, Pin& opin);
-        void ProductOfSums(Cell& cell, Pin& opin);
+        Expression* SumOfProducts(Cell& cell, Pin& opin);
+        Expression* ProductOfSums(Cell& cell, Pin& opin);
+        Expression* RecognizeXor(Cell& cell, Pin& opin);
         int MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
                                  int out_from, int out_to);
 };

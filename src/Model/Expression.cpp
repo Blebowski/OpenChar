@@ -156,6 +156,7 @@ void Expression::ConstFold()
         }
         break;
     case ExpressionKind::OR:
+    case ExpressionKind::XOR:
         assert(lhs_ != nullptr);
         assert(rhs_ != nullptr);
         if (lhs_->kind_ == ExpressionKind::CONSTANT && lhs_->const_val_ == 0) {

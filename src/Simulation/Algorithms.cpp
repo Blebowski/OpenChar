@@ -343,9 +343,9 @@ void Algorithms::MeasureComboDelay(Cell &cell)
     }
 }
 
-void Algorithms::SumOfProducts(Cell& cell, Pin& opin)
+Expression* Algorithms::SumOfProducts(Cell& cell, Pin& opin)
 {
-    Expression *fnc_e = new Expression(ExpressionKind::CONSTANT, 0);
+    Expression *e = new Expression(ExpressionKind::CONSTANT, 0);
 
     for (auto &lt_entry : opin.GetLogicTable()) {
         int output = lt_entry.second;
@@ -369,17 +369,16 @@ void Algorithms::SumOfProducts(Cell& cell, Pin& opin)
             i++;
         }
 
-        fnc_e = new Expression(ExpressionKind::OR, fnc_e, row_e);
+        e = new Expression(ExpressionKind::OR, e, row_e);
     }
 
-    fnc_e->Simplify();
-    opin.SetLogicFunction(fnc_e);
-    opin.PrintLogicFunction();
+    return e;
 }
 
-void Algorithms::ProductOfSums(Cell& cell, Pin& opin)
+Expression* Algorithms::ProductOfSums(Cell& cell, Pin& opin)
 {
-    Expression *fnc_e = new Expression(ExpressionKind::CONSTANT, 1);
+    // TODO: Cross-check this is correct!
+    Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
 
     for (const auto &lt_entry : opin.GetLogicTable()) {
         int output = lt_entry.second;
@@ -403,12 +402,40 @@ void Algorithms::ProductOfSums(Cell& cell, Pin& opin)
             i++;
         }
 
-        fnc_e = new Expression(ExpressionKind::AND, fnc_e, row_e);
+        e = new Expression(ExpressionKind::AND, e, row_e);
     }
 
-    fnc_e->Simplify();
-    opin.SetLogicFunction(fnc_e);
-    opin.PrintLogicFunction();
+    return e;
+}
+
+Expression* Algorithms::RecognizeXor(Cell& cell, Pin& opin)
+{
+    size_t n_inputs = cell.GetPinsCount(PinDirection::IN);
+
+    // Checks all rows are XOR of inputs
+    for (const auto & row : opin.GetLogicTable()) {
+        int64_t inputs = row.first;
+        int output = row.second;
+
+        int cur_out = 0;
+
+        for (size_t i = 0; i < n_inputs; i++) {
+            cur_out ^= (inputs >> i) & 0x1;
+        }
+
+        if (cur_out != output) {
+            return nullptr;
+        }
+    }
+
+    Expression *e = new Expression(ExpressionKind::CONSTANT, 0);
+
+    for (auto & ipin : cell.GetPins(PinDirection::IN)) {
+        Expression *term = new Expression(ExpressionKind::TERM, &ipin);
+        e = new Expression(ExpressionKind::XOR, e, term);
+    }
+
+    return e;
 }
 
 void Algorithms::CalculateLogicFunctions(Cell &cell)
@@ -417,22 +444,30 @@ void Algorithms::CalculateLogicFunctions(Cell &cell)
         auto &log_table = opin.GetLogicTable();
         assert(log_table.size() > 0);
 
-        size_t n_zeros = 0;
-        size_t n_ones = 0;
+        Expression *e = RecognizeXor(cell, opin);
 
-        for (const auto & row : log_table) {
-            assert (row.second == 0 || row.second == 1);
-            if (row.second == 1)
-                n_ones++;
-            if (row.second == 0)
-                n_zeros++;
+        if (e == nullptr) {
+            size_t n_zeros = 0;
+            size_t n_ones = 0;
+
+            for (const auto & row : log_table) {
+                assert (row.second == 0 || row.second == 1);
+                if (row.second == 1)
+                    n_ones++;
+                if (row.second == 0)
+                    n_zeros++;
+            }
+
+            if (n_ones > n_zeros) {
+                e = ProductOfSums(cell, opin);
+            } else {
+                e = SumOfProducts(cell, opin);
+            }
         }
 
-        if (n_ones > n_zeros) {
-            ProductOfSums(cell, opin);
-        } else {
-            SumOfProducts(cell, opin);
-        }
+        e->Simplify();
+        opin.SetLogicFunction(e);
+        opin.PrintLogicFunction();
     }
 }
 
