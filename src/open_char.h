@@ -8,17 +8,20 @@ namespace open_char {
     // Data Model
     class Cell;
     class Context;
-    class DelayTable;
+    class Expression;
     class Library;
-    class LogicTable;
+    class OpCond;
     class Pin;
     class Supply;
     class Template;
+    class TimingArgc;
+    class Variables;
 
     // Simulation backends
     class Algorithms;
     class Stimulus;
     class Simulation;
+    class SimulationPool;
     class Waves;
 
     // TCL Commands
@@ -84,7 +87,6 @@ namespace open_char {
     typedef double PicoFarad;
     typedef double KiloOhm;
     typedef double NanoWatt;
-
 }
 
 #endif

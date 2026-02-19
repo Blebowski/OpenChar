@@ -34,89 +34,6 @@ NanoWatt Algorithms::ComputePower(MicroAmp i, Volt v)
     return i * v * 1E3;
 }
 
-void Algorithms::MeasureLogicTableAndLeakage(Cell &cell)
-{
-    OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
-    Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
-    Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
-
-    auto o_pins = cell.GetPins(PinDirection::OUT);
-
-    bool first_opin = true;
-    for (auto & o_pin : o_pins) {
-        auto i_pins = cell.GetPins(PinDirection::IN);
-        size_t i_pins_len = cell.GetPinsCount(PinDirection::IN);
-
-        size_t n_sims = 1;
-        for (size_t i = 0; i < i_pins_len; i++)
-            n_sims *= 2;
-
-        for (int64_t ipin_vect = 0; ipin_vect < static_cast<int64_t>(n_sims); ipin_vect++) {
-
-            std::string sim_name = "LOG_TBL_LKG";
-            size_t input = ipin_vect;
-
-            for (const auto & i_pin : i_pins) {
-                sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, input & 0x1);
-                input >>= 1;
-            }
-
-            Simulation sim {ctx_, sim_name, &cell, SimulationKind::DC};
-
-            sim.SetTemp(op_cond.GetTemperature());
-            sim.SetSupply(op_cond.GetSupply());
-
-            for (const auto & netlist : ctx_->GetNetlists())
-                sim.AddInclude(netlist);
-
-            for (const auto & model : ctx_->GetModels())
-                sim.AddModel(model);
-
-            int i_pin_index = 0;
-            for (auto & i_pin : i_pins) {
-                size_t i_pin_val = ((ipin_vect >> i_pin_index) & 0x1);
-                sim.AddStimuli((Pin*)&i_pin, Stimulus((i_pin_val == 1) ? log1_v : log0_v));
-
-                i_pin_index++;
-            }
-
-            // TODO: Propagate error
-            sim.Simulate();
-
-            Waves w = sim.ReadWaves();
-            w.Print();
-
-            // Output value upon logic inputs
-            o_pin.AddLogicTableEntry(ipin_vect, ToLogic(w.GetVoltage(o_pin.name_)[0]));
-
-            // Leakage power upon this input combination
-            if (first_opin) {
-                Supply *s = op_cond.GetSupply();
-                NanoWatt lkg = Algorithms::ComputePower(
-                                w.GetCurrent(s->GetVddName())[0], s->GetVddVoltage());
-
-                Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
-                size_t v = ipin_vect;
-                for (auto & i_pin : i_pins) {
-                    Expression *tmp = new Expression(ExpressionKind::TERM, &(i_pin));
-                    if ((v & 0x1) == 0) {
-                        tmp = new Expression(ExpressionKind::NOT, tmp);
-                    }
-                    e = new Expression(ExpressionKind::AND, e, tmp);
-                    v >>= 1;
-                }
-                e->Simplify();
-                cell.AddLeakageTableEntry(e, lkg);
-            }
-        }
-        first_opin = false;
-    }
-
-    for (auto & o_pin : o_pins) {
-        o_pin.PrintLogicTable();
-    }
-}
-
 NanoSecond Algorithms::FindVoltage(Waves &w, Pin *pin, int from, Volt v)
 {
     const std::vector<Volt>& d = w.GetVoltage(pin->name_);
@@ -152,14 +69,103 @@ NanoSecond Algorithms::FindVoltage(Waves &w, Pin *pin, int from, Volt v)
     return w.GetTimeAtIndex(index);
 }
 
-int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_a, int64_t in_b,
+void Algorithms::PrepareLogicTableAndLeakageSims(Cell &cell)
+{
+    OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
+    Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
+    Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+
+    auto o_pins = cell.GetPins(PinDirection::OUT);
+
+    bool first_opin = true;
+    for (auto & o_pin : o_pins) {
+        auto i_pins = cell.GetPins(PinDirection::IN);
+        size_t i_pins_len = cell.GetPinsCount(PinDirection::IN);
+
+        size_t n_sims = 1;
+        for (size_t i = 0; i < i_pins_len; i++)
+            n_sims *= 2;
+
+        for (int64_t ipin_vect = 0; ipin_vect < static_cast<int64_t>(n_sims); ipin_vect++) {
+
+            std::string sim_name = "LOG_TBL_LKG";
+            size_t input = ipin_vect;
+
+            for (const auto & i_pin : i_pins) {
+                sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, input & 0x1);
+                input >>= 1;
+            }
+
+            // TODO: Wrap simulation construction with common stuff!
+            Simulation *sim = new Simulation(ctx_, sim_name, &cell, SimulationKind::DC);
+
+            sim->SetTemp(op_cond.GetTemperature());
+            sim->SetSupply(op_cond.GetSupply());
+
+            for (const auto & netlist : ctx_->GetNetlists())
+                sim->AddInclude(netlist);
+
+            for (const auto & model : ctx_->GetModels())
+                sim->AddModel(model);
+
+            int i_pin_index = 0;
+            for (auto & i_pin : i_pins) {
+                size_t i_pin_val = ((ipin_vect >> i_pin_index) & 0x1);
+                sim->AddStimuli((Pin*)&i_pin, Stimulus((i_pin_val == 1) ? log1_v : log0_v));
+
+                i_pin_index++;
+            }
+
+            auto post_sim_cb = [this, sim, &cell, &o_pin, &op_cond, ipin_vect, first_opin] () {
+                Waves w = sim->ReadWaves();
+                w.Print();
+
+                // Output value upon logic inputs
+                o_pin.AddLogicTableEntry(ipin_vect, ToLogic(w.GetVoltage(o_pin.name_)[0]));
+
+                // Leakage power upon this input combination
+                if (first_opin) {
+                    Supply *s = op_cond.GetSupply();
+                    NanoWatt lkg = Algorithms::ComputePower(
+                                    w.GetCurrent(s->GetVddName())[0], s->GetVddVoltage());
+
+                    Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
+                    size_t v = ipin_vect;
+                    auto i_pins = cell.GetPins(PinDirection::IN);
+                    for (auto & i_pin : i_pins) {
+                        Expression *tmp = new Expression(ExpressionKind::TERM, &(i_pin));
+                        if ((v & 0x1) == 0) {
+                            tmp = new Expression(ExpressionKind::NOT, tmp);
+                        }
+                        e = new Expression(ExpressionKind::AND, e, tmp);
+                        v >>= 1;
+                    }
+                    e->Simplify();
+                    cell.AddLeakageTableEntry(e, lkg);
+                }
+
+                // TODO: check for errors ?
+                return 0;
+            };
+
+            sim->SetPostSimCb(post_sim_cb);
+
+            ctx_->GetSimulationPool().PushSimulation(sim);
+        }
+        first_opin = false;
+    }
+}
+
+int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b,
                                      int out_a, int out_b)
 {
     Cell *cell = opin->cell_;
     auto i_pins = cell->GetPins(PinDirection::IN);
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
     Template *templ = cell->GetDelayTemplate();
-    TimingArc timing_arc(opin, templ, in_a, in_b, out_a, out_b);
+
+    opin->AddTimingArc(TimingArc(opin, templ, in_a, in_b, out_a, out_b));
+    size_t timing_arc_index = opin->GetTimingArcs().size() - 1;
 
     for (size_t i = 0; i < 2; i++) {
         int64_t in_from     = (i == 0) ? in_a  : in_b;
@@ -179,15 +185,16 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_a, int64_t in_b,
             for (const PicoFarad out_cap : templ->index_2_) {
                 std::string sim_name = sprintf("%s_TRAN_%f_CAP_%f", prefix, in_tran, out_cap);
 
-                Simulation sim {ctx_, sim_name, cell, SimulationKind::TRAN};
-                sim.SetTemp(op_cond.GetTemperature());
-                sim.SetSupply(op_cond.GetSupply());
+                // TODO: Wrap construction to some common tasks
+                Simulation *sim = new Simulation(ctx_, sim_name, cell, SimulationKind::TRAN);
+                sim->SetTemp(op_cond.GetTemperature());
+                sim->SetSupply(op_cond.GetSupply());
 
                 for (const auto & netlist : ctx_->GetNetlists())
-                    sim.AddInclude(netlist);
+                    sim->AddInclude(netlist);
 
                 for (const auto & model : ctx_->GetModels())
-                    sim.AddModel(model);
+                    sim->AddModel(model);
 
                 Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
                 Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
@@ -202,7 +209,7 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_a, int64_t in_b,
                     int in_to_bit = GetBit(in_to, i);
 
                     if (in_from_bit == in_to_bit) {
-                        sim.AddStimuli((Pin*)&i_pin, Stimulus((in_from_bit == 1) ? log1_v : log0_v));
+                        sim->AddStimuli((Pin*)&i_pin, Stimulus((in_from_bit == 1) ? log1_v : log0_v));
                     } else {
 
                         assert((in_from_bit == 0 && in_to_bit == 1) |
@@ -233,49 +240,58 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_a, int64_t in_b,
                             100,
                             1
                         );
-                        sim.AddStimuli((Pin*)&i_pin, std::move(edge));
+                        sim->AddStimuli((Pin*)&i_pin, std::move(edge));
                         tran_pin = &i_pin;
                         tran_from = in_from_bit;
                     }
 
                     i++;
                 }
-                sim.AddLoad(opin, out_cap);
+                sim->AddLoad(opin, out_cap);
 
-                // TODO: Propagate error
-                sim.Simulate();
-                Waves w = sim.ReadWaves();
+                auto post_sim_cb = [this, sim, tran_pin, opin, i_tran,
+                                    tran_from, out_from, timing_arc_index] () {
 
-                assert(tran_pin != nullptr);
-                Variables &vars = ctx_->GetVariables();
+                    Waves w = sim->ReadWaves();
+                    TimingArc& timing_arc = opin->GetTimingArcs()[timing_arc_index];
 
-                // Calculate output delay
-                double in_th = (tran_from == 0) ? vars.GetDoubleVariable("delay_in_rise") :
-                                                  vars.GetDoubleVariable("delay_in_fall");
-                double out_th = (out_from == 0) ? vars.GetDoubleVariable("delay_out_rise") :
-                                                  vars.GetDoubleVariable("delay_out_fall");
+                    assert(tran_pin != nullptr);
+                    Variables &vars = ctx_->GetVariables();
 
-                NanoSecond in_edge  = FindVoltage(w, tran_pin, tran_from, in_th);
-                NanoSecond out_edge = FindVoltage(w, opin, out_from, out_th);
+                    // Calculate output delay
+                    double in_th = (tran_from == 0) ? vars.GetDoubleVariable("delay_in_rise") :
+                                                    vars.GetDoubleVariable("delay_in_fall");
+                    double out_th = (out_from == 0) ? vars.GetDoubleVariable("delay_out_rise") :
+                                                    vars.GetDoubleVariable("delay_out_fall");
 
-                if (out_from == 0)
-                    timing_arc.AddRiseDelay(i_tran, out_edge - in_edge);
-                else
-                    timing_arc.AddFallDelay(i_tran, out_edge - in_edge);
+                    NanoSecond in_edge  = FindVoltage(w, tran_pin, tran_from, in_th);
+                    NanoSecond out_edge = FindVoltage(w, opin, out_from, out_th);
 
-                // Calculate output transition
-                double upp_th = (out_from == 0) ? vars.GetDoubleVariable("slew_upper_rise") :
-                                                  vars.GetDoubleVariable("slew_upper_fall");
-                double low_th = (out_from == 0) ? vars.GetDoubleVariable("slew_lower_rise") :
-                                                  vars.GetDoubleVariable("slew_lower_fall");
+                    if (out_from == 0)
+                        timing_arc.AddRiseDelay(i_tran, out_edge - in_edge);
+                    else
+                        timing_arc.AddFallDelay(i_tran, out_edge - in_edge);
 
-                NanoSecond low  = FindVoltage(w, tran_pin, tran_from, low_th);
-                NanoSecond high = FindVoltage(w, tran_pin, tran_from, upp_th);
+                    // Calculate output transition
+                    double upp_th = (out_from == 0) ? vars.GetDoubleVariable("slew_upper_rise") :
+                                                      vars.GetDoubleVariable("slew_upper_fall");
+                    double low_th = (out_from == 0) ? vars.GetDoubleVariable("slew_lower_rise") :
+                                                      vars.GetDoubleVariable("slew_lower_fall");
 
-                if (out_from == 0)
-                    timing_arc.AddRiseTransition(i_tran, (out_from == 0) ? high - low : low - high);
-                else
-                    timing_arc.AddFallTransition(i_tran, (out_from == 0) ? high - low : low - high);
+                    NanoSecond low  = FindVoltage(w, tran_pin, tran_from, low_th);
+                    NanoSecond high = FindVoltage(w, tran_pin, tran_from, upp_th);
+
+                    if (out_from == 0)
+                        timing_arc.AddRiseTransition(i_tran, (out_from == 0) ? high - low : low - high);
+                    else
+                        timing_arc.AddFallTransition(i_tran, (out_from == 0) ? high - low : low - high);
+
+                    // TODO: Return some error code
+                    return 0;
+                };
+
+                sim->SetPostSimCb(post_sim_cb);
+                ctx_->GetSimulationPool().PushSimulation(sim);
 
                 i_cap++;
             }
@@ -283,13 +299,10 @@ int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_a, int64_t in_b,
         }
     }
 
-    timing_arc.Print();
-    opin->AddTimingArc(timing_arc);
-
     return 0;
 }
 
-void Algorithms::MeasureComboDelay(Cell &cell)
+void Algorithms::PrepareComboDelaySims(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
 
@@ -344,7 +357,7 @@ void Algorithms::MeasureComboDelay(Cell &cell)
 
         // Simulate all test vectors - Both directions
         for (const auto & tv : test_vects) {
-            MeasureOneStateDelay(&o_pin, tv.in_i, tv.in_j, tv.out_i, tv.out_j);
+            PrepareTimingArcSims(&o_pin, tv.in_i, tv.in_j, tv.out_i, tv.out_j);
         }
     }
 }
@@ -446,7 +459,7 @@ Expression* Algorithms::RecognizeXor(Cell& cell, Pin& opin)
 
 void Algorithms::CalculateLogicFunctions(Cell &cell)
 {
-    for (auto &opin : cell.GetPins(PinDirection::OUT)) {
+    for (auto & opin : cell.GetPins(PinDirection::OUT)) {
         auto &log_table = opin.GetLogicTable();
         assert(log_table.size() > 0);
 
@@ -477,11 +490,43 @@ void Algorithms::CalculateLogicFunctions(Cell &cell)
     }
 }
 
-void Algorithms::CharacterizeCells(Cell &cell)
+void Algorithms::CharacterizeLibrary()
 {
-    MeasureLogicTableAndLeakage(cell);
-    CalculateLogicFunctions(cell);
-    MeasureComboDelay(cell);
+    SimulationPool &sp = ctx_->GetSimulationPool();
+
+    // TODO: Set by TCL variable
+    sp.SetNumThreads(14);
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // First stage
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Prepare
+    for (auto & cell : ctx_->GetLibrary().GetCells()) {
+        PrepareLogicTableAndLeakageSims(cell.second);
+    }
+
+    // Simulate and post-process
+    sp.StartSimulations();
+    sp.FinishAndProcessSimulations();
+
+    // Manual calculations based on result
+    for (auto & cell : ctx_->GetLibrary().GetCells()) {
+        CalculateLogicFunctions(cell.second);
+    }
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // Second Simulation stage
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Prepare
+    for (auto & cell : ctx_->GetLibrary().GetCells()) {
+        PrepareComboDelaySims(cell.second);
+    }
+
+    // Simulate and post-process
+    sp.StartSimulations();
+    sp.FinishAndProcessSimulations();
 }
 
 }

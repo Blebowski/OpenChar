@@ -17,7 +17,9 @@ void test_inv(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.MeasureLogicTableAndLeakage(c1);
+    algs.PrepareLogicTableAndLeakageSims(c1);
+    ctx.GetSimulationPool().StartSimulations();
+    ctx.GetSimulationPool().FinishAndProcessSimulations();
 
     assert (c1.GetPin("Y").GetLogicTableEntry(0).first == 0);
     assert (c1.GetPin("Y").GetLogicTableEntry(0).second == 1);
@@ -37,7 +39,9 @@ void test_nand2(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.MeasureLogicTableAndLeakage(c1);
+    algs.PrepareLogicTableAndLeakageSims(c1);
+    ctx.GetSimulationPool().StartSimulations();
+    ctx.GetSimulationPool().FinishAndProcessSimulations();
 
     assert (c1.GetPin("Y").GetLogicTableEntry(0).first == 0b00);
     assert (c1.GetPin("Y").GetLogicTableEntry(0).second == 1);
@@ -64,7 +68,9 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.MeasureLogicTableAndLeakage(c1);
+    algs.PrepareLogicTableAndLeakageSims(c1);
+    ctx.GetSimulationPool().StartSimulations();
+    ctx.GetSimulationPool().FinishAndProcessSimulations();
 
     assert (c1.GetPin("CO").GetLogicTableEntry(0).first == 0b00);
     assert (c1.GetPin("CO").GetLogicTableEntry(0).second == 0);

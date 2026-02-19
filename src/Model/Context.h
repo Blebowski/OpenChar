@@ -10,6 +10,7 @@
 #include "Algorithms.h"
 #include "Library.h"
 #include "Variables.h"
+#include "SimulationPool.h"
 
 namespace open_char {
 
@@ -29,6 +30,8 @@ class Context {
         std::vector<std::pair<TclCmd, Tcl_ObjCmdProc*>>& GetTclCommands();
 
         Tcl_Interp* GetTclInterp();
+
+        SimulationPool& GetSimulationPool();
 
         const std::vector<std::string>& GetModels();
         const std::vector<std::string>& GetNetlists();
@@ -54,6 +57,9 @@ class Context {
 
         // TCL interpreter
         Tcl_Interp* tcl_interp_;
+
+        // Simulation pool
+        SimulationPool sim_pool_;
 };
 
 }

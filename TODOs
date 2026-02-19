@@ -3,7 +3,6 @@ Features:
 - Propagate Error code from simulation
 - Parse TCL values as TCL expression -> Supports variables and expression in arguments
 - Adjust simulation duration and/or precision based on initial run.
-- Parallelize simulation by creating Simulation pool.
 - Measure input capacitance of pin (Frequency sweep vs. RC transient measure) ?
 - Detect non-monotonic behavior in the output ? How to do it fast ?
 - Measure transition power -> Integrate current ?
@@ -14,14 +13,13 @@ Features:
     - How to generate the logic function here properly ?
     - Can we recognize clock polarity automatically ? I think yes!
     - Can we recognize polarity of async pins such as reset / set ? I think too.
-    - Specify by hand: clock, data, async, enable
+    - Specify by hand: clock, data, async, clock_enable
 - Support clock gating cells:
     - Recognize type of gating from simulation.
     - Measure Clock gating check -> How to recognize this messed up ??
 - Simple "database" dumper and reader:
     - Store data model
     - Store Simulation results (compress on the fly due to size).
-- Add CCS model support.
 - Verilog writer
     - First step - With UDPs, no timing for starters
     - Optionally behavioral description
@@ -29,6 +27,7 @@ Features:
 - VHDL writer
     - First step - Behavioral logic only
     - Secon step - Add VITAL writer
+- Add CCS model support.
 - Detect weird cases
     - E.g. Pin value does not start / end in expected value as per simulation.
 

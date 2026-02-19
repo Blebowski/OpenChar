@@ -6,6 +6,7 @@
 #include <vector>
 #include <string>
 #include <filesystem>
+#include <functional>
 
 #include "open_char.h"
 #include "Pin.h"
@@ -31,6 +32,9 @@ class Simulation {
 
         int Simulate();
         Waves ReadWaves();
+
+        void SetPostSimCb(std::function<int(void)> post_sim_cb);
+        void ExecutePostSimCb();
 
     private:
 
@@ -61,6 +65,7 @@ class Simulation {
         const std::string std_out_file_ = "stdout.log";
 
         std::filesystem::path sim_dir_;
+        std::function<int(void)> post_sim_cb_;
 
         void WriteTestBench();
 };

@@ -16,11 +16,12 @@ class Algorithms {
     public:
         Algorithms(Context *ctx);
 
-        void MeasureLogicTableAndLeakage(Cell &cell);
-        void MeasureComboDelay(Cell &cell);
+        void PrepareLogicTableAndLeakageSims(Cell &cell);
+        void PrepareComboDelaySims(Cell &cell);
+
         void CalculateLogicFunctions(Cell &cell);
 
-        void CharacterizeCells(Cell &cell);
+        void CharacterizeLibrary();
 
     private:
         Context *ctx_;
@@ -31,7 +32,7 @@ class Algorithms {
         Expression* SumOfProducts(Cell& cell, Pin& opin);
         Expression* ProductOfSums(Cell& cell, Pin& opin);
         Expression* RecognizeXor(Cell& cell, Pin& opin);
-        int MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
+        int PrepareTimingArcSims(Pin *opin, int64_t in_from, int64_t in_to,
                                  int out_from, int out_to);
 };
 

@@ -7,7 +7,8 @@ namespace open_char {
 Context::Context(Tcl_Interp* tcl_interp) :
     library_(this),
     algorithms_(this),
-    tcl_interp_(tcl_interp)
+    tcl_interp_(tcl_interp),
+    sim_pool_(this)
 {}
 
 Context::~Context()
@@ -57,6 +58,11 @@ Tcl_Interp* Context::GetTclInterp()
 {
     assert(tcl_interp_ != nullptr);
     return tcl_interp_;
+}
+
+SimulationPool& Context::GetSimulationPool()
+{
+    return sim_pool_;
 }
 
 Variables& Context::GetVariables()

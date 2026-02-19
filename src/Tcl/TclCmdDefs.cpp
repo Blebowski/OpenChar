@@ -19,10 +19,7 @@ CREATE_TCL_COMMAND(
 
     ARG({}),
     ARG({
-        for (auto & cell : ctx_->GetLibrary().GetCells()) {
-            ctx_->GetAlgorithms().CharacterizeCells(cell.second);
-        }
-
+        ctx_->GetAlgorithms().CharacterizeLibrary();
         return TCL_OK;
     })
 )

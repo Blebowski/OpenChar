@@ -158,6 +158,16 @@ int Simulation::Simulate()
     return exit_code;
 }
 
+void Simulation::SetPostSimCb(std::function<int(void)> post_sim_cb)
+{
+    post_sim_cb_ = post_sim_cb;
+}
+
+void Simulation::ExecutePostSimCb()
+{
+    post_sim_cb_();
+}
+
 Waves Simulation::ReadWaves()
 {
     std::filesystem::path wave_path = sim_dir_ / wave_file_;
