@@ -101,7 +101,8 @@ void Simulation::WriteTestBench()
 
     fprintf(f, "* Loads\n");
     for (const auto &l : loads_) {
-        fprintf(f, "C%s %s %s %fpF\n", l.first->name_, l.first->name_,
+        fprintf(f, "V%s %s %s_VSRC 0\n", l.first->name_, l.first->name_, l.first->name_);
+        fprintf(f, "C%s %s_VSRC %s %fpF\n", l.first->name_, l.first->name_,
                                        supply_->GetGndName(), l.second);
     }
     fprintf(f, "\n");
@@ -125,6 +126,10 @@ void Simulation::WriteTestBench()
         fprintf(f, ".SAVE %s\n", pin.name_);
     }
     fprintf(f, ".SAVE i(V%s)\n", supply_->GetVddName());
+    for (const auto &l : loads_) {
+        fprintf(f, ".SAVE i(V%s)\n", l.first->name_);
+    }
+
     fprintf(f, "\n");
 
     if (kind_ == SimulationKind::TRAN)
