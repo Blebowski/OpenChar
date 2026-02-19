@@ -55,7 +55,7 @@ CREATE_TCL_COMMAND(
         }
 
         Template& t = ctx_->GetLibrary().GetTemplate(templ_name);
-        if (t.kind_ != TemplateKind::DELAY) {
+        if (t.GetKind() != TemplateKind::DELAY) {
             error("Template '%s' is not a delay template.", templ_name);
             return TCL_ERROR;
         }
@@ -141,14 +141,14 @@ CREATE_TCL_COMMAND(
             ctx_->GetLibrary().AddTemplate(Tcl_GetString(opts_["template_name"].objv_));
 
         if (!template_p.second) {
-            error("Template %s already exists.\n", template_p.first.name_);
+            error("Template %s already exists.\n", template_p.first.GetName());
             return TCL_ERROR;
         }
 
         if (type == "delay") {
-            template_p.first.kind_ = TemplateKind::DELAY;
+            template_p.first.SetKind(TemplateKind::DELAY);
         } else {
-            template_p.first.kind_ = TemplateKind::POWER;
+            template_p.first.SetKind(TemplateKind::POWER);
         }
 
         if (opts_["-index_1"].isSet()) {
@@ -169,7 +169,7 @@ CREATE_TCL_COMMAND(
                     return TCL_ERROR;
                 }
                 min = v;
-                template_p.first.index_1_.push_back(atof(val.c_str()));
+                template_p.first.AddIndex1(atof(val.c_str()));
                 return TCL_OK;
             });
 
@@ -197,7 +197,7 @@ CREATE_TCL_COMMAND(
                     return TCL_ERROR;
                 }
                 min = v;
-                template_p.first.index_2_.push_back(atof(val.c_str()));
+                template_p.first.AddIndex2(atof(val.c_str()));
                 return TCL_OK;
             });
 

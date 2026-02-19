@@ -14,8 +14,11 @@ void test_inv(Context &ctx, Algorithms &algs)
     Cell &c1 = ctx.GetLibrary().GetCell("INV");
 
     Template t("MY_TEMP");
-    t.index_1_ = {0.01, 0.1};
-    t.index_2_ = {0.02, 0.3};
+    t.AddIndex1(0.01);
+    t.AddIndex1(0.1);
+
+    t.AddIndex2(0.02);
+    t.AddIndex2(0.3);
 
     c1.SetDelayTemplate(&t);
 

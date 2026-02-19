@@ -156,11 +156,9 @@ void Algorithms::PrepareLogicTableAndLeakageSims(Cell &cell)
     }
 }
 
-int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b,
-                                     int out_a, int out_b)
+int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b, int out_a, int out_b)
 {
     Cell *cell = opin->cell_;
-    auto i_pins = cell->GetPins(PinDirection::IN);
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
     Template *templ = cell->GetDelayTemplate();
 
@@ -174,15 +172,17 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b,
 
         std::string prefix = "DLY";
         size_t j = 0;
-        for (const auto & i_pin : i_pins) {
+        for (const auto & i_pin : cell->GetPins(PinDirection::IN)) {
             prefix = sprintf("%s_%s%d%d", prefix, i_pin.name_, GetBit(in_from, j), GetBit(in_to, j));
             j++;
         }
 
         int i_tran = 0;
-        for (const NanoSecond in_tran : templ->index_1_) {
+        for (const NanoSecond in_tran : templ->GetIndex1()) {
+
             int i_cap = 0;
-            for (const PicoFarad out_cap : templ->index_2_) {
+            for (const PicoFarad out_cap : templ->GetIndex2()) {
+
                 std::string sim_name = sprintf("%s_TRAN_%f_CAP_%f", prefix, in_tran, out_cap);
 
                 // TODO: Wrap construction to some common tasks
@@ -203,17 +203,18 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b,
                 Pin *tran_pin = nullptr;
                 int tran_from = 0;
 
-                for (auto & i_pin : i_pins) {
+                for (auto & i_pin : cell->GetPins(PinDirection::IN)) {
 
                     int in_from_bit = GetBit(in_from, i);
                     int in_to_bit = GetBit(in_to, i);
 
                     if (in_from_bit == in_to_bit) {
-                        sim->AddStimuli((Pin*)&i_pin, Stimulus((in_from_bit == 1) ? log1_v : log0_v));
+                        sim->AddStimuli((Pin*)&i_pin,
+                                        Stimulus((in_from_bit == 1) ? log1_v : log0_v));
                     } else {
 
                         assert((in_from_bit == 0 && in_to_bit == 1) |
-                            (in_from_bit == 1 && in_to_bit == 0));
+                               (in_from_bit == 1 && in_to_bit == 0));
 
                         NanoSecond in_tran_cor = in_tran;
                         Variables &vars = ctx_->GetVariables();
@@ -232,7 +233,7 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b,
                         // TODO: Refine
                         Stimulus edge (
                             (in_from_bit == 1) ? log1_v : log0_v,
-                            (in_to_bit == 1) ? log1_v : log0_v,
+                            (in_to_bit == 1)   ? log1_v : log0_v,
                             1,
                             in_tran_cor,
                             in_tran_cor,
@@ -260,9 +261,9 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b,
 
                     // Calculate output delay
                     double in_th = (tran_from == 0) ? vars.GetDoubleVariable("delay_in_rise") :
-                                                    vars.GetDoubleVariable("delay_in_fall");
+                                                      vars.GetDoubleVariable("delay_in_fall");
                     double out_th = (out_from == 0) ? vars.GetDoubleVariable("delay_out_rise") :
-                                                    vars.GetDoubleVariable("delay_out_fall");
+                                                      vars.GetDoubleVariable("delay_out_fall");
 
                     NanoSecond in_edge  = FindVoltage(w, tran_pin, tran_from, in_th);
                     NanoSecond out_edge = FindVoltage(w, opin, out_from, out_th);
@@ -282,9 +283,11 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b,
                     NanoSecond high = FindVoltage(w, tran_pin, tran_from, upp_th);
 
                     if (out_from == 0)
-                        timing_arc.AddRiseTransition(i_tran, (out_from == 0) ? high - low : low - high);
+                        timing_arc.AddRiseTransition(i_tran, (out_from == 0) ? high - low :
+                                                                               low - high);
                     else
-                        timing_arc.AddFallTransition(i_tran, (out_from == 0) ? high - low : low - high);
+                        timing_arc.AddFallTransition(i_tran, (out_from == 0) ? high - low :
+                                                                               low - high);
 
                     // TODO: Return some error code
                     return 0;

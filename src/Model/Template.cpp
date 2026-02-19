@@ -28,4 +28,39 @@ void Template::WriteLiberty(size_t tab, FILE* f)
     fprintf(f, "\")\n");
 }
 
+std::vector<double>& Template::GetIndex1()
+{
+    return index_1_;
+}
+
+std::vector<double>& Template::GetIndex2()
+{
+    return index_2_;
+}
+
+void Template::SetKind(TemplateKind kind)
+{
+    kind_ = kind;
+}
+
+TemplateKind Template::GetKind()
+{
+    return kind_;
+}
+
+void Template::AddIndex1(double val)
+{
+    index_1_.push_back(val);
+}
+
+void Template::AddIndex2(double val)
+{
+    index_2_.push_back(val);
+}
+
+std::string Template::GetName()
+{
+    return name_;
+}
+
 }
