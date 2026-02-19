@@ -4,7 +4,7 @@
 
 #include "Algorithms.h"
 #include "Context.h"
-#include "DelayTable.h"
+#include "TimingArc.h"
 #include "Library.h"
 #include "Simulation.h"
 #include "Template.h"
@@ -152,132 +152,139 @@ NanoSecond Algorithms::FindVoltage(Waves &w, Pin *pin, int from, Volt v)
     return w.GetTimeAtIndex(index);
 }
 
-int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_from, int64_t in_to,
-                                     int out_from, int out_to)
+int Algorithms::MeasureOneStateDelay(Pin *opin, int64_t in_a, int64_t in_b,
+                                     int out_a, int out_b)
 {
     Cell *cell = opin->cell_;
     auto i_pins = cell->GetPins(PinDirection::IN);
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
-
-    std::string prefix = "DLY";
-    size_t i = 0;
-    for (const auto & i_pin : i_pins) {
-        prefix = sprintf("%s_%s%d%d", prefix, i_pin.name_, GetBit(in_from, i), GetBit(in_to, i));
-        i++;
-    }
-
     Template *templ = cell->GetDelayTemplate();
-    DelayTable delay_table(opin, templ, in_from, in_to, out_from, out_to);
+    TimingArc timing_arc(opin, templ, in_a, in_b, out_a, out_b);
 
-    int i_tran = 0;
-    for (const NanoSecond in_tran : templ->index_1_) {
+    for (size_t i = 0; i < 2; i++) {
+        int64_t in_from     = (i == 0) ? in_a  : in_b;
+        int64_t in_to       = (i == 0) ? in_b  : in_a;
+        int     out_from    = (i == 0) ? out_a : out_b;
 
-        int i_cap = 0;
-        for (const PicoFarad out_cap : templ->index_2_) {
-
-            std::string sim_name = sprintf("%s_TRAN_%f_CAP_%f", prefix, in_tran, out_cap);
-
-            Simulation sim {ctx_, sim_name, cell, SimulationKind::TRAN};
-            sim.SetTemp(op_cond.GetTemperature());
-            sim.SetSupply(op_cond.GetSupply());
-
-            for (const auto & netlist : ctx_->GetNetlists())
-                sim.AddInclude(netlist);
-
-            for (const auto & model : ctx_->GetModels())
-                sim.AddModel(model);
-
-            Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
-            Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
-
-            int i = 0;
-            Pin *tran_pin = nullptr;
-            int tran_from = 0;
-
-            for (auto & i_pin : i_pins) {
-
-                int in_from_bit = GetBit(in_from, i);
-                int in_to_bit = GetBit(in_to, i);
-
-                if (in_from_bit == in_to_bit) {
-                    sim.AddStimuli((Pin*)&i_pin, Stimulus((in_from_bit == 1) ? log1_v : log0_v));
-                } else {
-
-                    assert((in_from_bit == 0 && in_to_bit == 1) |
-                           (in_from_bit == 1 && in_to_bit == 0));
-
-                    NanoSecond in_tran_cor = in_tran;
-                    Variables &vars = ctx_->GetVariables();
-
-                    // Assumes linear ramp
-                    if (in_from_bit == 0) {
-                        double slew_lower_rise = vars.GetDoubleVariable("slew_lower_rise");
-                        double slew_upper_rise = vars.GetDoubleVariable("slew_upper_rise");
-                        in_tran_cor *= (1 + slew_lower_rise + (1 - slew_upper_rise));
-                    } else {
-                        double slew_lower_fall = vars.GetDoubleVariable("slew_lower_fall");
-                        double slew_upper_fall = vars.GetDoubleVariable("slew_upper_fall");
-                        in_tran_cor *= (1 + slew_lower_fall + (1 - slew_upper_fall));
-                    }
-
-                    // TODO: Refine
-                    Stimulus edge (
-                        (in_from_bit == 1) ? log1_v : log0_v,
-                          (in_to_bit == 1) ? log1_v : log0_v,
-                         1,
-                         in_tran_cor,
-                         in_tran_cor,
-                         100,
-                         100,
-                         1
-                    );
-                    sim.AddStimuli((Pin*)&i_pin, std::move(edge));
-                    tran_pin = &i_pin;
-                    tran_from = in_from_bit;
-                }
-
-                i++;
-            }
-
-            sim.AddLoad(opin, out_cap);
-
-            // TODO: Propagate error
-            sim.Simulate();
-            Waves w = sim.ReadWaves();
-
-            assert(tran_pin != nullptr);
-            Variables &vars = ctx_->GetVariables();
-
-            // Calculate output delay
-
-            double in_th = (tran_from == 0) ? vars.GetDoubleVariable("delay_in_rise") :
-                                              vars.GetDoubleVariable("delay_in_fall");
-            double out_th = (out_from == 0) ? vars.GetDoubleVariable("delay_out_rise") :
-                                              vars.GetDoubleVariable("delay_out_fall");
-
-            NanoSecond in_edge  = FindVoltage(w, tran_pin, tran_from, in_th);
-            NanoSecond out_edge = FindVoltage(w, opin, out_from, out_th);
-            delay_table.AddDelay(i_tran, out_edge - in_edge);
-
-            // Calculate output transition
-            double upp_th = (out_from == 0) ? vars.GetDoubleVariable("slew_upper_rise") :
-                                              vars.GetDoubleVariable("slew_upper_fall");
-            double low_th = (out_from == 0) ? vars.GetDoubleVariable("slew_lower_rise") :
-                                              vars.GetDoubleVariable("slew_lower_fall");
-
-            NanoSecond low  = FindVoltage(w, tran_pin, tran_from, low_th);
-            NanoSecond high = FindVoltage(w, tran_pin, tran_from, upp_th);
-
-            delay_table.AddTransition(i_tran, (out_from == 0) ? high - low : low - high);
-
-            i_cap++;
+        std::string prefix = "DLY";
+        size_t j = 0;
+        for (const auto & i_pin : i_pins) {
+            prefix = sprintf("%s_%s%d%d", prefix, i_pin.name_, GetBit(in_from, j), GetBit(in_to, j));
+            j++;
         }
 
-        i_tran++;
+        int i_tran = 0;
+        for (const NanoSecond in_tran : templ->index_1_) {
+            int i_cap = 0;
+            for (const PicoFarad out_cap : templ->index_2_) {
+                std::string sim_name = sprintf("%s_TRAN_%f_CAP_%f", prefix, in_tran, out_cap);
+
+                Simulation sim {ctx_, sim_name, cell, SimulationKind::TRAN};
+                sim.SetTemp(op_cond.GetTemperature());
+                sim.SetSupply(op_cond.GetSupply());
+
+                for (const auto & netlist : ctx_->GetNetlists())
+                    sim.AddInclude(netlist);
+
+                for (const auto & model : ctx_->GetModels())
+                    sim.AddModel(model);
+
+                Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
+                Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+
+                int i = 0;
+                Pin *tran_pin = nullptr;
+                int tran_from = 0;
+
+                for (auto & i_pin : i_pins) {
+
+                    int in_from_bit = GetBit(in_from, i);
+                    int in_to_bit = GetBit(in_to, i);
+
+                    if (in_from_bit == in_to_bit) {
+                        sim.AddStimuli((Pin*)&i_pin, Stimulus((in_from_bit == 1) ? log1_v : log0_v));
+                    } else {
+
+                        assert((in_from_bit == 0 && in_to_bit == 1) |
+                            (in_from_bit == 1 && in_to_bit == 0));
+
+                        NanoSecond in_tran_cor = in_tran;
+                        Variables &vars = ctx_->GetVariables();
+
+                        // Assumes linear ramp
+                        if (in_from_bit == 0) {
+                            double slew_lower_rise = vars.GetDoubleVariable("slew_lower_rise");
+                            double slew_upper_rise = vars.GetDoubleVariable("slew_upper_rise");
+                            in_tran_cor *= (1 + slew_lower_rise + (1 - slew_upper_rise));
+                        } else {
+                            double slew_lower_fall = vars.GetDoubleVariable("slew_lower_fall");
+                            double slew_upper_fall = vars.GetDoubleVariable("slew_upper_fall");
+                            in_tran_cor *= (1 + slew_lower_fall + (1 - slew_upper_fall));
+                        }
+
+                        // TODO: Refine
+                        Stimulus edge (
+                            (in_from_bit == 1) ? log1_v : log0_v,
+                            (in_to_bit == 1) ? log1_v : log0_v,
+                            1,
+                            in_tran_cor,
+                            in_tran_cor,
+                            100,
+                            100,
+                            1
+                        );
+                        sim.AddStimuli((Pin*)&i_pin, std::move(edge));
+                        tran_pin = &i_pin;
+                        tran_from = in_from_bit;
+                    }
+
+                    i++;
+                }
+                sim.AddLoad(opin, out_cap);
+
+                // TODO: Propagate error
+                sim.Simulate();
+                Waves w = sim.ReadWaves();
+
+                assert(tran_pin != nullptr);
+                Variables &vars = ctx_->GetVariables();
+
+                // Calculate output delay
+                double in_th = (tran_from == 0) ? vars.GetDoubleVariable("delay_in_rise") :
+                                                  vars.GetDoubleVariable("delay_in_fall");
+                double out_th = (out_from == 0) ? vars.GetDoubleVariable("delay_out_rise") :
+                                                  vars.GetDoubleVariable("delay_out_fall");
+
+                NanoSecond in_edge  = FindVoltage(w, tran_pin, tran_from, in_th);
+                NanoSecond out_edge = FindVoltage(w, opin, out_from, out_th);
+
+                if (out_from == 0)
+                    timing_arc.AddRiseDelay(i_tran, out_edge - in_edge);
+                else
+                    timing_arc.AddFallDelay(i_tran, out_edge - in_edge);
+
+                // Calculate output transition
+                double upp_th = (out_from == 0) ? vars.GetDoubleVariable("slew_upper_rise") :
+                                                  vars.GetDoubleVariable("slew_upper_fall");
+                double low_th = (out_from == 0) ? vars.GetDoubleVariable("slew_lower_rise") :
+                                                  vars.GetDoubleVariable("slew_lower_fall");
+
+                NanoSecond low  = FindVoltage(w, tran_pin, tran_from, low_th);
+                NanoSecond high = FindVoltage(w, tran_pin, tran_from, upp_th);
+
+                if (out_from == 0)
+                    timing_arc.AddRiseTransition(i_tran, (out_from == 0) ? high - low : low - high);
+                else
+                    timing_arc.AddFallTransition(i_tran, (out_from == 0) ? high - low : low - high);
+
+                i_cap++;
+            }
+            i_tran++;
+        }
     }
 
-    delay_table.Print();
-    opin->AddDelayTable(delay_table);
+    timing_arc.Print();
+    opin->AddTimingArc(timing_arc);
 
     return 0;
 }
@@ -338,7 +345,6 @@ void Algorithms::MeasureComboDelay(Cell &cell)
         // Simulate all test vectors - Both directions
         for (const auto & tv : test_vects) {
             MeasureOneStateDelay(&o_pin, tv.in_i, tv.in_j, tv.out_i, tv.out_j);
-            MeasureOneStateDelay(&o_pin, tv.in_j, tv.in_i, tv.out_j, tv.out_i);
         }
     }
 }

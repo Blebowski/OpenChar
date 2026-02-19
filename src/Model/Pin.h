@@ -6,7 +6,7 @@
 #include <vector>
 
 #include "open_char.h"
-#include "DelayTable.h"
+#include "TimingArc.h"
 #include "Expression.h"
 
 namespace open_char {
@@ -28,8 +28,8 @@ class Pin {
         std::pair<int64_t, int> GetLogicTableEntry(int index);
 
         // TODO: Avoid copying here
-        void AddDelayTable(DelayTable delay_table);
-        std::vector<DelayTable>& GetDelayTables();
+        void AddTimingArc(TimingArc timing_arc);
+        std::vector<TimingArc>& GetTimingArcs();
 
         const std::vector<std::pair<int64_t, int>>& GetLogicTable();
         void PrintLogicTable();
@@ -44,7 +44,8 @@ class Pin {
         // First value - Cell inputs
         // Second value - Cell output
         std::vector<std::pair<int64_t, int>> logic_table_;
-        std::vector<DelayTable> delay_tables_;
+
+        std::vector<TimingArc> timing_arcs_;
 
         Expression *func_;
 

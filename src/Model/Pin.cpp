@@ -45,14 +45,14 @@ const std::vector<std::pair<int64_t, int>>& Pin::GetLogicTable()
     return logic_table_;
 }
 
-void Pin::AddDelayTable(DelayTable delay_table)
+void Pin::AddTimingArc(TimingArc timing_arc)
 {
-    delay_tables_.push_back(delay_table);
+    timing_arcs_.push_back(timing_arc);
 }
 
-std::vector<DelayTable>& Pin::GetDelayTables()
+std::vector<TimingArc>& Pin::GetTimingArcs()
 {
-    return delay_tables_;
+    return timing_arcs_;
 }
 
 void Pin::PrintLogicTable()
@@ -150,8 +150,8 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
         TAB_FPRINTF(tab, f, "capacitance : 0.0 ;\n");
 
         if (direction_ == PinDirection::OUT) {
-            for (auto & delay_table : delay_tables_) {
-                delay_table.WriteLiberty(f, tab);
+            for (auto & arc : timing_arcs_) {
+                arc.WriteLiberty(f, tab);
             }
         }
 

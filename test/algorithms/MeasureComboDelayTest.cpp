@@ -29,18 +29,18 @@ void test_inv(Context &ctx, Algorithms &algs)
 
     Pin& pin = c1.GetPin("Y");
 
-    std::vector<DelayTable>& dts = pin.GetDelayTables();
+    TimingArc& arc = pin.GetTimingArcs()[0];
 
     // Default numbers for basic NMOS and PMOS in NGSPICE
-    assert (dts[0].GetDelays()[0][0] > 0.18 && dts[0].GetDelays()[0][0] < 0.19);
-    assert (dts[0].GetDelays()[0][1] > 2.72 && dts[0].GetDelays()[0][1] < 2.73);
-    assert (dts[0].GetDelays()[1][0] > 0.20 && dts[0].GetDelays()[1][0] < 0.21);
-    assert (dts[0].GetDelays()[1][1] > 2.75 && dts[0].GetDelays()[1][1] < 2.76);
+    assert (arc.GetFallDelays()[0][0] > 0.18 && arc.GetFallDelays()[0][0] < 0.19);
+    assert (arc.GetFallDelays()[0][1] > 2.72 && arc.GetFallDelays()[0][1] < 2.73);
+    assert (arc.GetFallDelays()[1][0] > 0.20 && arc.GetFallDelays()[1][0] < 0.21);
+    assert (arc.GetFallDelays()[1][1] > 2.75 && arc.GetFallDelays()[1][1] < 2.76);
 
-    assert (dts[1].GetDelays()[0][0] > 0.09 && dts[1].GetDelays()[0][0] < 0.10);
-    assert (dts[1].GetDelays()[0][1] > 1.36 && dts[1].GetDelays()[0][1] < 1.37);
-    assert (dts[1].GetDelays()[1][0] > 0.11 && dts[1].GetDelays()[1][0] < 0.12);
-    assert (dts[1].GetDelays()[1][1] > 1.38 && dts[1].GetDelays()[1][1] < 1.39);
+    assert (arc.GetRiseDelays()[0][0] > 0.09 && arc.GetRiseDelays()[0][0] < 0.10);
+    assert (arc.GetRiseDelays()[0][1] > 1.36 && arc.GetRiseDelays()[0][1] < 1.37);
+    assert (arc.GetRiseDelays()[1][0] > 0.11 && arc.GetRiseDelays()[1][0] < 0.12);
+    assert (arc.GetRiseDelays()[1][1] > 1.38 && arc.GetRiseDelays()[1][1] < 1.39);
 
     /*
     Inputs from: 00000000
