@@ -4,7 +4,7 @@
 
 #include "Algorithms.h"
 #include "Context.h"
-#include "TimingArc.h"
+#include "Arc.h"
 #include "Library.h"
 #include "Simulation.h"
 #include "Template.h"
@@ -116,14 +116,14 @@ void Algorithms::PrepareLogicTableAndLeakageSims(Cell &cell)
     }
 }
 
-int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b, int out_a, int out_b)
+int Algorithms::PrepareComboArcSims(Pin *opin, int64_t in_a, int64_t in_b, int out_a, int out_b)
 {
     Cell *cell = opin->cell_;
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
     Template *templ = cell->GetDelayTemplate();
 
-    opin->AddTimingArc(TimingArc(opin, templ, in_a, in_b, out_a, out_b));
-    size_t timing_arc_index = opin->GetTimingArcs().size() - 1;
+    opin->AddArc(Arc(opin, templ, in_a, in_b, out_a, out_b));
+    size_t arc_index = opin->GetArcs().size() - 1;
 
     for (size_t i = 0; i < 2; i++) {
         int64_t in_from     = (i == 0) ? in_a  : in_b;
@@ -211,14 +211,15 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b, int 
                 sim->AddLoad(opin, out_cap);
 
                 auto post_sim_cb = [this, sim, tran_pin, opin, i_tran,
-                                    tran_from, out_from, timing_arc_index] () {
+                                    tran_from, out_from, arc_index] () {
 
                     Waves w = sim->ReadWaves();
-                    TimingArc& timing_arc = opin->GetTimingArcs()[timing_arc_index];
+                    Arc& arc = opin->GetArcs()[arc_index];
 
                     assert(tran_pin != nullptr);
                     Variables &vars = ctx_->GetVariables();
                     Volt vdd = ctx_->GetLibrary().GetOpCond().GetSupply()->GetVddVoltage();
+                    std::string vdd_name = ctx_->GetLibrary().GetOpCond().GetSupply()->GetVddName();
 
                     // Calculate output delay
                     double in_th = (tran_from == 0) ? vars.GetDoubleVariable("delay_in_rise") :
@@ -228,15 +229,13 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b, int 
 
                     in_th *= vdd;
                     out_th *= vdd;
-                    NanoSecond in_edge  =
-                        w.FindTimeOfVoltageMonotonic(tran_pin->name_, tran_from, in_th);
-                    NanoSecond out_edge =
-                        w.FindTimeOfVoltageMonotonic(opin->name_, out_from, out_th);
+                    NanoSecond in_edge  = w.FindTransitionTime(tran_pin->name_, tran_from, in_th);
+                    NanoSecond out_edge = w.FindTransitionTime(opin->name_, out_from, out_th);
 
                     if (out_from == 0)
-                        timing_arc.AddRiseDelay(i_tran, out_edge - in_edge);
+                        arc.AddRiseDelay(i_tran, out_edge - in_edge);
                     else
-                        timing_arc.AddFallDelay(i_tran, out_edge - in_edge);
+                        arc.AddFallDelay(i_tran, out_edge - in_edge);
 
                     // Calculate output transition
                     double upp_th = (out_from == 0) ? vars.GetDoubleVariable("slew_upper_rise") :
@@ -247,15 +246,53 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b, int 
                     upp_th *= vdd;
                     low_th *= vdd;
 
-                    NanoSecond low  = w.FindTimeOfVoltageMonotonic(opin->name_, out_from, low_th);
-                    NanoSecond high = w.FindTimeOfVoltageMonotonic(opin->name_, out_from, upp_th);
+                    NanoSecond low  = w.FindTransitionTime(opin->name_, out_from, low_th);
+                    NanoSecond high = w.FindTransitionTime(opin->name_, out_from, upp_th);
 
                     if (out_from == 0)
-                        timing_arc.AddRiseTransition(i_tran, (out_from == 0) ? high - low :
+                        arc.AddRiseTransition(i_tran, (out_from == 0) ? high - low :
                                                                                low - high);
                     else
-                        timing_arc.AddFallTransition(i_tran, (out_from == 0) ? high - low :
+                        arc.AddFallTransition(i_tran, (out_from == 0) ? high - low :
                                                                                low - high);
+
+                    // Calculate power
+                    std::vector<NanoWatt> pwr;
+                    std::vector<MicroAmp> i_vdd = w.GetCurrent(vdd_name);
+                    std::vector<MicroAmp> i_out = w.GetCurrent(opin->name_);
+
+                    NanoWatt lkg = i_vdd[0] * vdd * 1E3;
+
+                    assert (i_vdd.size() == i_out.size());
+
+                    for (size_t i = 0; i < i_vdd.size(); i++) {
+                        pwr.push_back(((i_vdd[i] + i_out[i]) * vdd * 1E3) - lkg);
+                    }
+
+                    // Integrate total energy between the transitions between 1 and 99 percent
+                    // TODO: Figure out if this is the proper way!
+                    Volt th_start = (tran_from == 0) ? vdd * 0.01 : vdd * 0.99;
+                    Volt th_end = (out_from == 0) ? vdd * 0.99 : vdd * 0.01;
+
+                    size_t pwr_start = w.FindTransitionIndex(tran_pin->name_, tran_from, th_start);
+                    size_t pwr_end = w.FindTransitionIndex(opin->name_, out_from, th_end);
+
+                    PicoJoule e = 0;
+                    NanoSecond step = sim->GetTimeStep();
+
+                    for (size_t i = pwr_start; i < pwr_end; i++) {
+                        //printf("PWR is: %.10f nW, Step is: %f NS\n", pwr[i], step);
+                        e += pwr[i] * step;
+                    }
+
+                    // ns * nW gives us "atto Joule" -> divide to get pJ
+                    e /= 1E6;
+
+                    if (out_from == 0) {
+                        arc.AddFallPower(i_tran, e);
+                    } else {
+                        arc.AddRisePower(i_tran, e);
+                    }
 
                     // TODO: Return some error code
                     return 0;
@@ -328,7 +365,7 @@ void Algorithms::PrepareComboDelaySims(Cell &cell)
 
         // Simulate all test vectors - Both directions
         for (const auto & tv : test_vects) {
-            PrepareTimingArcSims(&o_pin, tv.in_i, tv.in_j, tv.out_i, tv.out_j);
+            PrepareComboArcSims(&o_pin, tv.in_i, tv.in_j, tv.out_i, tv.out_j);
         }
     }
 }

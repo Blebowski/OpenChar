@@ -1,15 +1,14 @@
 
 
 #include "Cell.h"
-#include "TimingArc.h"
+#include "Arc.h"
 #include "Pin.h"
 #include "Template.h"
 #include "Utils.h"
 
 namespace open_char {
 
-TimingArc::TimingArc(Pin *pin, Template *templ, int64_t in_a,
-                     int64_t in_b, int out_a, int out_b) :
+Arc::Arc(Pin *pin, Template *templ, int64_t in_a, int64_t in_b, int out_a, int out_b) :
     pin_(pin),
     template_(templ),
     in_a_(in_a),
@@ -18,55 +17,79 @@ TimingArc::TimingArc(Pin *pin, Template *templ, int64_t in_a,
     out_b_(out_b)
 {}
 
-void TimingArc::AddRiseDelay(size_t row, NanoSecond delay)
+void Arc::AddRiseDelay(size_t row, NanoSecond delay)
 {
     while (rise_delays_.size() <= row)
         rise_delays_.push_back(std::vector<NanoSecond>());
     rise_delays_[row].push_back(delay);
 }
 
-void TimingArc::AddFallDelay(size_t row, NanoSecond delay)
+void Arc::AddFallDelay(size_t row, NanoSecond delay)
 {
     while (fall_delays_.size() <= row)
         fall_delays_.push_back(std::vector<NanoSecond>());
     fall_delays_[row].push_back(delay);
 }
 
-std::vector<std::vector<NanoSecond>>& TimingArc::GetRiseDelays()
+std::vector<std::vector<NanoSecond>>& Arc::GetRiseDelays()
 {
     return rise_delays_;
 }
 
-std::vector<std::vector<NanoSecond>>& TimingArc::GetFallDelays()
+std::vector<std::vector<NanoSecond>>& Arc::GetFallDelays()
 {
     return fall_delays_;
 }
 
-void TimingArc::AddRiseTransition(size_t row, NanoSecond transition)
+void Arc::AddRiseTransition(size_t row, NanoSecond transition)
 {
     while (rise_transitions_.size() <= row)
         rise_transitions_.push_back(std::vector<NanoSecond>());
     rise_transitions_[row].push_back(transition);
 }
 
-void TimingArc::AddFallTransition(size_t row, NanoSecond transition)
+void Arc::AddFallTransition(size_t row, NanoSecond transition)
 {
     while (fall_transitions_.size() <= row)
         fall_transitions_.push_back(std::vector<NanoSecond>());
     fall_transitions_[row].push_back(transition);
 }
 
-std::vector<std::vector<NanoSecond>>& TimingArc::GetRiseTransitions()
+std::vector<std::vector<NanoSecond>>& Arc::GetRiseTransitions()
 {
     return rise_transitions_;
 }
 
-std::vector<std::vector<NanoSecond>>& TimingArc::GetFallTransitions()
+std::vector<std::vector<NanoSecond>>& Arc::GetFallTransitions()
 {
     return fall_transitions_;
 }
 
-void TimingArc::Print()
+void Arc::AddRisePower(size_t row, PicoJoule energy)
+{
+    while (rise_power_.size() <= row)
+        rise_power_.push_back(std::vector<PicoJoule>());
+    rise_power_[row].push_back(energy);
+}
+
+void Arc::AddFallPower(size_t row, PicoJoule energy)
+{
+    while (fall_power_.size() <= row)
+        fall_power_.push_back(std::vector<PicoJoule>());
+    fall_power_[row].push_back(energy);
+}
+
+std::vector<std::vector<PicoJoule>>& Arc::GetRisePowers()
+{
+    return rise_power_;
+}
+
+std::vector<std::vector<NanoSecond>>& Arc::GetFallPowers()
+{
+    return fall_power_;
+}
+
+void Arc::Print()
 {
     size_t width = std::max(rise_delays_[0].size() * 10 + 1,
                             fall_delays_[0].size() * 10 + 1);
@@ -109,7 +132,7 @@ void TimingArc::Print()
     PRINT_LINE(width)
 }
 
-Pin* TimingArc::GetRelatedPin()
+Pin* Arc::GetRelatedPin()
 {
     int64_t diff = in_a_ ^ in_b_;
 
@@ -131,7 +154,7 @@ Pin* TimingArc::GetRelatedPin()
     return rel_pin;
 }
 
-bool TimingArc::isPositiveUnate()
+bool Arc::isPositiveUnate()
 {
     int64_t diff = in_a_ ^ in_b_;
 
@@ -161,7 +184,35 @@ bool TimingArc::isPositiveUnate()
     }
 }
 
-void TimingArc::WriteLiberty(FILE *f, size_t tab)
+void Arc::WriteTable(FILE *f, size_t tab, std::vector<std::vector<double>>& data,
+                     std::string title)
+{
+    TAB_FPRINTF(tab, f, "%s() {\n", title);
+    tab++;
+
+    template_->WriteLiberty(tab, f);
+
+    TAB_FPRINTF(tab, f, "values ( \\\n");
+    tab++;
+
+    for (const auto & row : data) {
+        TAB_FPRINTF(tab, f, "\"");
+        size_t i = 0;
+        for (const double & d : row) {
+            fprintf(f, "%f%s", d, (i < row.size() - 1) ? ", " : "");
+            i++;
+        }
+        fprintf(f, "\" \\\n");
+    }
+
+    tab--;
+    TAB_FPRINTF(tab, f, ") ;\n");
+
+    tab--;
+    TAB_FPRINTF(tab, f, "} /* end %s */\n", title);
+}
+
+void Arc::WriteLiberty(FILE *f, size_t tab)
 {
     TAB_FPRINTF(tab, f, "timing () {\n");
     tab++;
@@ -173,111 +224,40 @@ void TimingArc::WriteLiberty(FILE *f, size_t tab)
                         (isPositiveUnate()) ? "positive" : "negative");
 
     if (rise_delays_.size() > 0) {
-        TAB_FPRINTF(tab, f, "cell_rise() {\n");
-        tab++;
-
-        template_->WriteLiberty(tab, f);
-
-        TAB_FPRINTF(tab, f, "values ( \\\n");
-        tab++;
-
-        for (const auto & row : rise_delays_) {
-            TAB_FPRINTF(tab, f, "\"");
-            size_t i = 0;
-            for (const NanoSecond & d : row) {
-                fprintf(f, "%f%s", d, (i < row.size() - 1) ? ", " : "");
-                i++;
-            }
-            fprintf(f, "\" \\\n");
-        }
-
-        tab--;
-        TAB_FPRINTF(tab, f, ") ;\n");
-
-        tab--;
-        TAB_FPRINTF(tab, f, "} /* end cell_rise */\n");
+        WriteTable(f, tab, rise_delays_, "cell_rise");
     }
 
     if (rise_transitions_.size() > 0) {
-        TAB_FPRINTF(tab, f, "rise_transition() {\n");
-        tab++;
-
-        template_->WriteLiberty(tab, f);
-
-        TAB_FPRINTF(tab, f, "values ( \\\n");
-        tab++;
-
-        for (const auto & row : rise_transitions_) {
-            TAB_FPRINTF(tab, f, "\"");
-            size_t i = 0;
-            for (const NanoSecond & d : row) {
-                fprintf(f, "%f%s", d, (i < row.size() - 1) ? ", " : "");
-                i++;
-            }
-            fprintf(f, "\" \\\n");
-        }
-
-        tab--;
-        TAB_FPRINTF(tab, f, ") ;\n");
-
-        tab--;
-        TAB_FPRINTF(tab, f, "} /* end rise_transition */\n");
+        WriteTable(f, tab, rise_transitions_, "rise_transition");
     }
 
     if (fall_delays_.size() > 0) {
-        TAB_FPRINTF(tab, f, "cell_fall() {\n");
-        tab++;
-
-        template_->WriteLiberty(tab, f);
-
-        TAB_FPRINTF(tab, f, "values ( \\\n");
-        tab++;
-
-        for (const auto & row : fall_delays_) {
-            TAB_FPRINTF(tab, f, "\"");
-            size_t i = 0;
-            for (const NanoSecond & d : row) {
-                fprintf(f, "%f%s", d, (i < row.size() - 1) ? ", " : "");
-                i++;
-            }
-            fprintf(f, "\" \\\n");
-        }
-
-        tab--;
-        TAB_FPRINTF(tab, f, ") ;\n");
-
-        tab--;
-        TAB_FPRINTF(tab, f, "} /* end cell_rise */\n");
+        WriteTable(f, tab, fall_delays_, "cell_fall");
     }
 
     if (fall_transitions_.size() > 0) {
-        TAB_FPRINTF(tab, f, "fall_transition() {\n");
-        tab++;
-
-        template_->WriteLiberty(tab, f);
-
-        TAB_FPRINTF(tab, f, "values ( \\\n");
-        tab++;
-
-        for (const auto & row : fall_transitions_) {
-            TAB_FPRINTF(tab, f, "\"");
-            size_t i = 0;
-            for (const NanoSecond & d : row) {
-                fprintf(f, "%f%s", d, (i < row.size() - 1) ? ", " : "");
-                i++;
-            }
-            fprintf(f, "\" \\\n");
-        }
-
-        tab--;
-        TAB_FPRINTF(tab, f, ") ;\n");
-
-        tab--;
-        TAB_FPRINTF(tab, f, "} /* end rise_transitions */\n");
+        WriteTable(f, tab, fall_transitions_, "fall_transition");
     }
     tab--;
 
     TAB_FPRINTF(tab, f, "} /* end timing */\n");
+
+    TAB_FPRINTF(tab, f, "internal_power () {\n");
+    tab++;
+
+    TAB_FPRINTF(tab, f, "related_pin : %s ;\n", rel_pin->name_);
+
+    if (rise_power_.size() > 0) {
+        WriteTable(f, tab, rise_power_, "rise_power");
+    }
+
+    if (rise_power_.size() > 0) {
+        WriteTable(f, tab, fall_power_, "fall_power");
+    }
+
+    tab--;
+    TAB_FPRINTF(tab, f, "}\n");
+
 }
 
 }

@@ -30,8 +30,8 @@ class Algorithms {
         Expression* SumOfProducts(Cell& cell, Pin& opin);
         Expression* ProductOfSums(Cell& cell, Pin& opin);
         Expression* RecognizeXor(Cell& cell, Pin& opin);
-        int PrepareTimingArcSims(Pin *opin, int64_t in_from, int64_t in_to,
-                                 int out_from, int out_to);
+        int PrepareComboArcSims(Pin *opin, int64_t in_from, int64_t in_to,
+                                int out_from, int out_to);
 };
 
 }

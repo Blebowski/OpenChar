@@ -217,7 +217,7 @@ NanoSecond Waves::GetTimeAtIndex(size_t index)
 }
 
 
-NanoSecond Waves::FindTimeOfVoltageMonotonic(std::string name, int from, Volt th)
+size_t Waves::FindTransitionIndex(std::string name, int from, Volt th)
 {
     assert (voltages_.contains(name));
 
@@ -249,6 +249,15 @@ NanoSecond Waves::FindTimeOfVoltageMonotonic(std::string name, int from, Volt th
         step /= 2;
     }
 
-    return GetTimeAtIndex(index);
+    if (index > d.size() - 1)
+        index = d.size() - 1;
+
+    return index;
 }
+
+NanoSecond Waves::FindTransitionTime(std::string name, int from, Volt th)
+{
+    return GetTimeAtIndex(FindTransitionIndex(name, from, th));
+}
+
 }

@@ -1,8 +1,8 @@
 
 target_sources(lib_open_char PRIVATE
+    Arc.cpp
     Cell.cpp
     Context.cpp
-    TimingArc.cpp
     Expression.cpp
     Library.cpp
     OpCond.cpp

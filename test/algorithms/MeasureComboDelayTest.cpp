@@ -40,7 +40,7 @@ void test_inv(Context &ctx, Algorithms &algs)
 
     Pin& pin = c1.GetPin("Y");
 
-    TimingArc& arc = pin.GetTimingArcs()[0];
+    Arc& arc = pin.GetArcs()[0];
 
     // Default numbers for basic NMOS and PMOS in NGSPICE
     assert (arc.GetFallDelays()[0][0] > 0.18 && arc.GetFallDelays()[0][0] < 0.19);

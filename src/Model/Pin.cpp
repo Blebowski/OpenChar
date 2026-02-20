@@ -45,14 +45,14 @@ const std::vector<std::pair<int64_t, int>>& Pin::GetLogicTable()
     return logic_table_;
 }
 
-void Pin::AddTimingArc(TimingArc timing_arc)
+void Pin::AddArc(Arc arc)
 {
-    timing_arcs_.push_back(timing_arc);
+    arcs_.push_back(arc);
 }
 
-std::vector<TimingArc>& Pin::GetTimingArcs()
+std::vector<Arc>& Pin::GetArcs()
 {
-    return timing_arcs_;
+    return arcs_;
 }
 
 void Pin::PrintLogicTable()
@@ -150,7 +150,7 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
         TAB_FPRINTF(tab, f, "capacitance : 0.0 ;\n");
 
         if (direction_ == PinDirection::OUT) {
-            for (auto & arc : timing_arcs_) {
+            for (auto & arc : arcs_) {
                 arc.WriteLiberty(f, tab);
             }
         }

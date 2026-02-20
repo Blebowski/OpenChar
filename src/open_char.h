@@ -87,6 +87,8 @@ namespace open_char {
     typedef double PicoFarad;
     typedef double KiloOhm;
     typedef double NanoWatt;
+    typedef double PicoJoule;
+
 }
 
 #endif
