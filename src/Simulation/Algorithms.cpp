@@ -29,46 +29,6 @@ int Algorithms::GetBit(int64_t v, size_t index)
     return (v >> index) & 0x1;
 }
 
-NanoWatt Algorithms::ComputePower(MicroAmp i, Volt v)
-{
-    return i * v * 1E3;
-}
-
-NanoSecond Algorithms::FindVoltage(Waves &w, Pin *pin, int from, Volt v)
-{
-    const std::vector<Volt>& d = w.GetVoltage(pin->name_);
-    size_t len = d.size();
-
-    // TODO: Cross-check first and last data match the "from" and "to".
-
-    Volt th = v * ctx_->GetLibrary().GetOpCond().GetSupply()->GetVddVoltage();
-
-    size_t index = len - 1;
-    size_t step = len / 2;
-
-    while (step > 0) {
-        Volt v = d[index];
-
-        if (v > th) {
-            if (from == 0) {
-                index -= step;
-            } else {
-                index += step;
-            }
-        } else {
-            if (from == 0) {
-                index += step;
-            } else {
-                index -= step;
-            }
-        }
-
-        step /= 2;
-    }
-
-    return w.GetTimeAtIndex(index);
-}
-
 void Algorithms::PrepareLogicTableAndLeakageSims(Cell &cell)
 {
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
@@ -126,8 +86,8 @@ void Algorithms::PrepareLogicTableAndLeakageSims(Cell &cell)
                 // Leakage power upon this input combination
                 if (first_opin) {
                     Supply *s = op_cond.GetSupply();
-                    NanoWatt lkg = Algorithms::ComputePower(
-                                    w.GetCurrent(s->GetVddName())[0], s->GetVddVoltage());
+
+                    NanoWatt lkg = w.GetCurrent(s->GetVddName())[0] * s->GetVddVoltage() * 1E3;
 
                     Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
                     size_t v = ipin_vect;
@@ -258,6 +218,7 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b, int 
 
                     assert(tran_pin != nullptr);
                     Variables &vars = ctx_->GetVariables();
+                    Volt vdd = ctx_->GetLibrary().GetOpCond().GetSupply()->GetVddVoltage();
 
                     // Calculate output delay
                     double in_th = (tran_from == 0) ? vars.GetDoubleVariable("delay_in_rise") :
@@ -265,8 +226,12 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b, int 
                     double out_th = (out_from == 0) ? vars.GetDoubleVariable("delay_out_rise") :
                                                       vars.GetDoubleVariable("delay_out_fall");
 
-                    NanoSecond in_edge  = FindVoltage(w, tran_pin, tran_from, in_th);
-                    NanoSecond out_edge = FindVoltage(w, opin, out_from, out_th);
+                    in_th *= vdd;
+                    out_th *= vdd;
+                    NanoSecond in_edge  =
+                        w.FindTimeOfVoltageMonotonic(tran_pin->name_, tran_from, in_th);
+                    NanoSecond out_edge =
+                        w.FindTimeOfVoltageMonotonic(opin->name_, out_from, out_th);
 
                     if (out_from == 0)
                         timing_arc.AddRiseDelay(i_tran, out_edge - in_edge);
@@ -279,8 +244,11 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b, int 
                     double low_th = (out_from == 0) ? vars.GetDoubleVariable("slew_lower_rise") :
                                                       vars.GetDoubleVariable("slew_lower_fall");
 
-                    NanoSecond low  = FindVoltage(w, opin, out_from, low_th);
-                    NanoSecond high = FindVoltage(w, opin, out_from, upp_th);
+                    upp_th *= vdd;
+                    low_th *= vdd;
+
+                    NanoSecond low  = w.FindTimeOfVoltageMonotonic(opin->name_, out_from, low_th);
+                    NanoSecond high = w.FindTimeOfVoltageMonotonic(opin->name_, out_from, upp_th);
 
                     if (out_from == 0)
                         timing_arc.AddRiseTransition(i_tran, (out_from == 0) ? high - low :

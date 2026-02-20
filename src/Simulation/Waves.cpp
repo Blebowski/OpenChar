@@ -216,4 +216,39 @@ NanoSecond Waves::GetTimeAtIndex(size_t index)
     return reference_[index];
 }
 
+
+NanoSecond Waves::FindTimeOfVoltageMonotonic(std::string name, int from, Volt th)
+{
+    assert (voltages_.contains(name));
+
+    const std::vector<Volt>& d = voltages_[name].second;
+    size_t len = d.size();
+
+    // TODO: Cross-check first and last data match the "from" and "to".
+
+    size_t index = len - 1;
+    size_t step = len / 2;
+
+    while (step > 0) {
+        Volt v = d[index];
+
+        if (v > th) {
+            if (from == 0) {
+                index -= step;
+            } else {
+                index += step;
+            }
+        } else {
+            if (from == 0) {
+                index += step;
+            } else {
+                index -= step;
+            }
+        }
+
+        step /= 2;
+    }
+
+    return GetTimeAtIndex(index);
+}
 }

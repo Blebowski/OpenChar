@@ -27,8 +27,6 @@ class Algorithms {
         Context *ctx_;
         int ToLogic(Volt val);
         int GetBit(int64_t v, size_t index);
-        NanoWatt ComputePower(MicroAmp i, Volt v);
-        NanoSecond FindVoltage(Waves &w, Pin *pin, int from, Volt v);
         Expression* SumOfProducts(Cell& cell, Pin& opin);
         Expression* ProductOfSums(Cell& cell, Pin& opin);
         Expression* RecognizeXor(Cell& cell, Pin& opin);

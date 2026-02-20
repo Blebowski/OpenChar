@@ -23,6 +23,8 @@ class Waves {
         const std::vector<Volt>& GetVoltage(const std::string &node_name);
         const std::vector<MicroAmp>& GetCurrent(const std::string &node_name);
 
+        NanoSecond FindTimeOfVoltageMonotonic(std::string name, int from, Volt th);
+
         NanoSecond GetTimeAtIndex(size_t index);
 
     private:
