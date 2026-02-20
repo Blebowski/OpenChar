@@ -279,8 +279,8 @@ int Algorithms::PrepareTimingArcSims(Pin *opin, int64_t in_a, int64_t in_b, int 
                     double low_th = (out_from == 0) ? vars.GetDoubleVariable("slew_lower_rise") :
                                                       vars.GetDoubleVariable("slew_lower_fall");
 
-                    NanoSecond low  = FindVoltage(w, tran_pin, tran_from, low_th);
-                    NanoSecond high = FindVoltage(w, tran_pin, tran_from, upp_th);
+                    NanoSecond low  = FindVoltage(w, opin, out_from, low_th);
+                    NanoSecond high = FindVoltage(w, opin, out_from, upp_th);
 
                     if (out_from == 0)
                         timing_arc.AddRiseTransition(i_tran, (out_from == 0) ? high - low :
