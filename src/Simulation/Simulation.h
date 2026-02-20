@@ -33,6 +33,8 @@ class Simulation {
         int Simulate();
         Waves ReadWaves();
 
+        NanoSecond GetTimeStep();
+
         void SetPostSimCb(std::function<int(void)> post_sim_cb);
         void ExecutePostSimCb();
 
@@ -48,7 +50,7 @@ class Simulation {
 
         // TODO: Precision may be configurable either manually by user,
         //       or somehow determine based on quickness of response.
-        const std::string time_step_ = "100FS";
+        NanoSecond time_step_ = 0.0001;
 
         std::vector<std::string> includes_;
         std::vector<std::string> models_;

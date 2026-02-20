@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <string>
+#include <cmath>
 
 #include "open_char.h"
 
@@ -132,10 +133,14 @@ void Simulation::WriteTestBench()
 
     fprintf(f, "\n");
 
-    if (kind_ == SimulationKind::TRAN)
-        fprintf(f, ".TRAN %s %fNS\n", duration_, time_step_);
-    else if (kind_ == SimulationKind::DC)
+    if (kind_ == SimulationKind::TRAN) {
+        fprintf(f, ".TRAN %dFS %dNS \n",
+                    static_cast<int>(std::round(time_step_ * 1E6)),
+                    static_cast<int>(std::round(duration_)));
+
+    } else if (kind_ == SimulationKind::DC) {
         fprintf(f, ".DC V%s 0 0 0.1\n", supply_->GetGndName());
+    }
 
     fprintf(f, ".end\n");
 
@@ -173,6 +178,11 @@ Waves Simulation::ReadWaves()
     std::filesystem::path wave_path = sim_dir_ / wave_file_;
 
     return Waves(wave_path);
+}
+
+NanoSecond Simulation::GetTimeStep()
+{
+    return time_step_;
 }
 
 }
