@@ -38,6 +38,9 @@ class Pin {
         Expression *GetLogicFunction();
         void PrintLogicFunction();
 
+        void SetPolarity(int polarity);
+        int  GetPolarity();
+
         void WriteLiberty(FILE *f, size_t tab);
 
     private:
@@ -48,6 +51,8 @@ class Pin {
         std::vector<Arc> arcs_;
 
         Expression *func_;
+
+        int polarity_;
 
 };
 

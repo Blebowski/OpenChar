@@ -46,6 +46,11 @@ namespace open_char {
         ASYNC
     };
 
+    enum class CellKind {
+        COMBINATIONAL,
+        SEQUENTIAL
+    };
+
     enum class StimulusKind {
         PULSE,
         CONSTANT

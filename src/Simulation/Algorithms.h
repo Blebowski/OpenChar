@@ -16,8 +16,10 @@ class Algorithms {
     public:
         Algorithms(Context *ctx);
 
-        void PrepareLogicTableAndLeakageSims(Cell &cell);
-        void PrepareComboDelaySims(Cell &cell);
+        void PrepareComboLogicTableAndLeakageSims(Cell &cell);
+        void PrepareComboDelayAndPowerSims(Cell &cell);
+
+        void PrepareSeqAsyncFunctionSims(Cell &cell);
 
         void CalculateLogicFunctions(Cell &cell);
 

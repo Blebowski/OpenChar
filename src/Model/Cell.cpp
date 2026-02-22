@@ -29,6 +29,16 @@ const std::string& Cell::GetName()
     return name_;
 }
 
+CellKind Cell::GetKind()
+{
+    return kind_;
+}
+
+void Cell::SetKind(CellKind kind)
+{
+    kind_ = kind;
+}
+
 std::pair<Pin&, bool> Cell::AddPin(std::string name, PinDirection direction, PinKind kind)
 {
     auto [it, inserted] = pins_.emplace(name, Pin(this, name, direction, kind));

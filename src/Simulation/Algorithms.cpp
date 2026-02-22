@@ -29,7 +29,7 @@ int Algorithms::GetBit(int64_t v, size_t index)
     return (v >> index) & 0x1;
 }
 
-void Algorithms::PrepareLogicTableAndLeakageSims(Cell &cell)
+void Algorithms::PrepareComboLogicTableAndLeakageSims(Cell &cell)
 {
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
     Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -48,7 +48,7 @@ void Algorithms::PrepareLogicTableAndLeakageSims(Cell &cell)
 
         for (int64_t ipin_vect = 0; ipin_vect < static_cast<int64_t>(n_sims); ipin_vect++) {
 
-            std::string sim_name = "LOG_TBL_LKG";
+            std::string sim_name = "COMBO_LOGTBLLKG";
             size_t input = ipin_vect;
 
             for (const auto & i_pin : i_pins) {
@@ -130,7 +130,7 @@ int Algorithms::PrepareComboArcSims(Pin *opin, int64_t in_a, int64_t in_b, int o
         int64_t in_to       = (i == 0) ? in_b  : in_a;
         int     out_from    = (i == 0) ? out_a : out_b;
 
-        std::string prefix = "DLY";
+        std::string prefix = "COMBO_DLYPWR";
         size_t j = 0;
         for (const auto & i_pin : cell->GetPins(PinDirection::IN)) {
             prefix = sprintf("%s_%s%d%d", prefix, i_pin.name_, GetBit(in_from, j), GetBit(in_to, j));
@@ -310,7 +310,7 @@ int Algorithms::PrepareComboArcSims(Pin *opin, int64_t in_a, int64_t in_b, int o
     return 0;
 }
 
-void Algorithms::PrepareComboDelaySims(Cell &cell)
+void Algorithms::PrepareComboDelayAndPowerSims(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
 
@@ -367,6 +367,74 @@ void Algorithms::PrepareComboDelaySims(Cell &cell)
         for (const auto & tv : test_vects) {
             PrepareComboArcSims(&o_pin, tv.in_i, tv.in_j, tv.out_i, tv.out_j);
         }
+    }
+}
+
+void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
+{
+    auto apins = cell.GetPins(PinKind::ASYNC);
+
+    size_t apins_cnt = 0;
+    for (auto apin : apins) {
+        apins_cnt++;
+    }
+
+    if (apins_cnt == 0) {
+        return;
+    }
+
+    for (int64_t apin_vect = 0; apin_vect < (1 << apins_cnt); apin_vect++) {
+
+        std::string sim_name = "SEQ_ASYNCFUNC";
+
+        int64_t tmp = apin_vect;
+        for (const auto & apin : apins) {
+            sim_name = sprintf("%s_%s%d", sim_name, apin.name_, tmp & 0x1);
+            tmp >>= 1;
+        }
+
+        // TODO: Wrap construction to some common tasks
+
+        Simulation *sim = new Simulation(ctx_, sim_name, &cell, SimulationKind::TRAN);
+
+        OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
+        sim->SetTemp(op_cond.GetTemperature());
+        sim->SetSupply(op_cond.GetSupply());
+
+        for (const auto & netlist : ctx_->GetNetlists())
+            sim->AddInclude(netlist);
+
+        for (const auto & model : ctx_->GetModels())
+            sim->AddModel(model);
+
+        Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
+        Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+
+        // Drive async pins
+        tmp = apin_vect;
+        for (auto & apin : apins) {
+            sim->AddStimuli((Pin*)&apin, Stimulus(((tmp & 0x1) == 1) ? log1_v : log0_v));
+            tmp >>= 1;
+        }
+
+        // Drive data pins
+        for (auto & ipin : cell.GetPins(PinDirection::IN, PinKind::DATA)) {
+            sim->AddStimuli((Pin*)&ipin, Stimulus(0));
+        }
+
+        // CK pulse
+        for (auto & cpin : cell.GetPins(PinKind::CLK)) {
+            sim->AddStimuli((Pin*)&cpin, Stimulus(log0_v, log1_v, 1, 0.1, 0.1, 1, 100, 1));
+        }
+
+        auto post_sim_cb = [](){
+
+            // TODO: Recognize polarity and functionality of the async pins!
+            return 0;
+        };
+
+        sim->SetPostSimCb(post_sim_cb);
+        ctx_->GetSimulationPool().PushSimulation(sim);
     }
 }
 
@@ -511,12 +579,18 @@ void Algorithms::CharacterizeLibrary()
 
     // Prepare
     for (auto & cell : ctx_->GetLibrary().GetCells()) {
-        PrepareLogicTableAndLeakageSims(cell.second);
+        if (cell.second.GetKind() == CellKind::COMBINATIONAL) {
+            PrepareComboLogicTableAndLeakageSims(cell.second);
+        } else {
+            PrepareSeqAsyncFunctionSims(cell.second);
+        }
     }
 
     // Simulate and post-process
     sp.StartSimulations();
     sp.FinishAndProcessSimulations();
+
+    exit(1);
 
     // Manual calculations based on result
     for (auto & cell : ctx_->GetLibrary().GetCells()) {
@@ -529,7 +603,7 @@ void Algorithms::CharacterizeLibrary()
 
     // Prepare
     for (auto & cell : ctx_->GetLibrary().GetCells()) {
-        PrepareComboDelaySims(cell.second);
+        PrepareComboDelayAndPowerSims(cell.second);
     }
 
     // Simulate and post-process

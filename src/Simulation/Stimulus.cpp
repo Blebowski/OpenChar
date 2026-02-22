@@ -11,7 +11,7 @@ namespace open_char {
         volage_(voltage)
     {};
 
-    Stimulus::Stimulus(NanoSecond v1, NanoSecond v2, NanoSecond t_delay, NanoSecond t_rise,
+    Stimulus::Stimulus(Volt v1, Volt v2, NanoSecond t_delay, NanoSecond t_rise,
                        NanoSecond t_fall, NanoSecond pulse_width, NanoSecond period,
                        int num_pulses):
         kind_(StimulusKind::PULSE),

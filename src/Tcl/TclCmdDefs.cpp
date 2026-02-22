@@ -33,15 +33,12 @@ CREATE_TCL_COMMAND(
     ARG({
         {"-input",      TclCmdOpt(true,         "{pin_names}",      "Input pin or pins.")},
         {"-output",     TclCmdOpt(true,         "{pin_names}",      "Output pin or pins.")},
+        {"-clock",      TclCmdOpt(true,         "pin_name",         "Clock pin")},
+        {"-async",      TclCmdOpt(true,         "{pin_names}",      "Asynchrnous set/clear pin or pins.")},
         {"-delay",      TclCmdOpt(true,         "delay_template",   "Name of delay template to use when characterizing the cell.")},
         {"cell_name",   TclCmdOpt(false,        "cell_name",        "Name of the cell.")}
         }),
     ARG({
-
-        if (!opts_["-input"].isSet() && !opts_["-output"].isSet()) {
-            error("You need to specify at least -input or -outputs.\n");
-            return TCL_ERROR;
-        }
 
         if (!opts_["-delay"].isSet()) {
             error("You need to specify -delay template.\n");
@@ -57,6 +54,11 @@ CREATE_TCL_COMMAND(
         Template& t = ctx_->GetLibrary().GetTemplate(templ_name);
         if (t.GetKind() != TemplateKind::DELAY) {
             error("Template '%s' is not a delay template.", templ_name);
+            return TCL_ERROR;
+        }
+
+        if (opts_["-async"].isSet() && !opts_["-clock"].isSet()) {
+            error("Can't specify '-async' pins without clock pin.", templ_name);
             return TCL_ERROR;
         }
 
@@ -86,6 +88,23 @@ CREATE_TCL_COMMAND(
                 cell.AddPin(val, PinDirection::IN, PinKind::DATA);
                 return TCL_OK;
             });
+        }
+
+        if (opts_["-async"].isSet()) {
+            const std::string s = Tcl_GetString(opts_["-async"].objv_);
+            // TODO: Handle duplicit pins here!
+            ForEachInGroup(s, [&](const std::string &val){
+                cell.AddPin(val, PinDirection::IN, PinKind::ASYNC);
+                return TCL_OK;
+            });
+        }
+
+        if (opts_["-clock"].isSet()) {
+            const std::string s = Tcl_GetString(opts_["-clock"].objv_);
+            cell.AddPin(s, PinDirection::IN, PinKind::CLK);
+            cell.SetKind(CellKind::SEQUENTIAL);
+        } else {
+            cell.SetKind(CellKind::COMBINATIONAL);
         }
 
         Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();

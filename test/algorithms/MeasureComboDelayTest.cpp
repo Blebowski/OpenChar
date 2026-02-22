@@ -27,14 +27,14 @@ void test_inv(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.PrepareLogicTableAndLeakageSims(c1);
+    algs.PrepareComboLogicTableAndLeakageSims(c1);
 
     ctx.GetSimulationPool().StartSimulations();
     ctx.GetSimulationPool().FinishAndProcessSimulations();
 
     algs.CalculateLogicFunctions(c1);
 
-    algs.PrepareComboDelaySims(c1);
+    algs.PrepareComboDelayAndPowerSims(c1);
     ctx.GetSimulationPool().StartSimulations();
     ctx.GetSimulationPool().FinishAndProcessSimulations();
 

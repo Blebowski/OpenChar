@@ -96,6 +96,16 @@ Expression *Pin::GetLogicFunction()
     return func_;
 }
 
+void Pin::SetPolarity(int polarity)
+{
+    polarity_ = polarity % 2;
+}
+
+int Pin::GetPolarity()
+{
+    return polarity_;
+}
+
 void Pin::PrintLogicFunction()
 {
     printf("%s: ", name_);

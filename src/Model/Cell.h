@@ -21,6 +21,9 @@ class Cell {
         Library* GetLibrary();
         const std::string& GetName();
 
+        CellKind GetKind();
+        void SetKind(CellKind kind);
+
         std::pair<Pin&, bool> AddPin(std::string name, PinDirection direction, PinKind kind);
         Pin& GetPin(std::string name);
 
@@ -48,6 +51,15 @@ class Cell {
             return std::views::values(filtered);
         };
 
+        auto GetPins(PinDirection direction, PinKind kind) {
+            auto filtered = std::views::filter(pins_,
+                [kind, direction](const auto& pair) {
+                    return (pair.second.kind_ == kind) && (pair.second.direction_ == direction);
+                }
+            );
+            return std::views::values(filtered);
+        };
+
         size_t GetPinsCount(PinDirection direction);
 
         Template* GetDelayTemplate();
@@ -60,6 +72,7 @@ class Cell {
         Library* library_;
         std::map<std::string, Pin> pins_;
         Template *d_template_;
+        CellKind kind_;
 
         // First value - Cell inputs
         // Second value - Leakage power upon such state
