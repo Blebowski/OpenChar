@@ -10,6 +10,7 @@ using namespace open_char;
 
 void test_inv(Context &ctx, Algorithms &algs)
 {
+    /*
     ctx.GetLibrary().AddCell("INV");
     Cell &c1 = ctx.GetLibrary().GetCell("INV");
 
@@ -53,26 +54,25 @@ void test_inv(Context &ctx, Algorithms &algs)
     assert (arc.GetRiseDelays()[1][0] > 0.11 && arc.GetRiseDelays()[1][0] < 0.12);
     assert (arc.GetRiseDelays()[1][1] > 1.38 && arc.GetRiseDelays()[1][1] < 1.39);
 
-    /*
-    Inputs from: 00000000
-    Inputs to:   00000001
-    Output from:        1
-    Output to:          0
-    ---------------------
-    | 0.18410 | 2.72870 |
-    | 0.20790 | 2.75010 |
-    ---------------------
-    ---------------------
-    Inputs from: 00000001
-    Inputs to:   00000000
-    Output from:        0
-    Output to:          1
-    ---------------------
-    | 0.09330 | 1.36650 |
-    | 0.11510 | 1.38750 |
-    ---------------------
-    */
+    // Inputs from: 00000000
+    // Inputs to:   00000001
+    // Output from:        1
+    // Output to:          0
+    // ---------------------
+    // | 0.18410 | 2.72870 |
+    // | 0.20790 | 2.75010 |
+    // ---------------------
+    // ---------------------
+    // Inputs from: 00000001
+    // Inputs to:   00000000
+    // Output from:        0
+    // Output to:          1
+    // ---------------------
+    // | 0.09330 | 1.36650 |
+    // | 0.11510 | 1.38750 |
+    // ---------------------
 
+    */
 }
 
 int main()

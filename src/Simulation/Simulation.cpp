@@ -185,4 +185,15 @@ NanoSecond Simulation::GetTimeStep()
     return time_step_;
 }
 
+void Simulation::PutMetaData(int data)
+{
+    metadata_.push_back(data);
+}
+
+int Simulation::GetMetaDataAt(size_t index)
+{
+    assert(index < metadata_.size());
+    return metadata_[index];
+}
+
 }

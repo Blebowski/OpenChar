@@ -106,6 +106,16 @@ int Pin::GetPolarity()
     return polarity_;
 }
 
+void Pin::AddSimulation(Simulation *simulation)
+{
+    simulations_.push_back(simulation);
+}
+
+std::vector<Simulation*>& Pin::GetSimulations()
+{
+    return simulations_;
+}
+
 void Pin::PrintLogicFunction()
 {
     printf("%s: ", name_);

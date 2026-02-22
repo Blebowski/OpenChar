@@ -17,11 +17,17 @@ class Algorithms {
         Algorithms(Context *ctx);
 
         void PrepareComboLogicTableAndLeakageSims(Cell &cell);
+        void MeasureComboLogicTables(Cell &cell);
+        void MeasureComboLeakage(Cell &cell);
+        void CalculateComboLogicFunctions(Cell &cell);
+
         void PrepareComboDelayAndPowerSims(Cell &cell);
+        void MeasureComboDelays(Cell &cell);
+        void MeasureComboTransitions(Cell &cell);
+        void MeasureComboPowers(Cell &cell);
 
         void PrepareSeqAsyncFunctionSims(Cell &cell);
 
-        void CalculateLogicFunctions(Cell &cell);
 
         void CharacterizeLibrary();
 
@@ -32,7 +38,7 @@ class Algorithms {
         Expression* SumOfProducts(Cell& cell, Pin& opin);
         Expression* ProductOfSums(Cell& cell, Pin& opin);
         Expression* RecognizeXor(Cell& cell, Pin& opin);
-        int PrepareComboArcSims(Pin *opin, int64_t in_from, int64_t in_to,
+        int PrepareComboArcSims(Pin &opin, int64_t in_from, int64_t in_to,
                                 int out_from, int out_to);
 };
 

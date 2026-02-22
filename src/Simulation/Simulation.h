@@ -30,6 +30,10 @@ class Simulation {
         void AddStimuli(Pin *pin, Stimulus &&stim);
         void AddLoad(Pin *pin, PicoFarad cap);
 
+        void PutMetaData(int data);
+        void PutMetaData(double data);
+        int GetMetaDataAt(size_t index);
+
         int Simulate();
         Waves ReadWaves();
 
@@ -68,6 +72,8 @@ class Simulation {
 
         std::filesystem::path sim_dir_;
         std::function<int(void)> post_sim_cb_;
+
+        std::vector<int> metadata_;
 
         void WriteTestBench();
 };

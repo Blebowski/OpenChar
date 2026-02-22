@@ -65,6 +65,9 @@ class Cell {
         Template* GetDelayTemplate();
         void SetDelayTemplate(Template *d_template);
 
+        void AddSimulation(Simulation *simulation);
+        std::vector<Simulation*>& GetSimulations();
+
         void WriteLiberty(FILE *f, size_t tab);
 
     private:
@@ -77,6 +80,8 @@ class Cell {
         // First value - Cell inputs
         // Second value - Leakage power upon such state
         std::vector<std::pair<Expression*, NanoWatt>> leakage_table_;
+
+        std::vector<Simulation*> simulations_;
 
 };
 

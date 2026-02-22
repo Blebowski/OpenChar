@@ -28,7 +28,7 @@ void SimulationPool::PushSimulation(Simulation *simulation)
     simulations_.push_back(simulation);
 }
 
-void SimulationPool::StartSimulations()
+void SimulationPool::RunSimulations()
 {
     for (size_t i = dispatch_tail_; i < simulations_.size(); i++) {
         queue_.push(simulations_[i]);
@@ -61,10 +61,7 @@ void SimulationPool::StartSimulations()
     }
 
     cv_.notify_all();
-}
 
-void SimulationPool::FinishAndProcessSimulations()
-{
     {
         std::unique_lock<std::mutex> lock(lock_);
         stop_ = true;
@@ -79,12 +76,10 @@ void SimulationPool::FinishAndProcessSimulations()
     // Synchronously do the post processing callback so that we don't
     // need to handle locking of the data model.
     while (dispatch_tail_ < dispatch_head_) {
-        simulations_[dispatch_tail_]->ExecutePostSimCb();
         dispatch_tail_++;
     }
 
     threads_.clear();
 }
-
 
 }

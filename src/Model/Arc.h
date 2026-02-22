@@ -16,26 +16,31 @@ class Arc {
         void Print();
         void WriteLiberty(FILE *f, size_t tab);
 
-        void AddRiseDelay(size_t row, NanoSecond delay);
+        Pin* GetRelatedPin();
+        Template* GetTemplate();
+
+        void SetRiseDelay(size_t row, size_t col, NanoSecond delay);
         std::vector<std::vector<NanoSecond>>& GetRiseDelays();
 
-        void AddFallDelay(size_t row, NanoSecond delay);
+        void SetFallDelay(size_t row, size_t col, NanoSecond delay);
         std::vector<std::vector<NanoSecond>>& GetFallDelays();
 
-        void AddRiseTransition(size_t row, NanoSecond transition);
+        void SetRiseTransition(size_t row, size_t col, NanoSecond transition);
         std::vector<std::vector<NanoSecond>>& GetRiseTransitions();
 
-        void AddFallTransition(size_t row, NanoSecond transition);
+        void SetFallTransition(size_t row, size_t col, NanoSecond transition);
         std::vector<std::vector<NanoSecond>>& GetFallTransitions();
 
-        void AddRisePower(size_t row, PicoJoule energy);
+        void SetRisePower(size_t row, size_t col, PicoJoule energy);
         std::vector<std::vector<PicoJoule>>& GetRisePowers();
 
-        void AddFallPower(size_t row, PicoJoule energy);
+        void SetFallPower(size_t row, size_t col, PicoJoule energy);
         std::vector<std::vector<NanoSecond>>& GetFallPowers();
 
+        void AddSimulation(Simulation *simulation);
+        std::vector<Simulation*>& GetSimulations();
+
     private:
-        Pin* GetRelatedPin();
         bool isPositiveUnate();
 
         void WriteTable(FILE *f, size_t tab, std::vector<std::vector<double>>& data,
@@ -57,6 +62,8 @@ class Arc {
         int64_t in_b_;
         int out_a_;
         int out_b_;
+
+        std::vector<Simulation*> simulations_;
 };
 
 }

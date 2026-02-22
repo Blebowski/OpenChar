@@ -41,6 +41,9 @@ class Pin {
         void SetPolarity(int polarity);
         int  GetPolarity();
 
+        void AddSimulation(Simulation *simulation);
+        std::vector<Simulation*>& GetSimulations();
+
         void WriteLiberty(FILE *f, size_t tab);
 
     private:
@@ -53,6 +56,8 @@ class Pin {
         Expression *func_;
 
         int polarity_;
+
+        std::vector<Simulation*> simulations_;
 
 };
 

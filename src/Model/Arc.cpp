@@ -17,18 +17,34 @@ Arc::Arc(Pin *pin, Template *templ, int64_t in_a, int64_t in_b, int out_a, int o
     out_b_(out_b)
 {}
 
-void Arc::AddRiseDelay(size_t row, NanoSecond delay)
+void Arc::SetRiseDelay(size_t row, size_t column, NanoSecond delay)
 {
-    while (rise_delays_.size() <= row)
-        rise_delays_.push_back(std::vector<NanoSecond>());
-    rise_delays_[row].push_back(delay);
+    while (rise_delays_.size() <= row) {
+        rise_delays_.push_back(std::vector<NanoSecond>(column + 1));
+    }
+
+    for (auto & row : rise_delays_) {
+        while (row.size() <= column) {
+            row.push_back(0.0);
+        }
+    }
+
+    rise_delays_[row][column] = delay;
 }
 
-void Arc::AddFallDelay(size_t row, NanoSecond delay)
+void Arc::SetFallDelay(size_t row, size_t column, NanoSecond delay)
 {
-    while (fall_delays_.size() <= row)
-        fall_delays_.push_back(std::vector<NanoSecond>());
-    fall_delays_[row].push_back(delay);
+    while (fall_delays_.size() <= row) {
+        fall_delays_.push_back(std::vector<NanoSecond>(column + 1));
+    }
+
+    for (auto & row : fall_delays_) {
+        while (row.size() <= column) {
+            row.push_back(0.0);
+        }
+    }
+
+    fall_delays_[row][column] = delay;
 }
 
 std::vector<std::vector<NanoSecond>>& Arc::GetRiseDelays()
@@ -41,18 +57,34 @@ std::vector<std::vector<NanoSecond>>& Arc::GetFallDelays()
     return fall_delays_;
 }
 
-void Arc::AddRiseTransition(size_t row, NanoSecond transition)
+void Arc::SetRiseTransition(size_t row, size_t col, NanoSecond transition)
 {
-    while (rise_transitions_.size() <= row)
-        rise_transitions_.push_back(std::vector<NanoSecond>());
-    rise_transitions_[row].push_back(transition);
+    while (rise_transitions_.size() <= row) {
+        rise_transitions_.push_back(std::vector<NanoSecond>(col + 1));
+    }
+
+    for (auto & row : rise_transitions_) {
+        while (row.size() <= col) {
+            row.push_back(0.0);
+        }
+    }
+
+    rise_transitions_[row][col] = transition;
 }
 
-void Arc::AddFallTransition(size_t row, NanoSecond transition)
+void Arc::SetFallTransition(size_t row, size_t col, NanoSecond transition)
 {
-    while (fall_transitions_.size() <= row)
-        fall_transitions_.push_back(std::vector<NanoSecond>());
-    fall_transitions_[row].push_back(transition);
+    while (fall_transitions_.size() <= row) {
+        fall_transitions_.push_back(std::vector<NanoSecond>(col + 1));
+    }
+
+    for (auto & row : fall_transitions_) {
+        while (row.size() <= col) {
+            row.push_back(0.0);
+        }
+    }
+
+    fall_transitions_[row][col] = transition;
 }
 
 std::vector<std::vector<NanoSecond>>& Arc::GetRiseTransitions()
@@ -65,18 +97,34 @@ std::vector<std::vector<NanoSecond>>& Arc::GetFallTransitions()
     return fall_transitions_;
 }
 
-void Arc::AddRisePower(size_t row, PicoJoule energy)
+void Arc::SetRisePower(size_t row, size_t col, PicoJoule energy)
 {
-    while (rise_power_.size() <= row)
-        rise_power_.push_back(std::vector<PicoJoule>());
-    rise_power_[row].push_back(energy);
+    while (rise_power_.size() <= row) {
+        rise_power_.push_back(std::vector<NanoSecond>(col + 1));
+    }
+
+    for (auto & row : rise_power_) {
+        while (row.size() <= col) {
+            row.push_back(0.0);
+        }
+    }
+
+    rise_power_[row][col] = energy;
 }
 
-void Arc::AddFallPower(size_t row, PicoJoule energy)
+void Arc::SetFallPower(size_t row, size_t col, PicoJoule energy)
 {
-    while (fall_power_.size() <= row)
-        fall_power_.push_back(std::vector<PicoJoule>());
-    fall_power_[row].push_back(energy);
+    while (fall_power_.size() <= row) {
+        fall_power_.push_back(std::vector<NanoSecond>(col + 1));
+    }
+
+    for (auto & row : fall_power_) {
+        while (row.size() <= col) {
+            row.push_back(0.0);
+        }
+    }
+
+    fall_power_[row][col] = energy;
 }
 
 std::vector<std::vector<PicoJoule>>& Arc::GetRisePowers()
@@ -87,6 +135,16 @@ std::vector<std::vector<PicoJoule>>& Arc::GetRisePowers()
 std::vector<std::vector<NanoSecond>>& Arc::GetFallPowers()
 {
     return fall_power_;
+}
+
+void Arc::AddSimulation(Simulation *simulation)
+{
+    simulations_.push_back(simulation);
+}
+
+std::vector<Simulation*>& Arc::GetSimulations()
+{
+    return simulations_;
 }
 
 void Arc::Print()
@@ -152,6 +210,11 @@ Pin* Arc::GetRelatedPin()
     assert(rel_pin != nullptr);
 
     return rel_pin;
+}
+
+Template* Arc::GetTemplate()
+{
+    return template_;
 }
 
 bool Arc::isPositiveUnate()

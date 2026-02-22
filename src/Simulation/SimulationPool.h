@@ -24,8 +24,7 @@ class SimulationPool {
         void PushSimulation(Simulation *simulation);
         void SetNumThreads(size_t num_threads);
 
-        void StartSimulations();
-        void FinishAndProcessSimulations();
+        void RunSimulations();
 
     private:
         Context *ctx_;

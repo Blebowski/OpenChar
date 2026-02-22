@@ -73,6 +73,16 @@ void Cell::AddLeakageTableEntry(Expression *e, NanoWatt pwr)
     leakage_table_.push_back(std::make_pair(e, pwr));
 }
 
+void Cell::AddSimulation(Simulation *simulation)
+{
+    simulations_.push_back(simulation);
+}
+
+std::vector<Simulation*>& Cell::GetSimulations()
+{
+    return simulations_;
+}
+
 void Cell::WriteLiberty(FILE *f, size_t tab)
 {
     TAB_FPRINTF(tab, f, "cell (%s) {\n", name_);
