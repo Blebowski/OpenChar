@@ -4,6 +4,7 @@ target_sources(lib_open_char PRIVATE
     Cell.cpp
     Context.cpp
     Expression.cpp
+    FlipFlop.cpp
     Library.cpp
     OpCond.cpp
     Pin.cpp
