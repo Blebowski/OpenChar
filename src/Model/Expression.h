@@ -2,6 +2,8 @@
 #ifndef EXPRESSION_H
 #define EXPRESSION_H
 
+#include <vector>
+
 #include "open_char.h"
 
 namespace open_char {
@@ -16,6 +18,8 @@ class Expression {
         ~Expression();
 
         void Simplify();
+        bool Equals(Expression *e, ExpressionEqualityKind eq_kind);
+        void Substitute(Pin *pin, int val);
         void Print(FILE *fd);
 
         ExpressionKind GetKind();
@@ -27,8 +31,14 @@ class Expression {
     private:
         void Copy(Expression *e);
         void ConstFold();
+        void Associate();
         void DeMorgan();
+        void Tautology();
+        void Contradiction();
         void Invalidate();
+
+        void GetTerms(std::vector<Pin*> &res);
+        int Evaluate(std::vector<std::pair<Pin*, int>> &terms);
 
         const char and_op = '&';
         const char or_op = '|';
