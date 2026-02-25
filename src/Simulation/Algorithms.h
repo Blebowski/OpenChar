@@ -27,7 +27,7 @@ class Algorithms {
         void MeasureComboPowers(Cell &cell);
 
         void PrepareSeqAsyncFunctionSims(Cell &cell);
-
+        void MeasureSeqAsyncFunctions(Cell &cell);
 
         void CharacterizeLibrary();
 
@@ -35,10 +35,10 @@ class Algorithms {
         Context *ctx_;
         int ToLogic(Volt val);
         int GetBit(int64_t v, size_t index);
-        Expression* SumOfProducts(Cell& cell, Pin& opin);
-        Expression* ProductOfSums(Cell& cell, Pin& opin);
-        Expression* RecognizeXor(Cell& cell, Pin& opin);
-        int PrepareComboArcSims(Pin &opin, int64_t in_from, int64_t in_to,
+        Expression* SumOfProducts(Cell& cell, Pin& o_pin);
+        Expression* ProductOfSums(Cell& cell, Pin& o_pin);
+        Expression* RecognizeXor(Cell& cell, Pin& o_pin);
+        int PrepareComboArcSims(Pin &o_pin, int64_t in_from, int64_t in_to,
                                 int out_from, int out_to);
 };
 

@@ -103,6 +103,14 @@ CREATE_TCL_COMMAND(
             const std::string s = Tcl_GetString(opts_["-clock"].objv_);
             cell.AddPin(s, PinDirection::IN, PinKind::CLK);
             cell.SetKind(CellKind::SEQUENTIAL);
+
+            auto & c_pin = cell.GetPins(PinKind::CLK).front();
+            cell.GetFlipFlop().SetClockPin(&c_pin);
+
+            // TODO: Check here the flop cell is consistent:
+            //      - Has input data pin
+            //      - Has output data pin
+
         } else {
             cell.SetKind(CellKind::COMBINATIONAL);
         }

@@ -85,6 +85,16 @@ namespace open_char {
         CONSTANT
     };
 
+    enum class ExpressionEqualityKind {
+        EQUAL,
+        INVERT
+    };
+
+    enum class AsyncPriority {
+        PRESET,
+        CLEAR
+    };
+
     typedef double Celsius;
     typedef double Volt;
     typedef double NanoSecond;
