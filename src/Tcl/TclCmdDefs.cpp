@@ -105,7 +105,7 @@ CREATE_TCL_COMMAND(
             cell.SetKind(CellKind::SEQUENTIAL);
 
             auto & c_pin = cell.GetPins(PinKind::CLK).front();
-            cell.GetFlipFlop().SetClockPin(&c_pin);
+            cell.GetSequential().SetClockPin(&c_pin);
 
             // TODO: Check here the flop cell is consistent:
             //      - Has input data pin

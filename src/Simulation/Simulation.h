@@ -38,13 +38,15 @@ class Simulation {
         Waves ReadWaves();
 
         NanoSecond GetTimeStep();
+        void SetDuration(NanoSecond duration);
 
         void SetPostSimCb(std::function<int(void)> post_sim_cb);
         void ExecutePostSimCb();
 
+        const std::string name_;
+
     private:
 
-        const std::string name_;
         const SimulationKind kind_;
         Cell * const dut_;
 

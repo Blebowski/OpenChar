@@ -8,7 +8,7 @@
 #include <vector>
 
 #include "open_char.h"
-#include "FlipFlop.h"
+#include "Sequential.h"
 #include "Pin.h"
 
 namespace open_char {
@@ -63,7 +63,7 @@ class Cell {
 
         size_t GetPinsCount(PinDirection direction);
 
-        FlipFlop& GetFlipFlop();
+        Sequential& GetSequential();
 
         Template* GetDelayTemplate();
         void SetDelayTemplate(Template *d_template);
@@ -84,7 +84,8 @@ class Cell {
         // Second value - Leakage power upon such state
         std::vector<std::pair<Expression*, NanoWatt>> leakage_table_;
 
-        FlipFlop ff_;
+        Sequential seq_;
+        bool has_seq_;
 
         std::vector<Simulation*> simulations_;
 };

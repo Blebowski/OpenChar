@@ -51,6 +51,11 @@ namespace open_char {
         SEQUENTIAL
     };
 
+    enum class SequentialKind {
+        FLIP_FLOP,
+        LATCH
+    };
+
     enum class StimulusKind {
         PULSE,
         CONSTANT

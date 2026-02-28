@@ -10,7 +10,7 @@ namespace open_char {
 Cell::Cell(std::string name, Library *library) :
     name_(name),
     library_(library),
-    ff_(this)
+    seq_(this)
 {};
 
 Cell::~Cell()
@@ -59,9 +59,9 @@ size_t Cell::GetPinsCount(PinDirection direction)
                         });
 }
 
-FlipFlop& Cell::GetFlipFlop()
+Sequential& Cell::GetSequential()
 {
-    return ff_;
+    return seq_;
 }
 
 Template* Cell::GetDelayTemplate()
@@ -108,7 +108,7 @@ void Cell::WriteLiberty(FILE *f, size_t tab)
     }
 
     if (kind_ == CellKind::SEQUENTIAL) {
-        ff_.WriteLiberty(f, tab);
+        seq_.WriteLiberty(f, tab);
     }
 
     for (auto & pin : GetPins(PinKind::PWR)) {

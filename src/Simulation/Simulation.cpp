@@ -185,6 +185,11 @@ NanoSecond Simulation::GetTimeStep()
     return time_step_;
 }
 
+void Simulation::SetDuration(NanoSecond duration)
+{
+    duration_ = duration;
+}
+
 void Simulation::PutMetaData(int data)
 {
     metadata_.push_back(data);

@@ -1,14 +1,14 @@
 
 #include <cassert>
 
-#include "FlipFlop.h"
+#include "Sequential.h"
 #include "Expression.h"
 #include "Utils.h"
 #include "Pin.h"
 
 namespace open_char {
 
-FlipFlop::FlipFlop(Cell *cell) :
+Sequential::Sequential(Cell *cell) :
     cell_(cell),
     clock_pin_(nullptr),
     set_(nullptr),
@@ -16,7 +16,7 @@ FlipFlop::FlipFlop(Cell *cell) :
     next_state_(nullptr)
 {};
 
-FlipFlop::~FlipFlop()
+Sequential::~Sequential()
 {
     if (set_ != nullptr) {
         delete set_;
@@ -29,40 +29,69 @@ FlipFlop::~FlipFlop()
     }
 }
 
-void FlipFlop::SetClear(Expression *e)
+void Sequential::SetClear(Expression *e)
 {
     clr_ = e;
 }
 
-void FlipFlop::SetPreset(Expression *e)
+void Sequential::SetPreset(Expression *e)
 {
     set_ = e;
 }
 
-void FlipFlop::SetNextState(Expression *e)
+void Sequential::SetNextState(Expression *e)
 {
     next_state_ = e;
 }
 
-void FlipFlop::SetClockPin(Pin *pin)
+void Sequential::SetClockPin(Pin *pin)
 {
     clock_pin_ = pin;
 }
 
-Pin* FlipFlop::GetClockPin()
+Pin* Sequential::GetClockPin()
 {
     assert(clock_pin_ != nullptr);
     return clock_pin_;
 }
 
-void FlipFlop::SetAsyncPriority(AsyncPriority async_priority)
+void Sequential::SetAsyncPriority(AsyncPriority async_priority)
 {
     async_priority_ = async_priority;
 }
 
-void FlipFlop::WriteLiberty(FILE *f, size_t tab)
+void Sequential::SetKind(SequentialKind kind)
 {
-    TAB_FPRINTF(tab, f, "ff(IQ, IQN) {\n");
+    kind_ = kind;
+}
+
+SequentialKind Sequential::GetKind()
+{
+    return kind_;
+}
+
+void Sequential::SetClockPolarity(EdgeKind clock_polarity)
+{
+    clock_polarity_ = clock_polarity;
+}
+
+EdgeKind Sequential::GetClockPolarity()
+{
+    return clock_polarity_;
+}
+
+void Sequential::SetEnablePolarity(int enable_polarity)
+{
+    enable_polarity_ = enable_polarity;
+}
+
+void Sequential::WriteLiberty(FILE *f, size_t tab)
+{
+    if (kind_ == SequentialKind::FLIP_FLOP) {
+        TAB_FPRINTF(tab, f, "ff(IQ, IQN) {\n");
+    } else {
+        TAB_FPRINTF(tab, f, "latch(IQ, IQN) {\n");
+    }
     tab++;
 
     TAB_FPRINTF(tab, f, "next_state: TODO\n");
