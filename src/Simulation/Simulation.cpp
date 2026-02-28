@@ -95,7 +95,7 @@ void Simulation::WriteTestBench()
         if (v.kind_ == StimulusKind::CONSTANT)
             fprintf(f, "%f\n", v.volage_);
         else
-            fprintf(f, "PULSE(%fV %fV %fNS %fNS %fNS %fNS)\n", v.v1_, v.v2_, v.t_delay_, v.t_rise_,
+            fprintf(f, "PULSE(%fV %fV %fNS %fNS %fNS %fNS %fNS %d)\n", v.v1_, v.v2_, v.t_delay_, v.t_rise_,
                     v.t_fall_, v.pulse_width_, v.period_, v.num_pulses_);
     }
     fprintf(f, "\n");
