@@ -1,3 +1,5 @@
+#include <cmath>
+
 #include "open_char.h"
 
 #include "Waves.h"
@@ -216,48 +218,91 @@ NanoSecond Waves::GetTimeAtIndex(size_t index)
     return reference_[index];
 }
 
-
-size_t Waves::FindTransitionIndex(std::string name, int from, Volt th)
+size_t Waves::FindReferenceIndex(double val)
 {
-    assert (voltages_.contains(name));
+    double step = static_cast<double>(reference_.size()) / 2;
+    double index = step;
+
+    while (step > 1) {
+        step /= 2;
+
+        double low_t = reference_[static_cast<size_t>(index - step)];
+        double high_t = reference_[static_cast<size_t>(index + step)];
+
+        if (std::abs(low_t - val) < std::abs(high_t - val)) {
+            index -= step;
+        } else {
+            index += step;
+        }
+    }
+
+    return static_cast<size_t>(index);
+}
+
+size_t Waves::FindTransitionIndex(std::string name, Volt th,
+                                  NanoSecond time_start, NanoSecond time_end)
+{
+    assert(voltages_.contains(name));
+    assert(kind_ == WaveKind::TIME);
+    assert(time_start < time_end);
+
+    size_t index_start = FindReferenceIndex(time_start);
+    size_t index_stop = FindReferenceIndex(time_end);
+
+    assert(index_stop < reference_.size() && index_start <= index_stop);
 
     const std::vector<Volt>& d = voltages_[name].second;
-    size_t len = d.size();
 
-    // TODO: Cross-check first and last data match the "from" and "to".
+    size_t len = index_stop - index_start;
+    double step = static_cast<double>(len) / 2;
+    double index = static_cast<double>(index_start) + step;
 
-    size_t index = len - 1;
-    size_t step = len / 2;
+    assert(index_start < d.size());
+    assert(index_stop  < d.size());
 
-    while (step > 0) {
-        Volt v = d[index];
+    Volt v_first = d[index_start];
+    Volt v_last  = d[index_stop];
 
-        if (v > th) {
-            if (from == 0) {
+    while (step > 1.0) {
+        step /= 2;
+
+        if (d[static_cast<size_t>(index)] < th) {
+            if (th < v_first) {
                 index -= step;
             } else {
                 index += step;
             }
         } else {
-            if (from == 0) {
+            if (th < v_first) {
                 index += step;
             } else {
                 index -= step;
             }
         }
-
-        step /= 2;
     }
 
-    if (index > d.size() - 1)
-        index = d.size() - 1;
+    assert(static_cast<size_t>(index) < d.size());
 
-    return index;
+    return static_cast<size_t>(index);
 }
 
-NanoSecond Waves::FindTransitionTime(std::string name, int from, Volt th)
+NanoSecond Waves::FindTransitionTime(std::string name, Volt th,
+                                     NanoSecond time_start, NanoSecond time_end)
 {
-    return GetTimeAtIndex(FindTransitionIndex(name, from, th));
+    return GetTimeAtIndex(FindTransitionIndex(name, th, time_start, time_end));
+}
+
+size_t Waves::FindTransitionIndex(std::string name, Volt th)
+{
+    assert (voltages_.contains(name));
+    assert(kind_ == WaveKind::TIME);
+
+    return FindTransitionIndex(name, th, reference_.front() , reference_.back());
+}
+
+NanoSecond Waves::FindTransitionTime(std::string name, Volt th)
+{
+    return GetTimeAtIndex(FindTransitionIndex(name, th));
 }
 
 }

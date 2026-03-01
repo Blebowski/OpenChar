@@ -23,12 +23,18 @@ class Waves {
         const std::vector<Volt>& GetVoltage(const std::string &node_name);
         const std::vector<MicroAmp>& GetCurrent(const std::string &node_name);
 
-        NanoSecond FindTransitionTime(std::string name, int from, Volt th);
-        size_t FindTransitionIndex(std::string name, int from, Volt th);
+        size_t FindTransitionIndex(std::string name, Volt th);
+        NanoSecond FindTransitionTime(std::string name, Volt th);
+
+        size_t FindTransitionIndex(std::string name, Volt th,
+                                   NanoSecond time_start, NanoSecond time_end);
+        NanoSecond FindTransitionTime(std::string name, Volt th,
+                                      NanoSecond time_start, NanoSecond time_end);
 
         NanoSecond GetTimeAtIndex(size_t index);
 
     private:
+        size_t FindReferenceIndex(double val);
         std::map<std::string, std::pair<size_t, std::vector<Volt>>> voltages_;
         std::map<std::string, std::pair<size_t, std::vector<MicroAmp>>> currents_;
         std::vector<double> reference_;

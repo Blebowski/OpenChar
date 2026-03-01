@@ -451,8 +451,8 @@ void Algorithms::MeasureComboDelays(Cell &cell)
                 i_th *= vdd_voltage;
                 o_th *= vdd_voltage;
 
-                NanoSecond i_edge = w.FindTransitionTime(related_pin->name_, i_from, i_th);
-                NanoSecond o_edge = w.FindTransitionTime(o_pin.name_, o_from, o_th);
+                NanoSecond i_edge = w.FindTransitionTime(related_pin->name_, i_th);
+                NanoSecond o_edge = w.FindTransitionTime(o_pin.name_, o_th);
 
                 NanoSecond delay = o_edge - i_edge;
 
@@ -496,8 +496,8 @@ void Algorithms::MeasureComboTransitions(Cell &cell)
                 lo_th *= vdd_voltage;
                 hi_th *= vdd_voltage;
 
-                NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, o_from, lo_th);
-                NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, o_from, hi_th);
+                NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th);
+                NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th);
 
                 if (o_from == 0)
                     arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
@@ -545,8 +545,8 @@ void Algorithms::MeasureComboPowers(Cell &cell)
                 Volt th_start = (i_from == 0) ? vdd_voltage * 0.01 : vdd_voltage * 0.99;
                 Volt th_end = (o_from == 0) ? vdd_voltage * 0.99 : vdd_voltage * 0.01;
 
-                size_t pwr_start = w.FindTransitionIndex(related_pin->name_, i_from, th_start);
-                size_t pwr_end = w.FindTransitionIndex(o_pin.name_, o_from, th_end);
+                size_t pwr_start = w.FindTransitionIndex(related_pin->name_, th_start);
+                size_t pwr_end = w.FindTransitionIndex(o_pin.name_, th_end);
 
                 PicoJoule e = 0;
                 NanoSecond step = sim->GetTimeStep();
