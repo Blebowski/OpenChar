@@ -124,7 +124,7 @@ Waves::Waves(std::string path)
         if (kind_ == WaveKind::TIME)
             val *= 1E9;
 
-        reference_[sample] = val;
+        reference_.push_back(val);
 
         size_t i = 1;
         for (const auto &sig_name : sig_names) {
