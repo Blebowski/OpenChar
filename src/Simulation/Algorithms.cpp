@@ -1187,8 +1187,7 @@ void Algorithms::CharacterizeLibrary()
 {
     SimulationPool &sp = ctx_->GetSimulationPool();
 
-    // TODO: Set by TCL variable
-    sp.SetNumThreads(14);
+    sp.SetNumThreads(ctx_->GetVariables().GetIntVariable("max_threads"));
 
     ///////////////////////////////////////////////////////////////////////////////////////////////
     // First stage

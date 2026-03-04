@@ -2,6 +2,7 @@
 
 #include <filesystem>
 #include <cassert>
+#include <thread>
 
 #include "Utils.h"
 #include "Variables.h"
@@ -80,6 +81,14 @@ Variables::Variables() :
                 .kind = VarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
+                .d_val = 0.8
+            }
+        },
+        {"max_threads",
+            {
+                .kind = VarKind::INT,
+                .s_val = "",
+                .i_val = static_cast<int>(std::thread::hardware_concurrency()),
                 .d_val = 0.8
             }
         }
