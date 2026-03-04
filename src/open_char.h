@@ -100,6 +100,19 @@ namespace open_char {
         CLEAR
     };
 
+    enum class ArcKind {
+        COMBO,
+        SEQ_CK,
+        SEQ_SET,
+        SEQ_CLR
+    };
+
+    enum class UnateKind {
+        POSITIVE_UNATE,
+        NEGATIVE_UNATE,
+        NON_UNATE
+    };
+
     typedef double Celsius;
     typedef double Volt;
     typedef double NanoSecond;

@@ -8,13 +8,15 @@
 
 namespace open_char {
 
-Arc::Arc(Pin *pin, Template *templ, int64_t in_a, int64_t in_b, int out_a, int out_b) :
+Arc::Arc(Pin *pin, Template *templ, ArcKind kind, int64_t in_a,
+         int64_t in_b, int out_a, int out_b) :
     pin_(pin),
     template_(templ),
     in_a_(in_a),
     in_b_(in_b),
     out_a_(out_a),
-    out_b_(out_b)
+    out_b_(out_b),
+    kind_(kind)
 {}
 
 void Arc::SetRiseDelay(size_t row, size_t column, NanoSecond delay)
@@ -192,24 +194,36 @@ void Arc::Print()
 
 Pin* Arc::GetRelatedPin()
 {
-    int64_t diff = in_a_ ^ in_b_;
+    switch (kind_) {
+    case ArcKind::COMBO:
+    {
+        int64_t diff = in_a_ ^ in_b_;
 
-    // Must have exactly one bit set -> One pin transitioning
-    assert (IS_POWER_OF_2(diff));
+        // Must have exactly one bit set -> One pin transitioning
+        assert (IS_POWER_OF_2(diff));
 
-    int pos = __builtin_ctzll(diff);
-    Pin *rel_pin = nullptr;
+        int pos = __builtin_ctzll(diff);
+        Pin *rel_pin = nullptr;
 
-    int i = 0;
-    for (auto &p : pin_->cell_->GetPins(PinDirection::IN)) {
-        if (i == pos) {
-            rel_pin = &(p);
+        int i = 0;
+        for (auto &p : pin_->cell_->GetPins(PinDirection::IN)) {
+            if (i == pos) {
+                rel_pin = &(p);
+            }
+            i++;
         }
-        i++;
+        assert(rel_pin != nullptr);
+        return rel_pin;
     }
-    assert(rel_pin != nullptr);
+    case ArcKind::SEQ_CK:
+    {
+        return pin_->cell_->GetSequential().GetClockPin();
+    }
+    default:
+        assert(false);
+    }
 
-    return rel_pin;
+    return nullptr;
 }
 
 Template* Arc::GetTemplate()
@@ -217,33 +231,41 @@ Template* Arc::GetTemplate()
     return template_;
 }
 
-bool Arc::isPositiveUnate()
+UnateKind Arc::GetUnateness()
 {
-    int64_t diff = in_a_ ^ in_b_;
+    switch (kind_) {
+    case ArcKind::COMBO:
+    {
+        int64_t diff = in_a_ ^ in_b_;
 
-    // Must have exactly one bit set -> One pin transitioning
-    assert (IS_POWER_OF_2(diff));
+        // Must have exactly one bit set -> One pin transitioning
+        assert (IS_POWER_OF_2(diff));
 
-    int pos = __builtin_ctzll(diff);
+        int pos = __builtin_ctzll(diff);
 
-    int bit_a = (in_a_ >> pos) & 0x1;
-    int bit_b = (in_b_ >> pos) & 0x1;
+        int bit_a = (in_a_ >> pos) & 0x1;
+        int bit_b = (in_b_ >> pos) & 0x1;
 
-    assert ((bit_a == 0 && bit_b == 1) || (bit_a == 1 && bit_b == 0));
-    assert ((out_a_ == 0 && out_b_ == 1) || (out_b_ == 0 && out_a_ == 1));
+        assert ((bit_a == 0 && bit_b == 1) || (bit_a == 1 && bit_b == 0));
+        assert ((out_a_ == 0 && out_b_ == 1) || (out_b_ == 0 && out_a_ == 1));
 
-    if (bit_a == 0 && bit_b == 1) {
-        if (out_a_ == 0 && out_b_ == 1) {
-            return true;
+        if (bit_a == 0 && bit_b == 1) {
+            if (out_a_ == 0 && out_b_ == 1) {
+                return UnateKind::POSITIVE_UNATE;
+            } else {
+                return UnateKind::NEGATIVE_UNATE;
+            }
         } else {
-            return false;
+            if (out_a_ == 0 && out_b_ == 1) {
+                return UnateKind::NEGATIVE_UNATE;
+            } else {
+                return UnateKind::POSITIVE_UNATE;
+            }
         }
-    } else {
-        if (out_a_ == 0 && out_b_ == 1) {
-            return false;
-        } else {
-            return true;
-        }
+    }
+
+    default:
+        return UnateKind::NON_UNATE;
     }
 }
 
@@ -282,9 +304,42 @@ void Arc::WriteLiberty(FILE *f, size_t tab)
 
     Pin* rel_pin = GetRelatedPin();
     TAB_FPRINTF(tab, f, "related_pin : %s ;\n", rel_pin->name_);
-    TAB_FPRINTF(tab, f, "timing_type : combinational ;\n");
-    TAB_FPRINTF(tab, f, "timing_sense : %s_unate ;\n",
-                        (isPositiveUnate()) ? "positive" : "negative");
+
+    TAB_FPRINTF(tab, f, "timing_type : ");
+    switch (kind_) {
+    case ArcKind::COMBO:
+        fprintf(f, "combinational ;\n");
+        break;
+    case ArcKind::SEQ_CK:
+    {
+        EdgeKind kind = pin_->cell_->GetSequential().GetClockPolarity();
+        if (kind == EdgeKind::RISING) {
+            fprintf(f, "rising_edge ;\n");
+        } else {
+            fprintf(f, "falling_edge ;\n");
+        }
+        break;
+    }
+    case ArcKind::SEQ_CLR:
+        fprintf(f, "clear ;\n");
+        break;
+    case ArcKind::SEQ_SET:
+        fprintf(f, "set ;\n");
+        break;
+    }
+
+    TAB_FPRINTF(tab, f, "timing_sense : ");
+    switch (GetUnateness()) {
+    case UnateKind::POSITIVE_UNATE:
+        fprintf(f, "positive_unate ;\n");
+        break;
+    case UnateKind::NEGATIVE_UNATE:
+        fprintf(f, "negative_unate ;\n");
+        break;
+    case UnateKind::NON_UNATE:
+        fprintf(f, "non_unate ;\n");
+        break;
+    }
 
     if (rise_delays_.size() > 0) {
         WriteTable(f, tab, rise_delays_, "cell_rise");
@@ -305,21 +360,23 @@ void Arc::WriteLiberty(FILE *f, size_t tab)
 
     TAB_FPRINTF(tab, f, "} /* end timing */\n");
 
-    TAB_FPRINTF(tab, f, "internal_power () {\n");
-    tab++;
+    if (rise_power_.size() > 0 || fall_power_.size() > 0) {
+        TAB_FPRINTF(tab, f, "internal_power () {\n");
+        tab++;
 
-    TAB_FPRINTF(tab, f, "related_pin : %s ;\n", rel_pin->name_);
+        TAB_FPRINTF(tab, f, "related_pin : %s ;\n", rel_pin->name_);
 
-    if (rise_power_.size() > 0) {
-        WriteTable(f, tab, rise_power_, "rise_power");
+        if (rise_power_.size() > 0) {
+            WriteTable(f, tab, rise_power_, "rise_power");
+        }
+
+        if (rise_power_.size() > 0) {
+            WriteTable(f, tab, fall_power_, "fall_power");
+        }
+
+        tab--;
+        TAB_FPRINTF(tab, f, "}\n");
     }
-
-    if (rise_power_.size() > 0) {
-        WriteTable(f, tab, fall_power_, "fall_power");
-    }
-
-    tab--;
-    TAB_FPRINTF(tab, f, "}\n");
 
 }
 

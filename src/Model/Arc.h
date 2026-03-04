@@ -11,7 +11,8 @@ namespace open_char {
 class Arc {
 
     public:
-        Arc(Pin *pin, Template *templ, int64_t in_a, int64_t in_b, int out_a, int out_b);
+        Arc(Pin *pin, Template *templ, ArcKind kind,
+            int64_t in_a, int64_t in_b, int out_a, int out_b);
 
         void Print();
         void WriteLiberty(FILE *f, size_t tab);
@@ -41,7 +42,7 @@ class Arc {
         std::vector<Simulation*>& GetSimulations();
 
     private:
-        bool isPositiveUnate();
+        UnateKind GetUnateness();
 
         void WriteTable(FILE *f, size_t tab, std::vector<std::vector<double>>& data,
                         std::string title);
@@ -62,6 +63,8 @@ class Arc {
         int64_t in_b_;
         int out_a_;
         int out_b_;
+
+        ArcKind kind_;
 
         std::vector<Simulation*> simulations_;
 };

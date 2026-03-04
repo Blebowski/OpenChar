@@ -317,7 +317,7 @@ int Algorithms::PrepareComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, int 
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
     Template *templ = cell->GetDelayTemplate();
 
-    o_pin.AddArc(Arc(&o_pin, templ, in_a, in_b, out_a, out_b));
+    o_pin.AddArc(Arc(&o_pin, templ, ArcKind::COMBO, in_a, in_b, out_a, out_b));
     size_t arc_index = o_pin.GetArcs().size() - 1;
 
     for (size_t i = 0; i < 2; i++) {
@@ -1027,14 +1027,14 @@ void Algorithms::PrepareSeqClockDelaySims(Cell &cell)
             size_t o_cap_index = 0;
             for (PicoFarad o_cap : templ->GetIndex2()) {
 
+                // TODO: This is hard-coded for Q with the same polarity!
+                // We should extract logic function of each Q and compute according to it!
+                // Also, this is missing values of async pins.
+                o_pin.AddArc(Arc(&o_pin, templ, ArcKind::SEQ_CK, 0, 1, 0, 1));
+                size_t arc_index = o_pin.GetArcs().size() - 1;
+
                 // TODO: This assumes D-style flip-flop or latch.
                 for (int d_val = 0; d_val < 2; d_val++) {
-
-                    // TODO: This is hard-coded for Q with the same polarity!
-                    // We should extract logic function of each Q and compute according to it!
-                    // Also, this is missing values of async pins.
-                    o_pin.AddArc(Arc(&o_pin, templ, d_val, 1 - d_val, d_val, 1 - d_val));
-                    size_t arc_index = o_pin.GetArcs().size() - 1;
 
                     std::string sim_name = "SEQ_DLY";
 
@@ -1071,8 +1071,9 @@ void Algorithms::PrepareSeqClockDelaySims(Cell &cell)
                     }
 
                     // Drive D-pin
-                    sim->AddStimuli(&d_pin, Stimulus((d_val == 1) ? log0_v : log1_v,
-                                                     (d_val == 1) ? log1_v : log0_v,
+                    // First preset to !d_val and then one transfer to d_val.
+                    sim->AddStimuli(&d_pin, Stimulus((d_val == 0) ? log0_v : log1_v,
+                                                     (d_val == 0) ? log1_v : log0_v,
                                                      0.1, 0.01, 0.01, 10.0, 100.0, 1));
 
                     // Drive clock
@@ -1110,8 +1111,31 @@ void Algorithms::MeasureSeqClockDelay(Cell &cell)
 
                 int i_tran_index = sim->GetMetaDataAt(0);
                 int o_cap_index = sim->GetMetaDataAt(1);
+                int d_val = sim->GetMetaDataAt(2);
 
-                // TODO: Search for delay between D and Q on the second clock edge!
+                auto & c_pin = cell.GetPins(PinKind::CLK).front();
+
+                Variables &vars = ctx_->GetVariables();
+                double q_th = (d_val == 1) ? vars.GetDoubleVariable("delay_out_rise") :
+                                             vars.GetDoubleVariable("delay_out_fall");
+                double c_th = (cell.GetSequential().GetClockPolarity() == EdgeKind::RISING) ?
+                                        vars.GetDoubleVariable("delay_in_rise") :
+                                        vars.GetDoubleVariable("delay_in_fall");
+
+                Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+                Volt vdd_voltage = supply->GetVddVoltage();
+                q_th *= vdd_voltage;
+                c_th *= vdd_voltage;
+
+                NanoSecond q_edge = w.FindTransitionTime(o_pin.name_, q_th, 10.0, 25.0);
+                NanoSecond c_edge = w.FindTransitionTime(c_pin.name_, c_th, 12.5, 17.5);
+
+                NanoSecond ck_to_q = q_edge - c_edge;
+                if (d_val == 1) {
+                    arc.SetRiseDelay(i_tran_index, o_cap_index, ck_to_q);
+                } else {
+                    arc.SetFallDelay(i_tran_index, o_cap_index, ck_to_q);
+                }
             }
         }
     }
@@ -1238,6 +1262,13 @@ void Algorithms::CharacterizeLibrary()
 
     info("Running fourth simulation stage");
     sp.RunSimulations();
+
+    for (auto & cell : ctx_->GetLibrary().GetCells()) {
+        if (cell.second.GetKind() == CellKind::SEQUENTIAL) {
+            info("%s - Measuring clock to output delay", cell.second.GetName());
+            MeasureSeqClockDelay(cell.second);
+        }
+    }
 
 }
 

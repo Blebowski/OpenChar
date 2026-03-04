@@ -167,7 +167,9 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
             error("Unhandled pin_direction\n");
         }
 
-        TAB_FPRINTF(tab, f, "capacitance : 0.0 ;\n");
+        if (direction_ == PinDirection::IN) {
+            TAB_FPRINTF(tab, f, "capacitance : 0.0 ;\n");
+        }
 
         if (direction_ == PinDirection::OUT) {
             for (auto & arc : arcs_) {
