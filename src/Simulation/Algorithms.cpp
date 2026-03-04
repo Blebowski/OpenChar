@@ -1127,6 +1127,7 @@ void Algorithms::MeasureSeqClockDelay(Cell &cell)
                 q_th *= vdd_voltage;
                 c_th *= vdd_voltage;
 
+                // TODO: Pass the expected times via Simulation Object
                 NanoSecond q_edge = w.FindTransitionTime(o_pin.name_, q_th, 10.0, 25.0);
                 NanoSecond c_edge = w.FindTransitionTime(c_pin.name_, c_th, 12.5, 17.5);
 
@@ -1143,7 +1144,37 @@ void Algorithms::MeasureSeqClockDelay(Cell &cell)
 
 void Algorithms::MeasureSeqClockTransition(Cell &cell)
 {
+    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+        for (auto & arc : o_pin.GetArcs()) {
+            for (Simulation *sim : arc.GetSimulations()) {
+                Waves w = sim->ReadWaves();
 
+                int i_tran_index = sim->GetMetaDataAt(0);
+                int o_cap_index = sim->GetMetaDataAt(1);
+                int d_val = sim->GetMetaDataAt(2);
+
+                Variables &vars = ctx_->GetVariables();
+                double hi_th = (d_val == 1) ? vars.GetDoubleVariable("slew_upper_rise") :
+                                              vars.GetDoubleVariable("slew_upper_fall");
+                double lo_th = (d_val == 1) ? vars.GetDoubleVariable("slew_lower_rise") :
+                                              vars.GetDoubleVariable("slew_lower_fall");
+                Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+                Volt vdd_voltage = supply->GetVddVoltage();
+                hi_th *= vdd_voltage;
+                lo_th *= vdd_voltage;
+
+                // TODO: Pass the expected times via Simulation Object
+                NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th, 12.5, 17.5);
+                NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th, 12.5, 17.5);
+
+                if (d_val == 1) {
+                    arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
+                } else {
+                    arc.SetFallTransition(i_tran_index, o_cap_index, lo_time - hi_time);
+                }
+            }
+        }
+    }
 }
 
 void Algorithms::MeasureSeqClockPowers(Cell &cell)
@@ -1267,6 +1298,8 @@ void Algorithms::CharacterizeLibrary()
         if (cell.second.GetKind() == CellKind::SEQUENTIAL) {
             info("%s - Measuring clock to output delay", cell.second.GetName());
             MeasureSeqClockDelay(cell.second);
+            info("%s - Measuring output transition", cell.second.GetName());
+            MeasureSeqClockTransition(cell.second);
         }
     }
 
