@@ -1,3 +1,4 @@
 OPEN_CHAR_TEST(ContextTest)
+OPEN_CHAR_TEST(ExpressionTest)
 OPEN_CHAR_TEST(SupplyTest)
 OPEN_CHAR_TEST(VariablesTest)
