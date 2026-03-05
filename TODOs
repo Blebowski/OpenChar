@@ -21,6 +21,7 @@ Features:
             - Capture output.
             - Add logic table entry with all inputs an previous value of states
             - Cover the expression and simplify -> Logic function extracted.
+    - Measure min pulse width on CK pin, Async pins
 - Support clock gating cells:
     - Recognize type of gating from simulation.
     - Measure Clock gating check -> How to recognize this messed up ??

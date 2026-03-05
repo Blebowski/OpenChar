@@ -32,6 +32,7 @@ class SimulationPool {
         std::vector<Simulation *> simulations_;
         size_t dispatch_head_ = 0;
         size_t dispatch_tail_ = 0;
+        size_t n_batch_simulations_ = 0;
 
         std::queue<Simulation *> queue_;
         std::vector<std::thread> threads_;

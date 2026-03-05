@@ -1,5 +1,8 @@
 
+#include <cassert>
+
 #include "SimulationPool.h"
+#include "Utils.h"
 
 namespace open_char {
 
@@ -30,6 +33,9 @@ void SimulationPool::PushSimulation(Simulation *simulation)
 
 void SimulationPool::RunSimulations()
 {
+    n_batch_simulations_ = simulations_.size() - dispatch_tail_;
+    info("Running %d simulations...", n_batch_simulations_);
+
     for (size_t i = dispatch_tail_; i < simulations_.size(); i++) {
         queue_.push(simulations_[i]);
     }
@@ -56,6 +62,13 @@ void SimulationPool::RunSimulations()
                 }
 
                 simulation->Simulate();
+
+                {
+                    std::unique_lock<std::mutex> local_lock(lock_);
+                    dispatch_tail_++;
+                    size_t finished = n_batch_simulations_ - (simulations_.size() - dispatch_tail_);
+                    info("Finished: %d / %d", finished, n_batch_simulations_);
+                }
             }
         });
     }
@@ -75,9 +88,7 @@ void SimulationPool::RunSimulations()
 
     // Synchronously do the post processing callback so that we don't
     // need to handle locking of the data model.
-    while (dispatch_tail_ < dispatch_head_) {
-        dispatch_tail_++;
-    }
+    assert (dispatch_tail_ == dispatch_head_);
 
     threads_.clear();
 }
