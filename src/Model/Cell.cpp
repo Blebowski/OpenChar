@@ -119,6 +119,14 @@ void Cell::WriteLiberty(FILE *f, size_t tab)
         pin.WriteLiberty(f, tab);
     }
 
+    for (auto & pin : GetPins(PinKind::CLK)) {
+        pin.WriteLiberty(f, tab);
+    }
+
+    for (auto & pin : GetPins(PinKind::ASYNC)) {
+        pin.WriteLiberty(f, tab);
+    }
+
     for (auto & pin : GetPins(PinKind::DATA)) {
         pin.WriteLiberty(f, tab);
     }

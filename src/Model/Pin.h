@@ -41,6 +41,9 @@ class Pin {
         void SetPolarity(int polarity);
         int  GetPolarity();
 
+        void SetCapacitanceRise(PicoFarad min, PicoFarad max, PicoFarad avg);
+        void SetCapacitanceFall(PicoFarad min, PicoFarad max, PicoFarad avg);
+
         void AddSimulation(Simulation *simulation);
         std::vector<Simulation*>& GetSimulations();
 
@@ -59,6 +62,12 @@ class Pin {
 
         std::vector<Simulation*> simulations_;
 
+        PicoFarad cap_rise_min_;
+        PicoFarad cap_rise_max_;
+        PicoFarad cap_rise_avg_;
+        PicoFarad cap_fall_min_;
+        PicoFarad cap_fall_max_;
+        PicoFarad cap_fall_avg_;
 };
 
 }

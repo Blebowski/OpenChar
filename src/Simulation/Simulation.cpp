@@ -130,6 +130,9 @@ void Simulation::WriteTestBench()
     for (const auto &l : loads_) {
         fprintf(f, ".SAVE i(V%s)\n", l.first->name_);
     }
+    for (const auto &s : stimuli_) {
+        fprintf(f, ".SAVE i(V%s)\n", s.first->name_);
+    }
 
     fprintf(f, "\n");
 

@@ -32,6 +32,7 @@ class Waves {
                                       NanoSecond time_start, NanoSecond time_end);
 
         NanoSecond GetTimeAtIndex(size_t index);
+        size_t GetIndexOfTime(NanoSecond time);
 
     private:
         size_t FindReferenceIndex(double val);

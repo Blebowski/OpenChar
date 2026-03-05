@@ -30,6 +30,134 @@ int Algorithms::GetBit(int64_t v, size_t index)
     return (v >> index) & 0x1;
 }
 
+void Algorithms::PrepareInputCapSims(Cell &cell)
+{
+    size_t i_pin_index = 0;
+    for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+
+        std::string sim_name = sprintf("ICAP_%s", i_pin.name_);
+
+        // TODO: Wrap simulation construction with common stuff!
+        Simulation *sim = new Simulation(ctx_, sim_name, &cell, SimulationKind::TRAN);
+
+        OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
+        Supply *supply = op_cond.GetSupply();
+        sim->SetTemp(op_cond.GetTemperature());
+        sim->SetSupply(op_cond.GetSupply());
+
+        for (const auto & netlist : ctx_->GetNetlists())
+            sim->AddInclude(netlist);
+
+        for (const auto & model : ctx_->GetModels())
+            sim->AddModel(model);
+
+        Volt log0_v = supply->GetGndVoltage();
+        Volt log1_v = supply->GetVddVoltage();
+
+        for (auto & i_pin_2 : cell.GetPins(PinDirection::IN)) {
+            if (i_pin_2.name_ == i_pin.name_) {
+                sim->AddStimuli(&i_pin_2, Stimulus(log0_v, log1_v, 1, 1, 1, 2, 10, 1));
+            } else {
+                sim->AddStimuli(&i_pin_2, Stimulus(log0_v));
+            }
+        }
+
+        sim->SetDuration(6);
+        sim->PutMetaData(static_cast<int>(i_pin_index));
+
+        i_pin.AddSimulation(sim);
+        ctx_->GetSimulationPool().PushSimulation(sim);
+
+        i_pin_index++;
+    }
+}
+
+void Algorithms::MeasureInputCap(Cell &cell)
+{
+    for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+        for (Simulation *sim : i_pin.GetSimulations()) {
+
+            // TODO: Better approach for filtering!
+            if (!sim->name_.starts_with("ICAP_")) {
+                continue;
+            }
+
+            Waves w = sim->ReadWaves();
+
+            auto & pin_current = w.GetCurrent(i_pin.name_);
+
+            // TODO: Pass time when edge starts / ends as part of simulation object
+            size_t rise_start_index = w.GetIndexOfTime(1.0);
+            size_t rise_end_index = w.GetIndexOfTime(2.0);
+
+            assert (pin_current.size() > rise_start_index && pin_current.size() > rise_end_index);
+
+            // TODO: Assumes fixed time step!
+            MicroAmp i_avg = 0;
+            MicroAmp i_min = 1E12;
+            MicroAmp i_max = 0;
+
+            for (size_t i = rise_start_index; i < rise_end_index; i++) {
+                MicroAmp cur_abs = std::abs(pin_current[i]);
+                i_avg += cur_abs;
+
+                if (cur_abs < i_min) {
+                    i_min = cur_abs;
+                }
+                if (cur_abs > i_max) {
+                    i_max = cur_abs;
+                }
+            }
+
+            i_avg /= static_cast<double>(rise_end_index - rise_start_index);
+
+            OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
+            Supply *supply = op_cond.GetSupply();
+            Volt log1_v = supply->GetVddVoltage();
+
+            // C = I / (dV/dT)
+            // uA / ( V / 1 ns) = fF -> * 1E-3 to pF
+            PicoFarad i_cap_rise_min = (i_min / log1_v) * 1E-3;
+            PicoFarad i_cap_rise_max = (i_max / log1_v) * 1E-3;
+            PicoFarad i_cap_rise_avg = (i_avg / log1_v) * 1E-3;
+
+            i_pin.SetCapacitanceRise(i_cap_rise_min, i_cap_rise_max, i_cap_rise_avg);
+
+            // TODO: Pass start / end times from the simulation object
+            size_t fall_start_index = w.GetIndexOfTime(4.0);
+            size_t fall_end_index = w.GetIndexOfTime(5.0);
+
+            assert (pin_current.size() > fall_start_index && pin_current.size() > fall_end_index);
+
+            // TODO: Assumes fixed time step!
+            i_avg = 0;
+            i_min = 1E12;
+            i_max = 0;
+
+            for (size_t i = fall_start_index; i < fall_end_index; i++) {
+                MicroAmp cur_abs = std::abs(pin_current[i]);
+                i_avg += cur_abs;
+
+                if (cur_abs < i_min) {
+                    i_min = cur_abs;
+                }
+                if (cur_abs > i_max) {
+                    i_max = cur_abs;
+                }
+            }
+            i_avg /= static_cast<double>(fall_end_index - fall_start_index);
+
+            // C = I / (dV/dT)
+            // uA / ( V / 1 ns) = fF -> * 1E-3 to pF
+            PicoFarad i_cap_fall_min = (i_min / log1_v) * 1E-3;
+            PicoFarad i_cap_fall_max = (i_max / log1_v) * 1E-3;
+            PicoFarad i_cap_fall_avg = (i_avg / log1_v) * 1E-3;
+
+            i_pin.SetCapacitanceFall(i_cap_fall_min, i_cap_fall_max, i_cap_fall_avg);
+        }
+    }
+}
+
 void Algorithms::PrepareComboLogicTableAndLeakageSims(Cell &cell)
 {
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
@@ -1248,6 +1376,8 @@ void Algorithms::CharacterizeLibrary()
             info("%s - Preparing Asynchronous pins simulations", cell.second.GetName());
             PrepareSeqAsyncFunctionSims(cell.second);
         }
+        info("%s - Preparing input capacitance simulations", cell.second.GetName());
+        PrepareInputCapSims(cell.second);
     }
 
     info("Running first simulation stage");
@@ -1265,6 +1395,8 @@ void Algorithms::CharacterizeLibrary()
             info("%s - Measuring async pin functions", cell.second.GetName());
             MeasureSeqAsyncFunctions(cell.second);
         }
+        info("%s - Measuring input capacitance", cell.second.GetName());
+        MeasureInputCap(cell.second);
     }
 
     ///////////////////////////////////////////////////////////////////////////////////////////////

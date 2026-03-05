@@ -16,6 +16,9 @@ class Algorithms {
     public:
         Algorithms(Context *ctx);
 
+        void PrepareInputCapSims(Cell &cell);
+        void MeasureInputCap(Cell &cell);
+
         void PrepareComboLogicTableAndLeakageSims(Cell &cell);
         void MeasureComboLogicTables(Cell &cell);
         void MeasureComboLeakage(Cell &cell);

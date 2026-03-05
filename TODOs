@@ -3,10 +3,9 @@ Features:
 - Propagate Error code from simulation
 - Add "sanity simulation" before the real characterization
     - Simple DC simp with the DUT inputs tied low!
-    - Helps to find undefined DUT, syntax or simulation errors!
+    - Helps to find undefined DUT, syntax or simulation errors
 - Parse TCL values as TCL expression -> Supports variables and expression in arguments
 - Adjust simulation duration and/or precision based on initial run.
-- Measure input capacitance of pin (Frequency sweep vs. RC transient measure) ?
 - Detect non-monotonic behavior in the output ? How to do it fast ?
 - Support Flip-flops and latches:
     - Setup / Hold measurement

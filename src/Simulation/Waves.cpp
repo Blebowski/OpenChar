@@ -218,6 +218,19 @@ NanoSecond Waves::GetTimeAtIndex(size_t index)
     return reference_[index];
 }
 
+size_t Waves::GetIndexOfTime(NanoSecond time)
+{
+    assert (kind_ == WaveKind::TIME);
+
+    for (size_t i = 0; i < reference_.size(); i++) {
+        if (reference_[i] > time)
+            return i;
+    }
+
+    assert(false);
+    return 0;
+}
+
 size_t Waves::FindReferenceIndex(double val)
 {
     double step = static_cast<double>(reference_.size()) / 2;

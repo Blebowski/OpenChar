@@ -106,6 +106,20 @@ int Pin::GetPolarity()
     return polarity_;
 }
 
+void Pin::SetCapacitanceRise(PicoFarad min, PicoFarad max, PicoFarad avg)
+{
+    cap_rise_min_ = min;
+    cap_rise_max_ = max;
+    cap_rise_avg_ = avg;
+}
+
+void Pin::SetCapacitanceFall(PicoFarad min, PicoFarad max, PicoFarad avg)
+{
+    cap_fall_min_ = min;
+    cap_fall_max_ = max;
+    cap_fall_avg_ = avg;
+}
+
 void Pin::AddSimulation(Simulation *simulation)
 {
     simulations_.push_back(simulation);
@@ -147,6 +161,8 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
         break;
 
     case PinKind::DATA:
+    case PinKind::CLK:
+    case PinKind::ASYNC:
         TAB_FPRINTF(tab, f, "pin (%s) {\n", name_);
         tab++;
 
@@ -167,8 +183,16 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
             error("Unhandled pin_direction\n");
         }
 
+        if (kind_ == PinKind::CLK) {
+            assert(direction_ == PinDirection::IN);
+            TAB_FPRINTF(tab, f, "clock : true ;\n");
+        }
+
         if (direction_ == PinDirection::IN) {
-            TAB_FPRINTF(tab, f, "capacitance : 0.0 ;\n");
+            TAB_FPRINTF(tab, f, "rise_capacitance : %.9f ;\n", cap_rise_avg_);
+            TAB_FPRINTF(tab, f, "rise_capacitance_range(%.9f, %.9f) ;\n", cap_rise_min_, cap_rise_max_);
+            TAB_FPRINTF(tab, f, "fall_capacitance : %.9f ;\n", cap_fall_avg_);
+            TAB_FPRINTF(tab, f, "fall_capacitance_range(%.9f, %.9f) ;\n", cap_fall_min_, cap_fall_max_);
         }
 
         if (direction_ == PinDirection::OUT) {
