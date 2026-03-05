@@ -5,14 +5,10 @@ Features:
 - Adjust simulation duration and/or precision based on initial run.
 - Measure input capacitance of pin (Frequency sweep vs. RC transient measure) ?
 - Detect non-monotonic behavior in the output ? How to do it fast ?
-- Measure transition power -> Integrate current ?
 - Support Flip-flops and latches:
-    - CK -> Q output delay
     - Setup / Hold measurement
     - Async pins -> out arc measurement
     - How to generate the logic function here properly ?
-    - Can we recognize clock polarity automatically ? I think yes!
-    - Can we recognize polarity of async pins such as reset / set ? I think too.
     - Specify by hand: clock, data, async, clock_enable
 - Support clock gating cells:
     - Recognize type of gating from simulation.
@@ -25,8 +21,8 @@ Features:
     - Optionally behavioral description
     - Second step - Dump specify blocks with delays and timing checks.
 - VHDL writer
-    - First step - Behavioral logic only
     - Secon step - Add VITAL writer
+    - First step - Behavioral logic only
 - Add CCS model support.
 - Detect weird cases
     - E.g. Pin value does not start / end in expected value as per simulation.

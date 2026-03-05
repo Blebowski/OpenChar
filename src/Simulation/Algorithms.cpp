@@ -551,6 +551,8 @@ void Algorithms::MeasureComboPowers(Cell &cell)
                 PicoJoule e = 0;
                 NanoSecond step = sim->GetTimeStep();
 
+                // TODO: Time step may not need to be constant, better integrate with each step
+                //       as time diff between two consecutive steps.
                 for (size_t i = pwr_start; i < pwr_end; i++) {
                     e += pwr[i] * step;
                 }
@@ -1179,7 +1181,52 @@ void Algorithms::MeasureSeqClockTransition(Cell &cell)
 
 void Algorithms::MeasureSeqClockPowers(Cell &cell)
 {
+    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+        for (auto & arc : o_pin.GetArcs()) {
+            for (Simulation *sim : arc.GetSimulations()) {
+                Waves w = sim->ReadWaves();
 
+                int i_tran_index = sim->GetMetaDataAt(0);
+                int o_cap_index = sim->GetMetaDataAt(1);
+                int d_val = sim->GetMetaDataAt(2);
+
+                Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+                Volt vdd_voltage = supply->GetVddVoltage();
+                Pin *c_pin = cell.GetSequential().GetClockPin();
+                EdgeKind edge_pol = cell.GetSequential().GetClockPolarity();
+
+                double ck_th = vdd_voltage;
+                ck_th *= (edge_pol == EdgeKind::RISING) ? 0.01 : 0.99;
+
+                double q_th = vdd_voltage;
+                q_th *= (d_val == 1) ? 0.99 : 0.01;
+
+                // TODO: Pass the look-up times via the Simulation object
+                size_t start_index = w.FindTransitionIndex(c_pin->name_, ck_th, 12.5, 17.5);
+                size_t end_index = w.FindTransitionIndex(o_pin.name_, q_th, 12.5, 17.5);
+
+                // Integrate
+                PicoJoule e = 0;
+                auto & i_vdd = w.GetCurrent(supply->GetVddName());
+                auto & i_q = w.GetCurrent(o_pin.name_);
+                NanoSecond time_step = sim->GetTimeStep();
+
+                // TODO: Integrate with possibly varying time step ?
+                for (size_t i = start_index; i < end_index; i++) {
+                    e += ((i_vdd[i] + i_q[i]) * vdd_voltage) * time_step;
+                }
+
+                // uA * V = uW ;  uW * ns = femtoJ -> Convert to Pico
+                e /= 1E3;
+
+                if (d_val == 1) {
+                    arc.SetRisePower(i_tran_index, o_cap_index, e);
+                } else {
+                    arc.SetFallPower(i_tran_index, o_cap_index, e);
+                }
+            }
+        }
+    }
 }
 
 
@@ -1299,6 +1346,8 @@ void Algorithms::CharacterizeLibrary()
             MeasureSeqClockDelay(cell.second);
             info("%s - Measuring output transition", cell.second.GetName());
             MeasureSeqClockTransition(cell.second);
+            info("%s - Measuring internal power", cell.second.GetName());
+            MeasureSeqClockPowers(cell.second);
         }
     }
 
