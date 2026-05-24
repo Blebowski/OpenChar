@@ -113,6 +113,21 @@ namespace open_char {
         NON_UNATE
     };
 
+    enum class CharactState {
+        START,
+        INPUT_CAP,
+
+        COM_LOG_TBL_LKG,
+        COM_DLY_PWR,
+
+        SEQ_ASYNC_FUNCS,
+        SEQ_CELL_KIND,
+        SEQ_FF_CK_POL,
+        SEQ_FF_DLY_PWR,
+
+        DONE
+    };
+
     typedef double Celsius;
     typedef double Volt;
     typedef double NanoSecond;

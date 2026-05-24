@@ -16,7 +16,8 @@ Simulation::Simulation(Context *ctx, std::string name, Cell *dut, SimulationKind
     name_(name),
     kind_(kind),
     dut_(dut),
-    duration_(10)
+    duration_(10),
+    is_finished_(false)
 {
     // TODO: Handle exceptions where creating Run directory fails!
     std::filesystem::path run_dir(ctx->GetVariables().GetVariable("run_directory"));
@@ -152,6 +153,11 @@ void Simulation::WriteTestBench()
 
 int Simulation::Simulate()
 {
+    {
+        std::unique_lock<std::mutex> local_lock(lock_);
+        assert(is_finished_ == false);
+    }
+
     WriteTestBench();
 
     std::filesystem::path tb_path = sim_dir_ / testbench_;
@@ -162,22 +168,21 @@ int Simulation::Simulate()
     std::string cmd = sprintf("ngspice %s -b -r %s -o %s > %s 2>&1", tb_path.c_str(),
                                 wave_path.c_str(), log_path.c_str(), stdout_path.c_str());
 
-    int exit_code = system(cmd.c_str());
-    return exit_code;
-}
+    exit_code_ = system(cmd.c_str());
+    {
+        std::unique_lock<std::mutex> local_lock(lock_);
+        is_finished_ = true;
+    }
 
-void Simulation::SetPostSimCb(std::function<int(void)> post_sim_cb)
-{
-    post_sim_cb_ = post_sim_cb;
-}
-
-void Simulation::ExecutePostSimCb()
-{
-    post_sim_cb_();
+    return exit_code_;
 }
 
 Waves Simulation::ReadWaves()
 {
+    {
+        std::unique_lock<std::mutex> local_lock(lock_);
+        assert(is_finished_);
+    }
     std::filesystem::path wave_path = sim_dir_ / wave_file_;
 
     return Waves(wave_path);
@@ -202,6 +207,16 @@ int Simulation::GetMetaDataAt(size_t index)
 {
     assert(index < metadata_.size());
     return metadata_[index];
+}
+
+bool Simulation::IsFinished()
+{
+    bool rv;
+    {
+        std::unique_lock<std::mutex> local_lock(lock_);
+        rv = is_finished_;
+    }
+    return rv;
 }
 
 }

@@ -21,18 +21,22 @@ class SimulationPool {
         SimulationPool(Context *ctx);
         ~SimulationPool();
 
-        void PushSimulation(Simulation *simulation);
         void SetNumThreads(size_t num_threads);
 
-        void RunSimulations();
+        void EnqueueSimulation(Simulation *simulation);
+        void Start();
+        void WaitDone();
+
+        void PrintStats();
 
     private:
         Context *ctx_;
 
         std::vector<Simulation *> simulations_;
-        size_t dispatch_head_ = 0;
-        size_t dispatch_tail_ = 0;
-        size_t n_batch_simulations_ = 0;
+
+        size_t enqueued_;
+        size_t dispatched_;
+        size_t finished_;
 
         std::queue<Simulation *> queue_;
         std::vector<std::thread> threads_;

@@ -70,6 +70,10 @@ class Cell {
 
         void AddSimulation(Simulation *simulation);
         std::vector<Simulation*>& GetSimulations();
+        bool IsSimulationFinished();
+
+        void SetCharactState(CharactState charact_state);
+        CharactState GetCharactState();
 
         void WriteLiberty(FILE *f, size_t tab);
 
@@ -88,6 +92,7 @@ class Cell {
         bool has_seq_;
 
         std::vector<Simulation*> simulations_;
+        CharactState charact_state_;
 };
 
 }

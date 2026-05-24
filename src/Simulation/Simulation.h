@@ -7,6 +7,7 @@
 #include <string>
 #include <filesystem>
 #include <functional>
+#include <mutex>
 
 #include "open_char.h"
 #include "Pin.h"
@@ -43,6 +44,8 @@ class Simulation {
         void SetPostSimCb(std::function<int(void)> post_sim_cb);
         void ExecutePostSimCb();
 
+        bool IsFinished();
+
         const std::string name_;
 
     private:
@@ -73,9 +76,12 @@ class Simulation {
         const std::string std_out_file_ = "stdout.log";
 
         std::filesystem::path sim_dir_;
-        std::function<int(void)> post_sim_cb_;
 
         std::vector<int> metadata_;
+
+        int exit_code_ = 0;
+        bool is_finished_;
+        std::mutex lock_;
 
         void WriteTestBench();
 };

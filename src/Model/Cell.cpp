@@ -4,13 +4,15 @@
 #include "open_char.h"
 #include "Cell.h"
 #include "Utils.h"
+#include "Simulation.h"
 
 namespace open_char {
 
 Cell::Cell(std::string name, Library *library) :
     name_(name),
     library_(library),
-    seq_(this)
+    seq_(this),
+    charact_state_(CharactState::START)
 {};
 
 Cell::~Cell()
@@ -87,6 +89,43 @@ void Cell::AddSimulation(Simulation *simulation)
 std::vector<Simulation*>& Cell::GetSimulations()
 {
     return simulations_;
+}
+
+bool Cell::IsSimulationFinished()
+{
+    // TODO: When there are many simulations in cell, its pins and arcs, checking
+    //       if simulation is finished is expensive as each check in Simulation
+    //       object involves mutex lock / unlock. Later this may need to be optimized
+
+    for (auto & sim : simulations_) {
+        if (!sim->IsFinished())
+            return false;
+    }
+
+    for (auto & pin : pins_) {
+        for (auto & sim : pin.second.GetSimulations()) {
+            if (!sim->IsFinished())
+                return false;
+        }
+        for (auto & arc : pin.second.GetArcs()) {
+            for (auto & sim : arc.GetSimulations()) {
+                if (!sim->IsFinished())
+                    return false;
+            }
+        }
+    }
+
+    return true;
+}
+
+void Cell::SetCharactState(CharactState charact_state)
+{
+    charact_state_ = charact_state;
+}
+
+CharactState Cell::GetCharactState()
+{
+    return charact_state_;
 }
 
 void Cell::WriteLiberty(FILE *f, size_t tab)

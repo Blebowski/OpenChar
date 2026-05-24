@@ -38,10 +38,10 @@ class Algorithms {
         void PrepareFFClockPolaritySims(Cell &cell);
         void MeasureFFClockPolarity(Cell &cell);
 
-        void PrepareSeqClockDelaySims(Cell &cell);
-        void MeasureSeqClockDelay(Cell &cell);
-        void MeasureSeqClockTransition(Cell &cell);
-        void MeasureSeqClockPowers(Cell &cell);
+        void PrepareFFClockDelaySims(Cell &cell);
+        void MeasureFFClockDelay(Cell &cell);
+        void MeasureFFClockTransition(Cell &cell);
+        void MeasureFFClockPowers(Cell &cell);
 
         void CharacterizeLibrary();
 
