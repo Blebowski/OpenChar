@@ -1,0 +1,76 @@
+
+COMBO CELLS:
+
+1.  Logic Table and Leakage simulation
+    Dependencies:               None
+    Type:                       DC sim,
+    Number of sims:             One sim per each combination of input pin values
+    Procedure:                  Apply input pins combination, strobe outputs.
+    Measurements on results:
+        - Measure leakage (Current to supply pin upon input pins condition)
+        - Compute logic table (Add one entry for each input pin combination)
+        - Compute logic function from logic table (Do Sum-of-Product or Product-of-sums on logic table, then simplify)
+
+2.  Input capacitance simulation
+    Dependencies:               None
+    Type:                       Transient
+    Number of sims:             One sim per each input pin.
+    Procedure:                  Apply ramp on input pin.
+    Measurement on results:
+        - Measure input cap from current flowing into the pin from C = I / (dV/dT).
+          Voltage change across time given by the ramp slew rate.
+
+3.  Delay and transition measurement
+    Dependencies:               Logic Table and Leakage Simulation
+    Type:                       Transient
+    Nmber of sims:              Two sims per each combination of input transition and output cap (rising / falling)
+    Procedure:                  Apply rising or falling edge at the respective input pin.
+    Measurement on results:
+        - Measure Combo delay by finding input crossing, output crossing and computing diff
+        - Measure output transition
+
+SEQ CELLS:
+
+1.  Asynchronous pin function simulation
+    Dependencies:               None
+    Type:                       Transient
+    Number of sims:             Two sims for each combination of values on ASYNC input pin (one with each of D=0/1).
+    Procedure:                  Apply the ASYNC input pins combination, then do a clock pulse.
+    Measurement on result:
+        - If after a clock pulse output changes, no async pin is active.
+        - If there is no output change after a clock pulse, the async pin combination is
+          "set_candidate" or "clear candidate" based on output value.
+        - Out of "set candidates" and "clear candidates" we compute priority, polarity and
+          effect of output pins.
+
+2.  Sequential Cell kind recognition
+    Dependencies:               Asynchronous pin function simulation
+    Type:                       Transient
+    Number of sims:             2, one for each value of clock pin
+    Procedure:                  Tie async pins to inactive values. Apply constant CK value and toggle all combinations
+                                of non-clock and non-async pins in one sim.
+    Measurement on result:
+        - If in some simulation output value changes, cell is a latch, otherwise it is a flop
+
+3.  Flip Flop clock polarity sims
+    Dependencies:               Asynchronous pin function simulation, Sequential Cell kind recognition
+    Type:                       Transient
+    Number of sims:             2, one for each edge polarity * 2 ^ number of input data pins
+    Procedure:                  Tie async pins to inactive values. Tie Data inputs to the input combination.
+                                Apply clock edge on clock pin.
+    Measurement on result:
+        - If output changes under a clock polarity, that is the flops clock polarity.
+
+4.  Sequential cell clock delay sims
+    Dependencies:               Asynchronous pin function simulation, Sequential Cell kind recognition, Flip Flop clock polarity sims
+    Type:                       Transient
+    Number of sims:             2 for each combination of input transition and output capacitance
+    Procedure:                  Tie async pins to inactive value. Apply clock edge for inverted D pin value, then
+                                apply clock edge for measured D pin value.
+    Measurement on result:
+        - On the second clock edge in simulation find when output transitions,
+          measure its delay from CK transitioning and output transition time
+
+
+
+
