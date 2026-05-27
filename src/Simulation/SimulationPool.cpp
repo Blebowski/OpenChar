@@ -64,17 +64,19 @@ void SimulationPool::Start()
 
 void SimulationPool::WaitDone()
 {
-    cv_.notify_all();
     {
         std::unique_lock<std::mutex> lock(lock_);
         stop_ = true;
     }
+    cv_.notify_all();
 
     for (auto& thread : threads_) {
         thread.join();
     }
 
     threads_.clear();
+
+    stop_ = false;
 }
 
 void SimulationPool::EnqueueSimulation(Simulation *simulation)
