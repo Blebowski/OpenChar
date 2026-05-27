@@ -66,7 +66,7 @@ class Arc {
 
         ArcKind kind_;
 
-        std::vector<Simulation*> simulations_;
+        std::vector<std::vector<std::vector<Simulation*>>> simulations_;
 };
 
 }

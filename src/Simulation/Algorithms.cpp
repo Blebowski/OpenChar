@@ -486,9 +486,6 @@ int Algorithms::PrepareComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, int 
                 Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
                 Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
 
-                sim->PutMetaData(i_tran_index);
-                sim->PutMetaData(o_cap_index);
-
                 int i = 0;
                 for (auto & i_pin : cell->GetPins(PinDirection::IN)) {
 
@@ -536,7 +533,7 @@ int Algorithms::PrepareComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, int 
 
                 sim->AddLoad(&o_pin, o_cap);
 
-                o_pin.GetArcs()[arc_index].AddSimulation(sim);
+                o_pin.GetArcs()[arc_index].AddSimulation(i_tran_index, o_cap_index, sim);
                 ctx_->GetSimulationPool().EnqueueSimulation(sim);
 
                 o_cap_index++;
@@ -565,31 +562,41 @@ void Algorithms::MeasureComboDelays(Cell &cell)
 
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
-            for (Simulation *sim : arc.GetSimulations()) {
 
-                Waves w = sim->ReadWaves();
-                Pin *related_pin = arc.GetRelatedPin();
+            size_t i_tran_index = 0;
+            for (auto & sims_row : arc.GetSimulations()) {
 
-                int i_tran_index = sim->GetMetaDataAt(0);
-                int o_cap_index = sim->GetMetaDataAt(1);
-                int i_from = sim->GetMetaDataAt(2);
-                int o_from = sim->GetMetaDataAt(3);
+                size_t o_cap_index = 0;
+                for (auto & sims_row_coll : sims_row) {
 
-                double i_th = (i_from == 0) ? delay_in_rise : delay_in_fall;
-                double o_th = (o_from == 0) ? delay_out_rise : delay_out_fall;
+                    assert(sims_row_coll.size() == 1);
+                    Simulation* sim = sims_row_coll[0];
 
-                i_th *= vdd_voltage;
-                o_th *= vdd_voltage;
+                    Waves w = sim->ReadWaves();
+                    Pin *related_pin = arc.GetRelatedPin();
 
-                NanoSecond i_edge = w.FindTransitionTime(related_pin->name_, i_th);
-                NanoSecond o_edge = w.FindTransitionTime(o_pin.name_, o_th);
+                    int i_from = sim->GetMetaDataAt(0);
+                    int o_from = sim->GetMetaDataAt(1);
 
-                NanoSecond delay = o_edge - i_edge;
+                    double i_th = (i_from == 0) ? delay_in_rise : delay_in_fall;
+                    double o_th = (o_from == 0) ? delay_out_rise : delay_out_fall;
 
-                if (o_from == 0)
-                    arc.SetRiseDelay(i_tran_index, o_cap_index, delay);
-                else
-                    arc.SetFallDelay(i_tran_index, o_cap_index, delay);
+                    i_th *= vdd_voltage;
+                    o_th *= vdd_voltage;
+
+                    NanoSecond i_edge = w.FindTransitionTime(related_pin->name_, i_th);
+                    NanoSecond o_edge = w.FindTransitionTime(o_pin.name_, o_th);
+
+                    NanoSecond delay = o_edge - i_edge;
+
+                    if (o_from == 0)
+                        arc.SetRiseDelay(i_tran_index, o_cap_index, delay);
+                    else
+                        arc.SetFallDelay(i_tran_index, o_cap_index, delay);
+
+                    o_cap_index++;
+                }
+                i_tran_index++;
             }
         }
     }
@@ -612,27 +619,36 @@ void Algorithms::MeasureComboTransitions(Cell &cell)
 
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
-            for (Simulation *sim : arc.GetSimulations()) {
 
-                Waves w = sim->ReadWaves();
+            size_t i_tran_index = 0;
+            for (auto & sims_row : arc.GetSimulations()) {
 
-                int i_tran_index = sim->GetMetaDataAt(0);
-                int o_cap_index = sim->GetMetaDataAt(1);
-                int o_from = sim->GetMetaDataAt(3);
+                size_t o_cap_index = 0;
+                for (auto & sims_row_coll : sims_row) {
 
-                double lo_th = (o_from == 0) ? slew_lower_rise : slew_lower_fall;
-                double hi_th = (o_from == 0) ? slew_upper_rise : slew_upper_fall;
+                    assert(sims_row_coll.size() == 1);
+                    Simulation* sim = sims_row_coll[0];
 
-                lo_th *= vdd_voltage;
-                hi_th *= vdd_voltage;
+                    Waves w = sim->ReadWaves();
+                    int o_from = sim->GetMetaDataAt(1);
 
-                NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th);
-                NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th);
+                    double lo_th = (o_from == 0) ? slew_lower_rise : slew_lower_fall;
+                    double hi_th = (o_from == 0) ? slew_upper_rise : slew_upper_fall;
 
-                if (o_from == 0)
-                    arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
-                else
-                    arc.SetFallTransition(i_tran_index, o_cap_index, lo_time - hi_time);
+                    lo_th *= vdd_voltage;
+                    hi_th *= vdd_voltage;
+
+                    NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th);
+                    NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th);
+
+                    if (o_from == 0)
+                        arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
+                    else
+                        arc.SetFallTransition(i_tran_index, o_cap_index, lo_time - hi_time);
+
+                    o_cap_index++;
+                }
+                i_tran_index++;
             }
         }
     }
@@ -648,53 +664,62 @@ void Algorithms::MeasureComboPowers(Cell &cell)
 
     for (auto &o_pin : cell.GetPins(PinDirection::OUT)) {
         for (auto &arc : o_pin.GetArcs()) {
-            for (Simulation *sim : arc.GetSimulations()) {
 
-                Waves w = sim->ReadWaves();
-                Pin *related_pin = arc.GetRelatedPin();
+            size_t i_tran_index = 0;
+            for (auto & sims_row : arc.GetSimulations()) {
 
-                int i_tran_index = sim->GetMetaDataAt(0);
-                int o_cap_index = sim->GetMetaDataAt(1);
-                int i_from = sim->GetMetaDataAt(2);
-                int o_from = sim->GetMetaDataAt(3);
+                size_t o_cap_index = 0;
+                for (auto & sims_row_coll : sims_row) {
 
-                std::vector<NanoWatt> pwr;
-                std::vector<MicroAmp> i_vdd = w.GetCurrent(vdd_name);
-                std::vector<MicroAmp> i_out = w.GetCurrent(o_pin.name_);
+                    assert(sims_row_coll.size() == 1);
+                    Simulation* sim = sims_row_coll[0];
 
-                NanoWatt lkg = i_vdd[0] * vdd_voltage * 1E3;
+                    Waves w = sim->ReadWaves();
+                    Pin *related_pin = arc.GetRelatedPin();
 
-                assert (i_vdd.size() == i_out.size());
+                    int i_from = sim->GetMetaDataAt(0);
+                    int o_from = sim->GetMetaDataAt(1);
 
-                for (size_t i = 0; i < i_vdd.size(); i++) {
-                    pwr.push_back(((i_vdd[i] + i_out[i]) * vdd_voltage * 1E3) - lkg);
+                    std::vector<NanoWatt> pwr;
+                    std::vector<MicroAmp> i_vdd = w.GetCurrent(vdd_name);
+                    std::vector<MicroAmp> i_out = w.GetCurrent(o_pin.name_);
+
+                    NanoWatt lkg = i_vdd[0] * vdd_voltage * 1E3;
+
+                    assert (i_vdd.size() == i_out.size());
+
+                    for (size_t i = 0; i < i_vdd.size(); i++) {
+                        pwr.push_back(((i_vdd[i] + i_out[i]) * vdd_voltage * 1E3) - lkg);
+                    }
+
+                    // Integrate total energy between the transitions between 1 and 99 percent
+                    // TODO: Figure out if this is the proper way!
+                    Volt th_start = (i_from == 0) ? vdd_voltage * 0.01 : vdd_voltage * 0.99;
+                    Volt th_end = (o_from == 0) ? vdd_voltage * 0.99 : vdd_voltage * 0.01;
+
+                    size_t pwr_start = w.FindTransitionIndex(related_pin->name_, th_start);
+                    size_t pwr_end = w.FindTransitionIndex(o_pin.name_, th_end);
+
+                    PicoJoule e = 0;
+                    NanoSecond step = sim->GetTimeStep();
+
+                    // TODO: Time step may not need to be constant, better integrate with each step
+                    //       as time diff between two consecutive steps.
+                    for (size_t i = pwr_start; i < pwr_end; i++) {
+                        e += pwr[i] * step;
+                    }
+
+                    // ns * nW gives us "atto Joule" -> divide to get pJ
+                    e /= 1E6;
+
+                    if (o_from == 0) {
+                        arc.SetFallPower(i_tran_index, o_cap_index, e);
+                    } else {
+                        arc.SetRisePower(i_tran_index, o_cap_index, e);
+                    }
+                    o_cap_index++;
                 }
-
-                // Integrate total energy between the transitions between 1 and 99 percent
-                // TODO: Figure out if this is the proper way!
-                Volt th_start = (i_from == 0) ? vdd_voltage * 0.01 : vdd_voltage * 0.99;
-                Volt th_end = (o_from == 0) ? vdd_voltage * 0.99 : vdd_voltage * 0.01;
-
-                size_t pwr_start = w.FindTransitionIndex(related_pin->name_, th_start);
-                size_t pwr_end = w.FindTransitionIndex(o_pin.name_, th_end);
-
-                PicoJoule e = 0;
-                NanoSecond step = sim->GetTimeStep();
-
-                // TODO: Time step may not need to be constant, better integrate with each step
-                //       as time diff between two consecutive steps.
-                for (size_t i = pwr_start; i < pwr_end; i++) {
-                    e += pwr[i] * step;
-                }
-
-                // ns * nW gives us "atto Joule" -> divide to get pJ
-                e /= 1E6;
-
-                if (o_from == 0) {
-                    arc.SetFallPower(i_tran_index, o_cap_index, e);
-                } else {
-                    arc.SetRisePower(i_tran_index, o_cap_index, e);
-                }
+                i_tran_index++;
             }
         }
     }
@@ -1041,6 +1066,7 @@ void Algorithms::MeasureSeqCellKind(Cell &cell)
 void Algorithms::PrepareFFClockPolaritySims(Cell &cell)
 {
     size_t i_pin_cnt = 0;
+
     // TODO: Wrap calculation of number of pins!
     for ([[maybe_unused]] auto & i_pin : cell.GetPins(PinDirection::IN, PinKind::DATA)) {
         i_pin_cnt++;
@@ -1165,7 +1191,7 @@ void Algorithms::PrepareFFClockDelaySims(Cell &cell)
                 o_pin.AddArc(Arc(&o_pin, templ, ArcKind::SEQ_CK, 0, 1, 0, 1));
                 size_t arc_index = o_pin.GetArcs().size() - 1;
 
-                // TODO: This assumes D-style flip-flop or latch.
+                // TODO: This assumes D-style flip-flop.
                 for (int d_val = 0; d_val < 2; d_val++) {
 
                     std::string sim_name = "SEQ_DLY";
@@ -1217,13 +1243,9 @@ void Algorithms::PrepareFFClockDelaySims(Cell &cell)
 
                     // Add load
                     sim->AddLoad(&o_pin, o_cap);
-
-                    sim->PutMetaData(static_cast<int>(i_tran_index));
-                    sim->PutMetaData(static_cast<int>(o_cap_index));
-
                     sim->PutMetaData(d_val);
 
-                    o_pin.GetArcs()[arc_index].AddSimulation(sim);
+                    o_pin.GetArcs()[arc_index].AddSimulation(i_tran_index, o_cap_index, sim);
                     ctx_->GetSimulationPool().EnqueueSimulation(sim);
                 }
                 o_cap_index++;
@@ -1237,37 +1259,48 @@ void Algorithms::MeasureFFClockDelay(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
-            for (Simulation *sim : arc.GetSimulations()) {
-                Waves w = sim->ReadWaves();
 
-                int i_tran_index = sim->GetMetaDataAt(0);
-                int o_cap_index = sim->GetMetaDataAt(1);
-                int d_val = sim->GetMetaDataAt(2);
+            size_t i_tran_index = 0;
+            for (auto & sims_row : arc.GetSimulations()) {
 
-                auto & c_pin = cell.GetPins(PinKind::CLK).front();
+                size_t o_cap_index = 0;
+                for (auto & sims_row_coll : sims_row) {
 
-                Variables &vars = ctx_->GetVariables();
-                double q_th = (d_val == 1) ? vars.GetDoubleVariable("delay_out_rise") :
-                                             vars.GetDoubleVariable("delay_out_fall");
-                double c_th = (cell.GetSequential().GetClockPolarity() == EdgeKind::RISING) ?
-                                        vars.GetDoubleVariable("delay_in_rise") :
-                                        vars.GetDoubleVariable("delay_in_fall");
+                    assert(sims_row_coll.size() == 2);
 
-                Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-                Volt vdd_voltage = supply->GetVddVoltage();
-                q_th *= vdd_voltage;
-                c_th *= vdd_voltage;
+                    for (Simulation *sim : sims_row_coll) {
+                        Waves w = sim->ReadWaves();
 
-                // TODO: Pass the expected times via Simulation Object
-                NanoSecond q_edge = w.FindTransitionTime(o_pin.name_, q_th, 10.0, 25.0);
-                NanoSecond c_edge = w.FindTransitionTime(c_pin.name_, c_th, 12.5, 17.5);
+                        int d_val = sim->GetMetaDataAt(0);
+                        auto & c_pin = cell.GetPins(PinKind::CLK).front();
 
-                NanoSecond ck_to_q = q_edge - c_edge;
-                if (d_val == 1) {
-                    arc.SetRiseDelay(i_tran_index, o_cap_index, ck_to_q);
-                } else {
-                    arc.SetFallDelay(i_tran_index, o_cap_index, ck_to_q);
+                        Variables &vars = ctx_->GetVariables();
+                        double q_th = (d_val == 1) ? vars.GetDoubleVariable("delay_out_rise") :
+                                                    vars.GetDoubleVariable("delay_out_fall");
+                        double c_th = (cell.GetSequential().GetClockPolarity() == EdgeKind::RISING) ?
+                                                vars.GetDoubleVariable("delay_in_rise") :
+                                                vars.GetDoubleVariable("delay_in_fall");
+
+                        Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+                        Volt vdd_voltage = supply->GetVddVoltage();
+                        q_th *= vdd_voltage;
+                        c_th *= vdd_voltage;
+
+                        // TODO: Pass the expected times via Simulation Object
+                        NanoSecond q_edge = w.FindTransitionTime(o_pin.name_, q_th, 10.0, 25.0);
+                        NanoSecond c_edge = w.FindTransitionTime(c_pin.name_, c_th, 12.5, 17.5);
+
+                        NanoSecond ck_to_q = q_edge - c_edge;
+                        if (d_val == 1) {
+                            arc.SetRiseDelay(i_tran_index, o_cap_index, ck_to_q);
+                        } else {
+                            arc.SetFallDelay(i_tran_index, o_cap_index, ck_to_q);
+                        }
+                    }
+
+                    o_cap_index++;
                 }
+                i_tran_index++;
             }
         }
     }
@@ -1277,32 +1310,43 @@ void Algorithms::MeasureFFClockTransition(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
-            for (Simulation *sim : arc.GetSimulations()) {
-                Waves w = sim->ReadWaves();
 
-                int i_tran_index = sim->GetMetaDataAt(0);
-                int o_cap_index = sim->GetMetaDataAt(1);
-                int d_val = sim->GetMetaDataAt(2);
+            size_t i_tran_index = 0;
+            for (auto & sims_row : arc.GetSimulations()) {
 
-                Variables &vars = ctx_->GetVariables();
-                double hi_th = (d_val == 1) ? vars.GetDoubleVariable("slew_upper_rise") :
-                                              vars.GetDoubleVariable("slew_upper_fall");
-                double lo_th = (d_val == 1) ? vars.GetDoubleVariable("slew_lower_rise") :
-                                              vars.GetDoubleVariable("slew_lower_fall");
-                Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-                Volt vdd_voltage = supply->GetVddVoltage();
-                hi_th *= vdd_voltage;
-                lo_th *= vdd_voltage;
+                size_t o_cap_index = 0;
+                for (auto & sims_row_coll : sims_row) {
 
-                // TODO: Pass the expected times via Simulation Object
-                NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th, 12.5, 17.5);
-                NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th, 12.5, 17.5);
+                    assert(sims_row_coll.size() == 2);
+                    for (Simulation *sim : sims_row_coll) {
 
-                if (d_val == 1) {
-                    arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
-                } else {
-                    arc.SetFallTransition(i_tran_index, o_cap_index, lo_time - hi_time);
+                        Waves w = sim->ReadWaves();
+
+                        int d_val = sim->GetMetaDataAt(0);
+
+                        Variables &vars = ctx_->GetVariables();
+                        double hi_th = (d_val == 1) ? vars.GetDoubleVariable("slew_upper_rise") :
+                                                    vars.GetDoubleVariable("slew_upper_fall");
+                        double lo_th = (d_val == 1) ? vars.GetDoubleVariable("slew_lower_rise") :
+                                                    vars.GetDoubleVariable("slew_lower_fall");
+                        Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+                        Volt vdd_voltage = supply->GetVddVoltage();
+                        hi_th *= vdd_voltage;
+                        lo_th *= vdd_voltage;
+
+                        // TODO: Pass the expected times via Simulation Object
+                        NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th, 12.5, 17.5);
+                        NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th, 12.5, 17.5);
+
+                        if (d_val == 1) {
+                            arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
+                        } else {
+                            arc.SetFallTransition(i_tran_index, o_cap_index, lo_time - hi_time);
+                        }
+                    }
+                    o_cap_index++;
                 }
+                i_tran_index++;
             }
         }
     }
@@ -1312,47 +1356,57 @@ void Algorithms::MeasureFFClockPowers(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
-            for (Simulation *sim : arc.GetSimulations()) {
-                Waves w = sim->ReadWaves();
 
-                int i_tran_index = sim->GetMetaDataAt(0);
-                int o_cap_index = sim->GetMetaDataAt(1);
-                int d_val = sim->GetMetaDataAt(2);
+            size_t i_tran_index = 0;
+            for (auto & sims_row : arc.GetSimulations()) {
 
-                Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-                Volt vdd_voltage = supply->GetVddVoltage();
-                Pin *c_pin = cell.GetSequential().GetClockPin();
-                EdgeKind edge_pol = cell.GetSequential().GetClockPolarity();
+                size_t o_cap_index = 0;
+                for (auto & sims_row_coll : sims_row) {
 
-                double ck_th = vdd_voltage;
-                ck_th *= (edge_pol == EdgeKind::RISING) ? 0.01 : 0.99;
+                    assert(sims_row_coll.size() == 2);
+                    for (Simulation *sim : sims_row_coll) {
+                        Waves w = sim->ReadWaves();
 
-                double q_th = vdd_voltage;
-                q_th *= (d_val == 1) ? 0.99 : 0.01;
+                        int d_val = sim->GetMetaDataAt(0);
 
-                // TODO: Pass the look-up times via the Simulation object
-                size_t start_index = w.FindTransitionIndex(c_pin->name_, ck_th, 12.5, 17.5);
-                size_t end_index = w.FindTransitionIndex(o_pin.name_, q_th, 12.5, 17.5);
+                        Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+                        Volt vdd_voltage = supply->GetVddVoltage();
+                        Pin *c_pin = cell.GetSequential().GetClockPin();
+                        EdgeKind edge_pol = cell.GetSequential().GetClockPolarity();
 
-                // Integrate
-                PicoJoule e = 0;
-                auto & i_vdd = w.GetCurrent(supply->GetVddName());
-                auto & i_q = w.GetCurrent(o_pin.name_);
-                NanoSecond time_step = sim->GetTimeStep();
+                        double ck_th = vdd_voltage;
+                        ck_th *= (edge_pol == EdgeKind::RISING) ? 0.01 : 0.99;
 
-                // TODO: Integrate with possibly varying time step ?
-                for (size_t i = start_index; i < end_index; i++) {
-                    e += ((i_vdd[i] + i_q[i]) * vdd_voltage) * time_step;
+                        double q_th = vdd_voltage;
+                        q_th *= (d_val == 1) ? 0.99 : 0.01;
+
+                        // TODO: Pass the look-up times via the Simulation object
+                        size_t start_index = w.FindTransitionIndex(c_pin->name_, ck_th, 12.5, 17.5);
+                        size_t end_index = w.FindTransitionIndex(o_pin.name_, q_th, 12.5, 17.5);
+
+                        // Integrate
+                        PicoJoule e = 0;
+                        auto & i_vdd = w.GetCurrent(supply->GetVddName());
+                        auto & i_q = w.GetCurrent(o_pin.name_);
+                        NanoSecond time_step = sim->GetTimeStep();
+
+                        // TODO: Integrate with possibly varying time step ?
+                        for (size_t i = start_index; i < end_index; i++) {
+                            e += ((i_vdd[i] + i_q[i]) * vdd_voltage) * time_step;
+                        }
+
+                        // uA * V = uW ;  uW * ns = femtoJ -> Convert to Pico
+                        e /= 1E3;
+
+                        if (d_val == 1) {
+                            arc.SetRisePower(i_tran_index, o_cap_index, e);
+                        } else {
+                            arc.SetFallPower(i_tran_index, o_cap_index, e);
+                        }
+                    }
+                    o_cap_index++;
                 }
-
-                // uA * V = uW ;  uW * ns = femtoJ -> Convert to Pico
-                e /= 1E3;
-
-                if (d_val == 1) {
-                    arc.SetRisePower(i_tran_index, o_cap_index, e);
-                } else {
-                    arc.SetFallPower(i_tran_index, o_cap_index, e);
-                }
+                i_tran_index++;
             }
         }
     }

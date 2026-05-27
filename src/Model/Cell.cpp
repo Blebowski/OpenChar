@@ -107,10 +107,16 @@ bool Cell::IsSimulationFinished()
             if (!sim->IsFinished())
                 return false;
         }
+        // TODO: Move some of this down to Arc
         for (auto & arc : pin.second.GetArcs()) {
-            for (auto & sim : arc.GetSimulations()) {
-                if (!sim->IsFinished())
-                    return false;
+            for (auto & sims_row : arc.GetSimulations()) {
+                for (auto & sims_row_col : sims_row) {
+                    for (Simulation *sim : sims_row_col) {
+                        if (!sim->IsFinished()) {
+                            return false;
+                        }
+                    }
+                }
             }
         }
     }
