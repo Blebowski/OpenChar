@@ -1,6 +1,6 @@
 
 OPEN_CHAR_TEST(MeasureInputCapTest)
 OPEN_CHAR_TEST(MeasureComboLogicTableAndLeakageTest)
-OPEN_CHAR_TEST(MeasureComboDelayTest)
+OPEN_CHAR_TEST(MeasureComboDelayPowerTransitionTest)
 
 OPEN_CHAR_TEST(CalculateComboLogicFunctionTest)

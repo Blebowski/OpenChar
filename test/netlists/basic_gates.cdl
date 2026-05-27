@@ -1,5 +1,5 @@
-.model PMOS pmos (level=1)
-.model NMOS nmos (level=1)
+.model PMOS pmos (level=14)
+.model NMOS nmos (level=14)
 
 .subckt INV Y A VDD VSS
 MN0 Y A VDD VDD pmos W=10u L=1u

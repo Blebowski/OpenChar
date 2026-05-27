@@ -17,14 +17,13 @@ void test_inv(Context &ctx, Algorithms &algs)
     RUN_SIMULATIONS(ctx, algs.PrepareInputCapSims(c1));
     algs.MeasureInputCap(c1);
 
-    // TODO: Add some test where Rise/Fall are truly different
-    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceRiseMax(), 0.000319992));
-    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceRiseMin(), 0.000200000));
-    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceRiseAvg(), 0.000259974));
+    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceRiseMax(), 0.276150415));
+    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceRiseMin(), 0.075892807));
+    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceRiseAvg(), 0.177503686));
 
-    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceFallMax(), 0.000320000));
-    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceFallMin(), 0.000200006));
-    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceFallAvg(), 0.000259974));
+    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceFallMax(), 0.277773677));
+    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceFallMin(), 0.065065853));
+    assert (EQUAL_WITH_TOL(c1.GetPin("A").GetCapacitanceFallAvg(), 0.175257622));
 }
 
 int main()

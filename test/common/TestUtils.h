@@ -55,4 +55,4 @@
 
 // For now we set 1 % tolerance
 // This may need to be updated if we make time-step configurable
-#define EQUAL_WITH_TOL(a, b) (std::fabs(static_cast<double>(a) - static_cast<double>(b)) < (static_cast<double>(a) * 0.01))
+#define EQUAL_WITH_TOL(a, b) (std::fabs(static_cast<double>(a)) - std::fabs(static_cast<double>(b)) < std::fabs((static_cast<double>(a)) * 0.01))
