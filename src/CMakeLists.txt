@@ -7,6 +7,7 @@ target_include_directories(lib_open_char PUBLIC Common)
 target_include_directories(lib_open_char PUBLIC .)
 target_include_directories(lib_open_char PUBLIC ${TCL_INCLUDE_PATH})
 
+add_subdirectory(Common)
 add_subdirectory(Model)
 add_subdirectory(Simulation)
 add_subdirectory(Tcl)
