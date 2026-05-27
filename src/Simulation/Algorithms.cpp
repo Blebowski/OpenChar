@@ -626,28 +626,28 @@ void Algorithms::MeasureComboTransitions(Cell &cell)
 
                 size_t o_cap_index = 0;
                 for (auto & sims_row_coll : sims_row) {
+                    assert(sims_row_coll.size() == 2);
 
-                    assert(sims_row_coll.size() == 1);
-                    Simulation* sim = sims_row_coll[0];
+                    for (Simulation *sim : sims_row_coll) {
+                        Waves w = sim->ReadWaves();
+                        int o_from = sim->GetMetaDataAt(1);
 
-                    Waves w = sim->ReadWaves();
-                    int o_from = sim->GetMetaDataAt(1);
+                        double lo_th = (o_from == 0) ? slew_lower_rise : slew_lower_fall;
+                        double hi_th = (o_from == 0) ? slew_upper_rise : slew_upper_fall;
 
-                    double lo_th = (o_from == 0) ? slew_lower_rise : slew_lower_fall;
-                    double hi_th = (o_from == 0) ? slew_upper_rise : slew_upper_fall;
+                        lo_th *= vdd_voltage;
+                        hi_th *= vdd_voltage;
 
-                    lo_th *= vdd_voltage;
-                    hi_th *= vdd_voltage;
+                        NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th);
+                        NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th);
 
-                    NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th);
-                    NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th);
+                        if (o_from == 0)
+                            arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
+                        else
+                            arc.SetFallTransition(i_tran_index, o_cap_index, lo_time - hi_time);
 
-                    if (o_from == 0)
-                        arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
-                    else
-                        arc.SetFallTransition(i_tran_index, o_cap_index, lo_time - hi_time);
-
-                    o_cap_index++;
+                        o_cap_index++;
+                    }
                 }
                 i_tran_index++;
             }
@@ -671,52 +671,52 @@ void Algorithms::MeasureComboPowers(Cell &cell)
 
                 size_t o_cap_index = 0;
                 for (auto & sims_row_coll : sims_row) {
+                    assert(sims_row_coll.size() == 2);
 
-                    assert(sims_row_coll.size() == 1);
-                    Simulation* sim = sims_row_coll[0];
+                    for (Simulation* sim : sims_row_coll) {
+                        Waves w = sim->ReadWaves();
+                        Pin *related_pin = arc.GetRelatedPin();
 
-                    Waves w = sim->ReadWaves();
-                    Pin *related_pin = arc.GetRelatedPin();
+                        int i_from = sim->GetMetaDataAt(0);
+                        int o_from = sim->GetMetaDataAt(1);
 
-                    int i_from = sim->GetMetaDataAt(0);
-                    int o_from = sim->GetMetaDataAt(1);
+                        std::vector<NanoWatt> pwr;
+                        std::vector<MicroAmp> i_vdd = w.GetCurrent(vdd_name);
+                        std::vector<MicroAmp> i_out = w.GetCurrent(o_pin.name_);
 
-                    std::vector<NanoWatt> pwr;
-                    std::vector<MicroAmp> i_vdd = w.GetCurrent(vdd_name);
-                    std::vector<MicroAmp> i_out = w.GetCurrent(o_pin.name_);
+                        NanoWatt lkg = i_vdd[0] * vdd_voltage * 1E3;
 
-                    NanoWatt lkg = i_vdd[0] * vdd_voltage * 1E3;
+                        assert (i_vdd.size() == i_out.size());
 
-                    assert (i_vdd.size() == i_out.size());
+                        for (size_t i = 0; i < i_vdd.size(); i++) {
+                            pwr.push_back(((i_vdd[i] + i_out[i]) * vdd_voltage * 1E3) - lkg);
+                        }
 
-                    for (size_t i = 0; i < i_vdd.size(); i++) {
-                        pwr.push_back(((i_vdd[i] + i_out[i]) * vdd_voltage * 1E3) - lkg);
-                    }
+                        // Integrate total energy between the transitions between 1 and 99 percent
+                        // TODO: Figure out if this is the proper way!
+                        Volt th_start = (i_from == 0) ? vdd_voltage * 0.01 : vdd_voltage * 0.99;
+                        Volt th_end = (o_from == 0) ? vdd_voltage * 0.99 : vdd_voltage * 0.01;
 
-                    // Integrate total energy between the transitions between 1 and 99 percent
-                    // TODO: Figure out if this is the proper way!
-                    Volt th_start = (i_from == 0) ? vdd_voltage * 0.01 : vdd_voltage * 0.99;
-                    Volt th_end = (o_from == 0) ? vdd_voltage * 0.99 : vdd_voltage * 0.01;
+                        size_t pwr_start = w.FindTransitionIndex(related_pin->name_, th_start);
+                        size_t pwr_end = w.FindTransitionIndex(o_pin.name_, th_end);
 
-                    size_t pwr_start = w.FindTransitionIndex(related_pin->name_, th_start);
-                    size_t pwr_end = w.FindTransitionIndex(o_pin.name_, th_end);
+                        PicoJoule e = 0;
+                        NanoSecond step = sim->GetTimeStep();
 
-                    PicoJoule e = 0;
-                    NanoSecond step = sim->GetTimeStep();
+                        // TODO: Time step may not need to be constant, better integrate with each step
+                        //       as time diff between two consecutive steps.
+                        for (size_t i = pwr_start; i < pwr_end; i++) {
+                            e += pwr[i] * step;
+                        }
 
-                    // TODO: Time step may not need to be constant, better integrate with each step
-                    //       as time diff between two consecutive steps.
-                    for (size_t i = pwr_start; i < pwr_end; i++) {
-                        e += pwr[i] * step;
-                    }
+                        // ns * nW gives us "atto Joule" -> divide to get pJ
+                        e /= 1E6;
 
-                    // ns * nW gives us "atto Joule" -> divide to get pJ
-                    e /= 1E6;
-
-                    if (o_from == 0) {
-                        arc.SetFallPower(i_tran_index, o_cap_index, e);
-                    } else {
-                        arc.SetRisePower(i_tran_index, o_cap_index, e);
+                        if (o_from == 0) {
+                            arc.SetFallPower(i_tran_index, o_cap_index, e);
+                        } else {
+                            arc.SetRisePower(i_tran_index, o_cap_index, e);
+                        }
                     }
                     o_cap_index++;
                 }
