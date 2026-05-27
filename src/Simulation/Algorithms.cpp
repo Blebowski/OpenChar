@@ -689,11 +689,21 @@ void Algorithms::MeasureComboPowers(Cell &cell)
                         assert (i_vdd.size() == i_out.size());
 
                         for (size_t i = 0; i < i_vdd.size(); i++) {
-                            pwr.push_back(((i_vdd[i] + i_out[i]) * vdd_voltage * 1E3) - lkg);
+
+                            // The power is drain by the cell when i_vdd is negative.
+                            // The power is drain by the load when i_out is positive.
+                            // Sum of these therefore gives the current consumed by
+                            // the cell.
+                            // Also, if i_vdd is positive, it means current flows from
+                            // VDD back to the supply network. We are conservative and
+                            // ignore such flow as it would give more optimistic results.
+                            MicroAmp i_vdd_cap = (i_vdd[i] < 0) ? i_vdd[i] : 0.0;
+                            pwr.push_back(((i_vdd_cap + i_out[i]) * vdd_voltage * 1E3) - lkg);
                         }
 
                         // Integrate total energy between the transitions between 1 and 99 percent
-                        // TODO: Figure out if this is the proper way!
+                        // For "start" use the related pin, for "end" use the output pin, this spans
+                        // the whole interval where power is drain due to the transition
                         Volt th_start = (i_from == 0) ? vdd_voltage * 0.01 : vdd_voltage * 0.99;
                         Volt th_end = (o_from == 0) ? vdd_voltage * 0.99 : vdd_voltage * 0.01;
 
@@ -711,6 +721,7 @@ void Algorithms::MeasureComboPowers(Cell &cell)
 
                         // ns * nW gives us "atto Joule" -> divide to get pJ
                         e /= 1E6;
+                        e = std::fabs(e);
 
                         if (o_from == 0) {
                             arc.SetFallPower(i_tran_index, o_cap_index, e);
