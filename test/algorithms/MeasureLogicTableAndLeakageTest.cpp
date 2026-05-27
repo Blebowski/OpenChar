@@ -1,10 +1,10 @@
 
 #include "open_char.h"
+
 #include "Context.h"
 #include "Algorithms.h"
-#include "TestUtils.h"
 
-#include <cassert>
+#include "TestUtils.h"
 
 using namespace open_char;
 
@@ -97,10 +97,7 @@ void test_half_adder(Context &ctx, Algorithms &algs)
 
 int main()
 {
-    StackTraceInit();
-
-    Context ctx(nullptr);
-    Algorithms algs(&ctx);
+    ALG_TEST_INIT(ctx, algs);
 
     ctx.AddNetlist(TEST_NETLIST_DIR "/basic_gates.cdl");
 

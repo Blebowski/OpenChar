@@ -1,16 +1,16 @@
 
 #include "open_char.h"
+
 #include "Context.h"
 #include "Template.h"
 #include "Algorithms.h"
 
-#include <cassert>
+#include "TestUtils.h"
 
 using namespace open_char;
 
 void test_and2(Context &ctx, Algorithms &algs)
 {
-    /*
     ctx.GetLibrary().AddCell("AND2");
     Cell &c1 = ctx.GetLibrary().GetCell("AND2");
 
@@ -20,10 +20,9 @@ void test_and2(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.PrepareComboLogicTableAndLeakageSims(c1);
-    ctx.GetSimulationPool().StartSimulations();
-    ctx.GetSimulationPool().FinishAndProcessSimulations();
-    algs.CalculateLogicFunctions(c1);
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    algs.MeasureComboLogicTables(c1);
+    algs.CalculateComboLogicFunctions(c1);
 
     Expression *e = c1.GetPin("Z").GetLogicFunction();
     assert (e != nullptr);
@@ -39,12 +38,10 @@ void test_and2(Context &ctx, Algorithms &algs)
     assert (rhs->GetKind() == ExpressionKind::TERM);
     assert (lhs->GetPin() == &(c1.GetPin("A")));
     assert (rhs->GetPin() == &(c1.GetPin("B")));
-    */
 }
 
 void test_half_adder(Context &ctx, Algorithms &algs)
 {
-    /*
     ctx.GetLibrary().AddCell("HALF_ADDER");
     Cell &c1 = ctx.GetLibrary().GetCell("HALF_ADDER");
 
@@ -55,10 +52,9 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.PrepareComboLogicTableAndLeakageSims(c1);
-    ctx.GetSimulationPool().StartSimulations();
-    ctx.GetSimulationPool().FinishAndProcessSimulations();
-    algs.CalculateLogicFunctions(c1);
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    algs.MeasureComboLogicTables(c1);
+    algs.CalculateComboLogicFunctions(c1);
 
     // S: A ^ B
     Expression *e = c1.GetPin("S").GetLogicFunction();
@@ -75,15 +71,13 @@ void test_half_adder(Context &ctx, Algorithms &algs)
 
     assert (l1->GetPin() == &c1.GetPin("A"));
     assert (r1->GetPin() == &c1.GetPin("B"));
-    */
 }
 
 int main()
 {
-    Context ctx(nullptr);
-    Algorithms algs(&ctx);
+    ALG_TEST_INIT(ctx, algs);
 
-    ctx.AddNetlist(TEST_COMMON_DIR "/basic_gates.cdl");
+    ctx.AddNetlist(TEST_NETLIST_DIR "/basic_gates.cdl");
 
     test_and2       (ctx, algs);
     test_half_adder (ctx, algs);

@@ -1,18 +1,20 @@
 
 #include "open_char.h"
+
 #include "Context.h"
 #include "Template.h"
 #include "Algorithms.h"
 
-#include <cassert>
+#include "TestUtils.h"
+
 
 using namespace open_char;
 
 void test_inv(Context &ctx, Algorithms &algs)
 {
-    /*
     ctx.GetLibrary().AddCell("INV");
     Cell &c1 = ctx.GetLibrary().GetCell("INV");
+    c1.SetKind(CellKind::COMBINATIONAL);
 
     Template t("MY_TEMP");
     t.AddIndex1(0.01);
@@ -28,16 +30,13 @@ void test_inv(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.PrepareComboLogicTableAndLeakageSims(c1);
+    // Logic table and logic function are precondition for combo delays
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    algs.MeasureComboLogicTables(c1);
+    algs.CalculateComboLogicFunctions(c1);
 
-    ctx.GetSimulationPool().StartSimulations();
-    ctx.GetSimulationPool().FinishAndProcessSimulations();
-
-    algs.CalculateLogicFunctions(c1);
-
-    algs.PrepareComboDelayAndPowerSims(c1);
-    ctx.GetSimulationPool().StartSimulations();
-    ctx.GetSimulationPool().FinishAndProcessSimulations();
+    RUN_SIMULATIONS(ctx, algs.PrepareComboDelayAndPowerSims(c1));
+    algs.MeasureComboDelays(c1);
 
     Pin& pin = c1.GetPin("Y");
 
@@ -71,16 +70,13 @@ void test_inv(Context &ctx, Algorithms &algs)
     // | 0.09330 | 1.36650 |
     // | 0.11510 | 1.38750 |
     // ---------------------
-
-    */
 }
 
 int main()
 {
-    Context ctx(nullptr);
-    Algorithms algs(&ctx);
+    ALG_TEST_INIT(ctx, algs);
 
-    ctx.AddNetlist(TEST_COMMON_DIR "/basic_gates.cdl");
+    ctx.AddNetlist(TEST_NETLIST_DIR "/basic_gates.cdl");
 
     test_inv        (ctx, algs);
 
