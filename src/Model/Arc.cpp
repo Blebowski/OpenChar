@@ -19,34 +19,28 @@ Arc::Arc(Pin *pin, Template *templ, ArcKind kind, int64_t in_a,
     kind_(kind)
 {}
 
-void Arc::SetRiseDelay(size_t row, size_t column, NanoSecond delay)
+#define ENLARGE_MATRIX(matrix, type, row_size, col_size, def_val)                                   \
+            do {                                                                                    \
+                while (matrix.size() < row_size) {                                                  \
+                    matrix.push_back(std::vector<type>(col_size));                                  \
+                }                                                                                   \
+                for (auto & row : matrix) {                                                         \
+                    while (row.size() < col_size) {                                                 \
+                        row.push_back(def_val);                                                     \
+                    }                                                                               \
+                }                                                                                   \
+            } while (0);                                                                            \
+
+void Arc::SetRiseDelay(size_t row, size_t col, NanoSecond delay)
 {
-    while (rise_delays_.size() <= row) {
-        rise_delays_.push_back(std::vector<NanoSecond>(column + 1));
-    }
-
-    for (auto & row : rise_delays_) {
-        while (row.size() <= column) {
-            row.push_back(0.0);
-        }
-    }
-
-    rise_delays_[row][column] = delay;
+    ENLARGE_MATRIX(rise_delays_, NanoSecond, row + 1, col + 1, 0.0);
+    rise_delays_[row][col] = delay;
 }
 
-void Arc::SetFallDelay(size_t row, size_t column, NanoSecond delay)
+void Arc::SetFallDelay(size_t row, size_t col, NanoSecond delay)
 {
-    while (fall_delays_.size() <= row) {
-        fall_delays_.push_back(std::vector<NanoSecond>(column + 1));
-    }
-
-    for (auto & row : fall_delays_) {
-        while (row.size() <= column) {
-            row.push_back(0.0);
-        }
-    }
-
-    fall_delays_[row][column] = delay;
+    ENLARGE_MATRIX(fall_delays_, NanoSecond, row + 1, col + 1, 0.0);
+    fall_delays_[row][col] = delay;
 }
 
 std::vector<std::vector<NanoSecond>>& Arc::GetRiseDelays()
@@ -61,31 +55,13 @@ std::vector<std::vector<NanoSecond>>& Arc::GetFallDelays()
 
 void Arc::SetRiseTransition(size_t row, size_t col, NanoSecond transition)
 {
-    while (rise_transitions_.size() <= row) {
-        rise_transitions_.push_back(std::vector<NanoSecond>(col + 1));
-    }
-
-    for (auto & row : rise_transitions_) {
-        while (row.size() <= col) {
-            row.push_back(0.0);
-        }
-    }
-
+    ENLARGE_MATRIX(rise_transitions_, NanoSecond, row + 1, col + 1, 0.0);
     rise_transitions_[row][col] = transition;
 }
 
 void Arc::SetFallTransition(size_t row, size_t col, NanoSecond transition)
 {
-    while (fall_transitions_.size() <= row) {
-        fall_transitions_.push_back(std::vector<NanoSecond>(col + 1));
-    }
-
-    for (auto & row : fall_transitions_) {
-        while (row.size() <= col) {
-            row.push_back(0.0);
-        }
-    }
-
+    ENLARGE_MATRIX(fall_transitions_, NanoSecond, row + 1, col + 1, 0.0);
     fall_transitions_[row][col] = transition;
 }
 
@@ -101,31 +77,13 @@ std::vector<std::vector<NanoSecond>>& Arc::GetFallTransitions()
 
 void Arc::SetRisePower(size_t row, size_t col, PicoJoule energy)
 {
-    while (rise_powers_.size() <= row) {
-        rise_powers_.push_back(std::vector<NanoSecond>(col + 1));
-    }
-
-    for (auto & row : rise_powers_) {
-        while (row.size() <= col) {
-            row.push_back(0.0);
-        }
-    }
-
+    ENLARGE_MATRIX(rise_powers_, PicoJoule, row + 1, col + 1, 0.0);
     rise_powers_[row][col] = energy;
 }
 
 void Arc::SetFallPower(size_t row, size_t col, PicoJoule energy)
 {
-    while (fall_powers_.size() <= row) {
-        fall_powers_.push_back(std::vector<NanoSecond>(col + 1));
-    }
-
-    for (auto & row : fall_powers_) {
-        while (row.size() <= col) {
-            row.push_back(0.0);
-        }
-    }
-
+    ENLARGE_MATRIX(fall_powers_, PicoJoule, row + 1, col + 1, 0.0);
     fall_powers_[row][col] = energy;
 }
 
