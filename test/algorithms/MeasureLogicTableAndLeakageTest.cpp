@@ -2,6 +2,7 @@
 #include "open_char.h"
 #include "Context.h"
 #include "Algorithms.h"
+#include "TestUtils.h"
 
 #include <cassert>
 
@@ -9,7 +10,6 @@ using namespace open_char;
 
 void test_inv(Context &ctx, Algorithms &algs)
 {
-    /*
     ctx.GetLibrary().AddCell("INV");
     Cell &c1 = ctx.GetLibrary().GetCell("INV");
 
@@ -18,21 +18,18 @@ void test_inv(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.PrepareComboLogicTableAndLeakageSims(c1);
-    ctx.GetSimulationPool().StartSimulations();
-    ctx.GetSimulationPool().FinishAndProcessSimulations();
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    algs.MeasureComboLogicTables(c1);
 
     assert (c1.GetPin("Y").GetLogicTableEntry(0).first == 0);
     assert (c1.GetPin("Y").GetLogicTableEntry(0).second == 1);
 
     assert (c1.GetPin("Y").GetLogicTableEntry(1).first == 1);
     assert (c1.GetPin("Y").GetLogicTableEntry(1).second == 0);
-    */
 }
 
 void test_nand2(Context &ctx, Algorithms &algs)
 {
-    /*
     ctx.GetLibrary().AddCell("NAND2");
     Cell &c1 = ctx.GetLibrary().GetCell("NAND2");
 
@@ -42,9 +39,8 @@ void test_nand2(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.PrepareComboLogicTableAndLeakageSims(c1);
-    ctx.GetSimulationPool().StartSimulations();
-    ctx.GetSimulationPool().FinishAndProcessSimulations();
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    algs.MeasureComboLogicTables(c1);
 
     assert (c1.GetPin("Y").GetLogicTableEntry(0).first == 0b00);
     assert (c1.GetPin("Y").GetLogicTableEntry(0).second == 1);
@@ -57,12 +53,10 @@ void test_nand2(Context &ctx, Algorithms &algs)
 
     assert (c1.GetPin("Y").GetLogicTableEntry(3).first == 0b11);
     assert (c1.GetPin("Y").GetLogicTableEntry(3).second == 0);
-    */
 }
 
 void test_half_adder(Context &ctx, Algorithms &algs)
 {
-    /*
     ctx.GetLibrary().AddCell("HALF_ADDER");
     Cell &c1 = ctx.GetLibrary().GetCell("HALF_ADDER");
 
@@ -73,9 +67,8 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
     c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-    algs.PrepareComboLogicTableAndLeakageSims(c1);
-    ctx.GetSimulationPool().StartSimulations();
-    ctx.GetSimulationPool().FinishAndProcessSimulations();
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    algs.MeasureComboLogicTables(c1);
 
     assert (c1.GetPin("CO").GetLogicTableEntry(0).first == 0b00);
     assert (c1.GetPin("CO").GetLogicTableEntry(0).second == 0);
@@ -100,15 +93,16 @@ void test_half_adder(Context &ctx, Algorithms &algs)
 
     assert (c1.GetPin("S").GetLogicTableEntry(3).first == 0b11);
     assert (c1.GetPin("S").GetLogicTableEntry(3).second == 0);
-    */
 }
 
 int main()
 {
+    StackTraceInit();
+
     Context ctx(nullptr);
     Algorithms algs(&ctx);
 
-    ctx.AddNetlist(TEST_COMMON_DIR "/basic_gates.cdl");
+    ctx.AddNetlist(TEST_NETLIST_DIR "/basic_gates.cdl");
 
     test_inv        (ctx, algs);
     test_nand2      (ctx, algs);

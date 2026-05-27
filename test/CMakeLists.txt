@@ -1,7 +1,9 @@
-add_definitions(-DTEST_COMMON_DIR="${CMAKE_CURRENT_SOURCE_DIR}/common")
+add_definitions(-DTEST_NETLIST_DIR="${CMAKE_CURRENT_SOURCE_DIR}/netlists")
 
 macro(OPEN_CHAR_TEST test_name)
     add_executable(${test_name} ${test_name}.cpp)
+
+    target_include_directories(${test_name} PRIVATE ${CMAKE_SOURCE_DIR}/test/common)
 
     target_include_directories(${test_name} PRIVATE ${CMAKE_SOURCE_DIR}/src/Model)
     target_include_directories(${test_name} PRIVATE ${CMAKE_SOURCE_DIR}/src/Simulation)

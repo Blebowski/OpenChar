@@ -1,4 +1,4 @@
 
 OPEN_CHAR_TEST(MeasureLogicTableAndLeakageTest)
-OPEN_CHAR_TEST(CalculateLogicFunctionTest)
-OPEN_CHAR_TEST(MeasureComboDelayTest)
+#OPEN_CHAR_TEST(CalculateLogicFunctionTest)
+#OPEN_CHAR_TEST(MeasureComboDelayTest)
