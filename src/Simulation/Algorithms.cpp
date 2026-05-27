@@ -89,8 +89,8 @@ void Algorithms::MeasureInputCap(Cell &cell)
             auto & pin_current = w.GetCurrent(i_pin.name_);
 
             // TODO: Pass time when edge starts / ends as part of simulation object
-            size_t rise_start_index = w.GetIndexOfTime(1.0);
-            size_t rise_end_index = w.GetIndexOfTime(2.0);
+            size_t rise_start_index = w.GetIndexOfTime(1.0) + 1;
+            size_t rise_end_index = w.GetIndexOfTime(2.0) - 1;
 
             assert (pin_current.size() > rise_start_index && pin_current.size() > rise_end_index);
 
@@ -100,7 +100,7 @@ void Algorithms::MeasureInputCap(Cell &cell)
             MicroAmp i_max = 0;
 
             for (size_t i = rise_start_index; i < rise_end_index; i++) {
-                MicroAmp cur_abs = std::abs(pin_current[i]);
+                MicroAmp cur_abs = std::fabs(pin_current[i]);
                 i_avg += cur_abs;
 
                 if (cur_abs < i_min) {
@@ -126,8 +126,8 @@ void Algorithms::MeasureInputCap(Cell &cell)
             i_pin.SetCapacitanceRise(i_cap_rise_min, i_cap_rise_max, i_cap_rise_avg);
 
             // TODO: Pass start / end times from the simulation object
-            size_t fall_start_index = w.GetIndexOfTime(4.0);
-            size_t fall_end_index = w.GetIndexOfTime(5.0);
+            size_t fall_start_index = w.GetIndexOfTime(4.0) + 1;
+            size_t fall_end_index = w.GetIndexOfTime(5.0) - 1;
 
             assert (pin_current.size() > fall_start_index && pin_current.size() > fall_end_index);
 
@@ -137,7 +137,7 @@ void Algorithms::MeasureInputCap(Cell &cell)
             i_max = 0;
 
             for (size_t i = fall_start_index; i < fall_end_index; i++) {
-                MicroAmp cur_abs = std::abs(pin_current[i]);
+                MicroAmp cur_abs = std::fabs(pin_current[i]);
                 i_avg += cur_abs;
 
                 if (cur_abs < i_min) {
