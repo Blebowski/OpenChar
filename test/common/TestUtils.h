@@ -52,3 +52,7 @@
         c1.AddPin("B",   PinDirection::IN,      PinKind::DATA);                                 \
         c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);                                  \
         c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
+
+// For now we set 1 % tolerance
+// This may need to be updated if we make time-step configurable
+#define EQUAL_WITH_TOL(a, b) (std::fabs(static_cast<double>(a) - static_cast<double>(b)) < (static_cast<double>(a) * 0.01))

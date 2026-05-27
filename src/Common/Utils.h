@@ -7,6 +7,7 @@
 #include <filesystem>
 #include <cassert>
 #include <cstring>
+#include <cmath>
 
 #include <tcl.h>
 
