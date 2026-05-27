@@ -15,4 +15,5 @@ static void SegFaultHandler(int sig) {
 void StackTraceInit()
 {
     signal(SIGSEGV, SegFaultHandler);
+    signal(SIGABRT, SegFaultHandler);
 }
