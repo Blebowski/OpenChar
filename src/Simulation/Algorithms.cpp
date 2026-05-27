@@ -641,13 +641,13 @@ void Algorithms::MeasureComboTransitions(Cell &cell)
                         NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th);
                         NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th);
 
-                        if (o_from == 0)
+                        if (o_from == 0) {
                             arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
-                        else
+                        } else {
                             arc.SetFallTransition(i_tran_index, o_cap_index, lo_time - hi_time);
-
-                        o_cap_index++;
+                        }
                     }
+                    o_cap_index++;
                 }
                 i_tran_index++;
             }
