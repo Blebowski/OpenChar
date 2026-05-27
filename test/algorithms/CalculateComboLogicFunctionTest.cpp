@@ -11,14 +11,7 @@ using namespace open_char;
 
 void test_and2(Context &ctx, Algorithms &algs)
 {
-    ctx.GetLibrary().AddCell("AND2");
-    Cell &c1 = ctx.GetLibrary().GetCell("AND2");
-
-    c1.AddPin("Z",   PinDirection::OUT,     PinKind::DATA);
-    c1.AddPin("A",   PinDirection::IN,      PinKind::DATA);
-    c1.AddPin("B",   PinDirection::IN,      PinKind::DATA);
-    c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
-    c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
+    CREATE_AND2_CELL(ctx, c1)
 
     RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
     algs.MeasureComboLogicTables(c1);
@@ -42,15 +35,7 @@ void test_and2(Context &ctx, Algorithms &algs)
 
 void test_half_adder(Context &ctx, Algorithms &algs)
 {
-    ctx.GetLibrary().AddCell("HALF_ADDER");
-    Cell &c1 = ctx.GetLibrary().GetCell("HALF_ADDER");
-
-    c1.AddPin("CO",  PinDirection::OUT,     PinKind::DATA);
-    c1.AddPin("S",   PinDirection::OUT,     PinKind::DATA);
-    c1.AddPin("A",   PinDirection::IN,      PinKind::DATA);
-    c1.AddPin("B",   PinDirection::IN,      PinKind::DATA);
-    c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
-    c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
+    CREATE_HALF_ADDER_CELL(ctx, c1);
 
     RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
     algs.MeasureComboLogicTables(c1);

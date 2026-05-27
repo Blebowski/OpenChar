@@ -12,9 +12,7 @@ using namespace open_char;
 
 void test_inv(Context &ctx, Algorithms &algs)
 {
-    ctx.GetLibrary().AddCell("INV");
-    Cell &c1 = ctx.GetLibrary().GetCell("INV");
-    c1.SetKind(CellKind::COMBINATIONAL);
+    CREATE_INV_CELL(ctx, c1)
 
     Template t("MY_TEMP");
     t.AddIndex1(0.01);
@@ -24,11 +22,6 @@ void test_inv(Context &ctx, Algorithms &algs)
     t.AddIndex2(0.3);
 
     c1.SetDelayTemplate(&t);
-
-    c1.AddPin("Y",   PinDirection::OUT,     PinKind::DATA);
-    c1.AddPin("A",   PinDirection::IN,      PinKind::DATA);
-    c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);
-    c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
     // Logic table and logic function are precondition for combo delays
     RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
