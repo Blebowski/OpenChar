@@ -99,16 +99,7 @@ std::vector<std::vector<NanoSecond>>& Arc::GetFallPowers()
 
 void Arc::SetRiseConstraint(size_t row, size_t col, NanoSecond constr)
 {
-    while (rise_constraints_.size() <= row) {
-        rise_constraints_.push_back(std::vector<NanoSecond>(col + 1));
-    }
-
-    for (auto & row : rise_constraints_) {
-        while (row.size() <= col) {
-            row.push_back(0.0);
-        }
-    }
-
+    ENLARGE_MATRIX(rise_constraints_, NanoSecond, row + 1, col + 1, 0.0);
     rise_constraints_[row][col] = constr;
 }
 
@@ -119,16 +110,7 @@ std::vector<std::vector<NanoSecond>>& Arc::GetRiseConstraints()
 
 void Arc::SetFallConstraint(size_t row, size_t col, NanoSecond constr)
 {
-    while (fall_constraints_.size() <= row) {
-        fall_constraints_.push_back(std::vector<NanoSecond>(col + 1));
-    }
-
-    for (auto & row : fall_constraints_) {
-        while (row.size() <= col) {
-            row.push_back(0.0);
-        }
-    }
-
+    ENLARGE_MATRIX(fall_constraints_, NanoSecond, row + 1, col + 1, 0.0);
     fall_constraints_[row][col] = constr;
 }
 
@@ -139,16 +121,8 @@ std::vector<std::vector<NanoSecond>>& Arc::GetFallConstraints()
 
 void Arc::AddSimulation(size_t row, size_t col, Simulation *simulation)
 {
-    while (simulations_.size() <= row) {
-        simulations_.push_back(std::vector<std::vector<Simulation*>>(col + 1));
-    }
-
-    for (auto & row : simulations_) {
-        while (row.size() <= col) {
-            row.push_back(std::vector<Simulation*>());
-        }
-    }
-
+    ENLARGE_MATRIX(simulations_, std::vector<Simulation*>, row + 1, col + 1,
+                    std::vector<Simulation*>());
     simulations_[row][col].push_back(simulation);
 }
 
