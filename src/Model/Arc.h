@@ -52,11 +52,11 @@ class Arc {
 
         std::vector<std::vector<NanoSecond>> rise_delays_;
         std::vector<std::vector<NanoSecond>> rise_transitions_;
-        std::vector<std::vector<PicoJoule>>  rise_power_;
+        std::vector<std::vector<PicoJoule>>  rise_powers_;
 
         std::vector<std::vector<NanoSecond>> fall_delays_;
         std::vector<std::vector<NanoSecond>> fall_transitions_;
-        std::vector<std::vector<PicoJoule>>  fall_power_;
+        std::vector<std::vector<PicoJoule>>  fall_powers_;
 
         // Input and output pin states
         int64_t in_a_;

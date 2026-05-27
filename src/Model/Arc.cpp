@@ -101,50 +101,100 @@ std::vector<std::vector<NanoSecond>>& Arc::GetFallTransitions()
 
 void Arc::SetRisePower(size_t row, size_t col, PicoJoule energy)
 {
-    while (rise_power_.size() <= row) {
-        rise_power_.push_back(std::vector<NanoSecond>(col + 1));
+    while (rise_powers_.size() <= row) {
+        rise_powers_.push_back(std::vector<NanoSecond>(col + 1));
     }
 
-    for (auto & row : rise_power_) {
+    for (auto & row : rise_powers_) {
         while (row.size() <= col) {
             row.push_back(0.0);
         }
     }
 
-    rise_power_[row][col] = energy;
+    rise_powers_[row][col] = energy;
 }
 
 void Arc::SetFallPower(size_t row, size_t col, PicoJoule energy)
 {
-    while (fall_power_.size() <= row) {
-        fall_power_.push_back(std::vector<NanoSecond>(col + 1));
+    while (fall_powers_.size() <= row) {
+        fall_powers_.push_back(std::vector<NanoSecond>(col + 1));
     }
 
-    for (auto & row : fall_power_) {
+    for (auto & row : fall_powers_) {
         while (row.size() <= col) {
             row.push_back(0.0);
         }
     }
 
-    fall_power_[row][col] = energy;
+    fall_powers_[row][col] = energy;
 }
 
 std::vector<std::vector<PicoJoule>>& Arc::GetRisePowers()
 {
-    return rise_power_;
+    return rise_powers_;
 }
 
 std::vector<std::vector<NanoSecond>>& Arc::GetFallPowers()
 {
-    return fall_power_;
+    return fall_powers_;
 }
 
-void Arc::AddSimulation(Simulation *simulation)
+void Arc::SetRiseConstraint(size_t row, size_t col, NanoSecond constr)
 {
-    simulations_.push_back(simulation);
+    while (rise_constraints_.size() <= row) {
+        rise_constraints_.push_back(std::vector<NanoSecond>(col + 1));
+    }
+
+    for (auto & row : rise_constraints_) {
+        while (row.size() <= col) {
+            row.push_back(0.0);
+        }
+    }
+
+    rise_constraints_[row][col] = constr;
 }
 
-std::vector<Simulation*>& Arc::GetSimulations()
+std::vector<std::vector<NanoSecond>>& Arc::GetRiseConstraints()
+{
+    return rise_constraints_;
+}
+
+void Arc::SetFallConstraint(size_t row, size_t col, NanoSecond constr)
+{
+    while (fall_constraints_.size() <= row) {
+        fall_constraints_.push_back(std::vector<NanoSecond>(col + 1));
+    }
+
+    for (auto & row : fall_constraints_) {
+        while (row.size() <= col) {
+            row.push_back(0.0);
+        }
+    }
+
+    fall_constraints_[row][col] = constr;
+}
+
+std::vector<std::vector<NanoSecond>>& Arc::GetFallConstraints()
+{
+    return fall_constraints_;
+}
+
+void Arc::AddSimulation(size_t row, size_t col, Simulation *simulation)
+{
+    while (simulations_.size() <= row) {
+        simulations_.push_back(std::vector<std::vector<Simulation*>>(col + 1));
+    }
+
+    for (auto & row : simulations_) {
+        while (row.size() <= col) {
+            row.push_back(std::vector<Simulation*>());
+        }
+    }
+
+    simulations_[row][col].push_back(simulation);
+}
+
+std::vector<std::vector<std::vector<Simulation*>>>& Arc::GetSimulations()
 {
     return simulations_;
 }
@@ -360,18 +410,18 @@ void Arc::WriteLiberty(FILE *f, size_t tab)
 
     TAB_FPRINTF(tab, f, "} /* end timing */\n");
 
-    if (rise_power_.size() > 0 || fall_power_.size() > 0) {
+    if (rise_powers_.size() > 0 || fall_powers_.size() > 0) {
         TAB_FPRINTF(tab, f, "internal_power () {\n");
         tab++;
 
         TAB_FPRINTF(tab, f, "related_pin : %s ;\n", rel_pin->name_);
 
-        if (rise_power_.size() > 0) {
-            WriteTable(f, tab, rise_power_, "rise_power");
+        if (rise_powers_.size() > 0) {
+            WriteTable(f, tab, rise_powers_, "rise_power");
         }
 
-        if (rise_power_.size() > 0) {
-            WriteTable(f, tab, fall_power_, "fall_power");
+        if (fall_powers_.size() > 0) {
+            WriteTable(f, tab, fall_powers_, "fall_power");
         }
 
         tab--;
