@@ -568,31 +568,32 @@ void Algorithms::MeasureComboDelays(Cell &cell)
 
                 size_t o_cap_index = 0;
                 for (auto & sims_row_coll : sims_row) {
+                    assert(sims_row_coll.size() == 2);
 
-                    assert(sims_row_coll.size() == 1);
-                    Simulation* sim = sims_row_coll[0];
+                    for (Simulation *sim : sims_row_coll) {
 
-                    Waves w = sim->ReadWaves();
-                    Pin *related_pin = arc.GetRelatedPin();
+                        Waves w = sim->ReadWaves();
+                        Pin *related_pin = arc.GetRelatedPin();
 
-                    int i_from = sim->GetMetaDataAt(0);
-                    int o_from = sim->GetMetaDataAt(1);
+                        int i_from = sim->GetMetaDataAt(0);
+                        int o_from = sim->GetMetaDataAt(1);
 
-                    double i_th = (i_from == 0) ? delay_in_rise : delay_in_fall;
-                    double o_th = (o_from == 0) ? delay_out_rise : delay_out_fall;
+                        double i_th = (i_from == 0) ? delay_in_rise : delay_in_fall;
+                        double o_th = (o_from == 0) ? delay_out_rise : delay_out_fall;
 
-                    i_th *= vdd_voltage;
-                    o_th *= vdd_voltage;
+                        i_th *= vdd_voltage;
+                        o_th *= vdd_voltage;
 
-                    NanoSecond i_edge = w.FindTransitionTime(related_pin->name_, i_th);
-                    NanoSecond o_edge = w.FindTransitionTime(o_pin.name_, o_th);
+                        NanoSecond i_edge = w.FindTransitionTime(related_pin->name_, i_th);
+                        NanoSecond o_edge = w.FindTransitionTime(o_pin.name_, o_th);
 
-                    NanoSecond delay = o_edge - i_edge;
+                        NanoSecond delay = o_edge - i_edge;
 
-                    if (o_from == 0)
-                        arc.SetRiseDelay(i_tran_index, o_cap_index, delay);
-                    else
-                        arc.SetFallDelay(i_tran_index, o_cap_index, delay);
+                        if (o_from == 0)
+                            arc.SetRiseDelay(i_tran_index, o_cap_index, delay);
+                        else
+                            arc.SetFallDelay(i_tran_index, o_cap_index, delay);
+                    }
 
                     o_cap_index++;
                 }
