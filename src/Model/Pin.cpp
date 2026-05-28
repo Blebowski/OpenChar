@@ -120,6 +120,36 @@ void Pin::SetCapacitanceFall(PicoFarad min, PicoFarad max, PicoFarad avg)
     cap_fall_avg_ = avg;
 }
 
+PicoFarad Pin::GetCapacitanceRiseMax()
+{
+    return cap_rise_max_;
+}
+
+PicoFarad Pin::GetCapacitanceRiseMin()
+{
+    return cap_rise_min_;
+}
+
+PicoFarad Pin::GetCapacitanceRiseAvg()
+{
+    return cap_rise_avg_;
+}
+
+PicoFarad Pin::GetCapacitanceFallMax()
+{
+    return cap_fall_max_;
+}
+
+PicoFarad Pin::GetCapacitanceFallMin()
+{
+    return cap_fall_min_;
+}
+
+PicoFarad Pin::GetCapacitanceFallAvg()
+{
+    return cap_fall_avg_;
+}
+
 void Pin::AddSimulation(Simulation *simulation)
 {
     simulations_.push_back(simulation);

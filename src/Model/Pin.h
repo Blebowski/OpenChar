@@ -44,6 +44,14 @@ class Pin {
         void SetCapacitanceRise(PicoFarad min, PicoFarad max, PicoFarad avg);
         void SetCapacitanceFall(PicoFarad min, PicoFarad max, PicoFarad avg);
 
+        PicoFarad GetCapacitanceRiseMax();
+        PicoFarad GetCapacitanceRiseMin();
+        PicoFarad GetCapacitanceRiseAvg();
+
+        PicoFarad GetCapacitanceFallMax();
+        PicoFarad GetCapacitanceFallMin();
+        PicoFarad GetCapacitanceFallAvg();
+
         void AddSimulation(Simulation *simulation);
         std::vector<Simulation*>& GetSimulations();
 
