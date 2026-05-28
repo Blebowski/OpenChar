@@ -32,27 +32,32 @@ int Algorithms::GetBit(int64_t v, size_t index)
     return (v >> index) & 0x1;
 }
 
+Simulation *Algorithms::NewSimulation(std::string name, SimulationKind kind, Cell *cell)
+{
+    Simulation *sim = new Simulation(ctx_, name, cell, kind);
+
+    OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
+    sim->SetTemp(op_cond.GetTemperature());
+    sim->SetSupply(op_cond.GetSupply());
+
+    for (const auto & netlist : ctx_->GetNetlists())
+        sim->AddInclude(netlist);
+
+    for (const auto & model : ctx_->GetModels())
+        sim->AddModel(model);
+
+    return sim;
+}
+
 void Algorithms::PrepareInputCapSims(Cell &cell)
 {
     size_t i_pin_index = 0;
     for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
 
         std::string sim_name = sprintf("ICAP_%s", i_pin.name_);
+        Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
 
-        // TODO: Wrap simulation construction with common stuff!
-        Simulation *sim = new Simulation(ctx_, sim_name, &cell, SimulationKind::TRAN);
-
-        OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
-        Supply *supply = op_cond.GetSupply();
-        sim->SetTemp(op_cond.GetTemperature());
-        sim->SetSupply(op_cond.GetSupply());
-
-        for (const auto & netlist : ctx_->GetNetlists())
-            sim->AddInclude(netlist);
-
-        for (const auto & model : ctx_->GetModels())
-            sim->AddModel(model);
-
+        Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
         Volt log0_v = supply->GetGndVoltage();
         Volt log1_v = supply->GetVddVoltage();
 
@@ -182,17 +187,7 @@ void Algorithms::PrepareComboLogicTableAndLeakageSims(Cell &cell)
                 tmp >>= 1;
             }
 
-            // TODO: Wrap simulation construction with common stuff!
-            Simulation *sim = new Simulation(ctx_, sim_name, &cell, SimulationKind::DC);
-
-            sim->SetTemp(op_cond.GetTemperature());
-            sim->SetSupply(op_cond.GetSupply());
-
-            for (const auto & netlist : ctx_->GetNetlists())
-                sim->AddInclude(netlist);
-
-            for (const auto & model : ctx_->GetModels())
-                sim->AddModel(model);
+            Simulation *sim = NewSimulation(sim_name, SimulationKind::DC, &cell);
 
             int i_pin_index = 0;
             for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
@@ -471,17 +466,7 @@ int Algorithms::PrepareComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, int 
             for (const PicoFarad o_cap : templ->GetIndex2()) {
 
                 std::string sim_name = sprintf("%s_TRAN_%f_CAP_%f", prefix, i_tran, o_cap);
-
-                // TODO: Wrap construction to some common tasks
-                Simulation *sim = new Simulation(ctx_, sim_name, cell, SimulationKind::TRAN);
-                sim->SetTemp(op_cond.GetTemperature());
-                sim->SetSupply(op_cond.GetSupply());
-
-                for (const auto & netlist : ctx_->GetNetlists())
-                    sim->AddInclude(netlist);
-
-                for (const auto & model : ctx_->GetModels())
-                    sim->AddModel(model);
+                Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, cell);
 
                 Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
                 Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
@@ -773,21 +758,9 @@ void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
             }
 
             sim_name = sprintf("%s_%s%d", sim_name, d_pin.name_, d);
-
-            // TODO: Wrap construction to some common tasks
-
-            Simulation *sim = new Simulation(ctx_, sim_name, &cell, SimulationKind::TRAN);
+            Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
 
             OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
-            sim->SetTemp(op_cond.GetTemperature());
-            sim->SetSupply(op_cond.GetSupply());
-
-            for (const auto & netlist : ctx_->GetNetlists())
-                sim->AddInclude(netlist);
-
-            for (const auto & model : ctx_->GetModels())
-                sim->AddModel(model);
-
             Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
             Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
 
@@ -987,25 +960,13 @@ void Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
 void Algorithms::PrepareSeqCellKindSims(Cell &cell)
 {
     for (int clock_val = 0; clock_val < 2; clock_val++) {
-        std::string sim_name = "SEQ_EDGEVSLVL";
 
         Pin &c_pin = cell.GetPins(PinKind::CLK).front();
-        sim_name = sprintf("%s_%s%d", sim_name, c_pin.name_, clock_val);
 
-        // TODO: Wrap construction to some common tasks
-
-        Simulation *sim = new Simulation(ctx_, sim_name, &cell, SimulationKind::TRAN);
+        std::string sim_name = sprintf("SEQ_EDGEVSLVL_%s%d", c_pin.name_, clock_val);
+        Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
 
         OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
-        sim->SetTemp(op_cond.GetTemperature());
-        sim->SetSupply(op_cond.GetSupply());
-
-        for (const auto & netlist : ctx_->GetNetlists())
-            sim->AddInclude(netlist);
-
-        for (const auto & model : ctx_->GetModels())
-            sim->AddModel(model);
-
         Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
         Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
 
@@ -1091,27 +1052,14 @@ void Algorithms::PrepareFFClockPolaritySims(Cell &cell)
 
             std::string sim_name = sprintf("FF_CKPOL_%s%d%d", cell.GetPins(PinKind::CLK).front().name_,
                                             clock_polarity, 1 - clock_polarity);
-
             size_t i = 0;
             for (auto & i_pin : cell.GetPins(PinDirection::IN, PinKind::DATA)) {
                 sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, (i_pin_vect >> i) & 0x1);
                 i++;
             }
-
-            // TODO: Wrap construction to some common tasks
-
-            Simulation *sim = new Simulation(ctx_, sim_name, &cell, SimulationKind::TRAN);
+            Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
 
             OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
-            sim->SetTemp(op_cond.GetTemperature());
-            sim->SetSupply(op_cond.GetSupply());
-
-            for (const auto & netlist : ctx_->GetNetlists())
-                sim->AddInclude(netlist);
-
-            for (const auto & model : ctx_->GetModels())
-                sim->AddModel(model);
-
             Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
             Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
 
@@ -1193,6 +1141,13 @@ void Algorithms::PrepareFFClockDelaySims(Cell &cell)
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
 
         auto *templ = cell.GetDelayTemplate();
+        assert(templ != nullptr);
+
+        // TODO: This is hard-coded for Q with the same polarity!
+        // We should extract logic function of each Q and compute according to it!
+        // Also, this is missing values of async pins.
+        o_pin.AddArc(Arc(&o_pin, templ, ArcKind::SEQ_CK, 0, 1, 0, 1));
+        size_t arc_index = o_pin.GetArcs().size() - 1;
 
         size_t i_tran_index = 0;
         for (NanoSecond i_tran : templ->GetIndex1()) {
@@ -1200,39 +1155,16 @@ void Algorithms::PrepareFFClockDelaySims(Cell &cell)
             size_t o_cap_index = 0;
             for (PicoFarad o_cap : templ->GetIndex2()) {
 
-                // TODO: This is hard-coded for Q with the same polarity!
-                // We should extract logic function of each Q and compute according to it!
-                // Also, this is missing values of async pins.
-                o_pin.AddArc(Arc(&o_pin, templ, ArcKind::SEQ_CK, 0, 1, 0, 1));
-                size_t arc_index = o_pin.GetArcs().size() - 1;
-
                 // TODO: This assumes D-style flip-flop.
                 for (int d_val = 0; d_val < 2; d_val++) {
 
-                    std::string sim_name = "SEQ_DLY";
-
                     auto & c_pin = cell.GetPins(PinKind::CLK).front();
-                    sim_name = sprintf("%s_%s", sim_name, c_pin.name_);
-
                     auto & d_pin = cell.GetPins(PinDirection::IN, PinKind::DATA).front();
-                    sim_name = sprintf("%s_%s%d", sim_name, d_pin.name_, d_val);
-
-                    sim_name = sprintf("%s_TRAN_%f_CAP_%f", sim_name, i_tran, o_cap);
-
-                    // TODO: Wrap construction to some common tasks
-
-                    Simulation *sim = new Simulation(ctx_, sim_name, &cell, SimulationKind::TRAN);
+                    std::string sim_name = sprintf("SEQ_DLY_%s_%s%d_TRAN_%f_CAP_%f",
+                                                    c_pin.name_, d_pin.name_, d_val, i_tran, o_cap);
+                    Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
 
                     OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
-                    sim->SetTemp(op_cond.GetTemperature());
-                    sim->SetSupply(op_cond.GetSupply());
-
-                    for (const auto & netlist : ctx_->GetNetlists())
-                        sim->AddInclude(netlist);
-
-                    for (const auto & model : ctx_->GetModels())
-                        sim->AddModel(model);
-
                     Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
                     Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
 
@@ -1282,7 +1214,6 @@ void Algorithms::MeasureFFClockDelay(Cell &cell)
                 for (auto & sims_row_coll : sims_row) {
 
                     assert(sims_row_coll.size() == 2);
-
                     for (Simulation *sim : sims_row_coll) {
                         Waves w = sim->ReadWaves();
 
@@ -1405,13 +1336,24 @@ void Algorithms::MeasureFFClockPowers(Cell &cell)
                         auto & i_q = w.GetCurrent(o_pin.name_);
                         NanoSecond time_step = sim->GetTimeStep();
 
+                        NanoWatt lkg = i_vdd[0] * vdd_voltage;
+
                         // TODO: Integrate with possibly varying time step ?
+                        // The power is drain by the cell when i_vdd is negative.
+                        // The power is drain by the load when i_out is positive.
+                        // Sum of these therefore gives the current consumed by
+                        // the cell.
+                        // Also, if i_vdd is positive, it means current flows from
+                        // VDD back to the supply network. We are conservative and
+                        // ignore such flow as it would give more optimistic results.
                         for (size_t i = start_index; i < end_index; i++) {
-                            e += ((i_vdd[i] + i_q[i]) * vdd_voltage) * time_step;
+                            MicroAmp i_vdd_cap = (i_vdd[i] < 0) ? i_vdd[i] : 0.0;
+                            e += (((i_vdd_cap + i_q[i]) * vdd_voltage) - lkg) * time_step;
                         }
 
                         // uA * V = uW ;  uW * ns = femtoJ -> Convert to Pico
                         e /= 1E3;
+                        e = std::fabs(e);
 
                         if (d_val == 1) {
                             arc.SetRisePower(i_tran_index, o_cap_index, e);

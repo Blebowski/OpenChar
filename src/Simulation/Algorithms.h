@@ -48,6 +48,7 @@ class Algorithms {
     private:
         Context *ctx_;
         int ToLogic(Volt val);
+        Simulation* NewSimulation(std::string name, SimulationKind kind, Cell *cell);
         int GetBit(int64_t v, size_t index);
         Expression* ComboSumOfProducts(Cell& cell, Pin& o_pin);
         Expression* ComboProductOfSums(Cell& cell, Pin& o_pin);
