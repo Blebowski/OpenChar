@@ -1163,7 +1163,10 @@ void Algorithms::MeasureFFClockPolarity(Cell &cell)
         for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
             auto &out_v = w.GetVoltage(o_pin.name_);
 
-            if (!COMPARE_FLOATS(out_v.front(), out_v.back())) {
+            int out_start = ToLogic(out_v.front());
+            int out_end = ToLogic(out_v.back());
+
+            if (out_start != out_end) {
                 int clock_polarity = sim->GetMetaDataAt(0);
                 if (clock_polarity == 0) {
                     out_change_posedge = true;
