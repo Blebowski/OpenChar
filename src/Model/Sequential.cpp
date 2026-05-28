@@ -85,6 +85,11 @@ void Sequential::SetEnablePolarity(int enable_polarity)
     enable_polarity_ = enable_polarity;
 }
 
+int Sequential::GetEnablePolarity()
+{
+    return enable_polarity_;
+}
+
 void Sequential::WriteLiberty(FILE *f, size_t tab)
 {
     if (kind_ == SequentialKind::FLIP_FLOP) {

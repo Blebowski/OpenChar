@@ -21,6 +21,7 @@ class Sequential {
         EdgeKind GetClockPolarity();
 
         void SetEnablePolarity(int polarity);
+        int GetEnablePolarity();
 
         void SetKind(SequentialKind kind);
         SequentialKind GetKind();
