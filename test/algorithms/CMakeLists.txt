@@ -7,3 +7,4 @@ OPEN_CHAR_TEST(CalculateComboLogicFunctionTest)
 
 OPEN_CHAR_TEST(MeasureSequentialCellKindTest)
 OPEN_CHAR_TEST(MeasureFFClockPolarityTest)
+OPEN_CHAR_TEST(MeasureFFClockDelayPowerTransitionTest)
