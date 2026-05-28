@@ -66,6 +66,18 @@
         c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);                                  \
         c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
+#define CREATE_DFF_CK_SB_RB_CELL(ctx, name)                                                     \
+        ctx.GetLibrary().AddCell("DFF_CK_SB_RB");                                               \
+        Cell &c1 = ctx.GetLibrary().GetCell("DFF_CK_SB_RB");                                    \
+        c1.SetKind(CellKind::SEQUENTIAL);                                                       \
+        c1.AddPin("Q",   PinDirection::OUT,     PinKind::DATA);                                 \
+        c1.AddPin("CK",  PinDirection::IN,      PinKind::CLK);                                  \
+        c1.AddPin("D",   PinDirection::IN,      PinKind::DATA);                                 \
+        c1.AddPin("RB",  PinDirection::IN,      PinKind::ASYNC);                                \
+        c1.AddPin("SB",  PinDirection::IN,      PinKind::ASYNC);                                \
+        c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);                                  \
+        c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
+
 #define CREATE_LAT_CKB_R_S_CELL(ctx, name)                                                      \
         ctx.GetLibrary().AddCell("LAT_CKB_R_S");                                                \
         Cell &c1 = ctx.GetLibrary().GetCell("LAT_CKB_R_S");                                     \
