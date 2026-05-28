@@ -12,6 +12,7 @@
 #define ALG_TEST_INIT(ctx, algs)                                                                \
         StackTraceInit();                                                                       \
         Context ctx(nullptr);                                                                   \
+        ctx.GetSimulationPool().SetNumThreads(10);                                              \
         Algorithms algs(&ctx);
 
 #define CREATE_INV_CELL(ctx, name)                                                              \
