@@ -31,12 +31,13 @@ CREATE_TCL_COMMAND(
     true,
 
     ARG({
-        {"-input",      TclCmdOpt(true,         "{pin_names}",      "Input pin or pins.")},
-        {"-output",     TclCmdOpt(true,         "{pin_names}",      "Output pin or pins.")},
-        {"-clock",      TclCmdOpt(true,         "pin_name",         "Clock pin")},
-        {"-async",      TclCmdOpt(true,         "{pin_names}",      "Asynchrnous set/clear pin or pins.")},
-        {"-delay",      TclCmdOpt(true,         "delay_template",   "Name of delay template to use when characterizing the cell.")},
-        {"cell_name",   TclCmdOpt(false,        "cell_name",        "Name of the cell.")}
+        {"-input",      TclCmdOpt(true,         "{pin_names}",          "Input pin or pins.")},
+        {"-output",     TclCmdOpt(true,         "{pin_names}",          "Output pin or pins.")},
+        {"-clock",      TclCmdOpt(true,         "pin_name",             "Clock pin")},
+        {"-async",      TclCmdOpt(true,         "{pin_names}",          "Asynchrnous set/clear pin or pins.")},
+        {"-delay",      TclCmdOpt(true,         "delay_template",       "Name of delay template to use when characterizing the cell.")},
+        {"-constraint", TclCmdOpt(true,         "constraint_template",  "Name of constraint template to use when characterizing the cell.")},
+        {"cell_name",   TclCmdOpt(false,        "cell_name",            "Name of the cell.")}
         }),
     ARG({
 
@@ -45,21 +46,48 @@ CREATE_TCL_COMMAND(
             return TCL_ERROR;
         }
 
-        const std::string templ_name = Tcl_GetString(opts_["-delay"].objv_);
-        if (!ctx_->GetLibrary().HasTemplate(templ_name)) {
-            error("Template '%s' does not exist.", templ_name);
+        if (opts_["-clock"].isSet() && !opts_["-constraint"].isSet()) {
+            error("Cells that contain -clock pins must have -constraint template set.\n");
             return TCL_ERROR;
         }
 
-        Template& t = ctx_->GetLibrary().GetTemplate(templ_name);
+        const std::string d_templ_name = Tcl_GetString(opts_["-delay"].objv_);
+        if (!ctx_->GetLibrary().HasTemplate(d_templ_name)) {
+            error("Template '%s' does not exist.", d_templ_name);
+            return TCL_ERROR;
+        }
+
+        Template& t = ctx_->GetLibrary().GetTemplate(d_templ_name);
         if (t.GetKind() != TemplateKind::DELAY) {
-            error("Template '%s' is not a delay template.", templ_name);
+            error("Template '%s' is not a delay template.", d_templ_name);
             return TCL_ERROR;
         }
 
         if (opts_["-async"].isSet() && !opts_["-clock"].isSet()) {
-            error("Can't specify '-async' pins without clock pin.", templ_name);
+            error("Can't specify '-async' pins without clock pin.");
             return TCL_ERROR;
+        }
+
+        if (opts_["-constraint"].isSet() && !opts_["-clock"].isSet()) {
+            error("Can't specify '-constraint' pins without clock pin.");
+            return TCL_ERROR;
+        }
+
+        std::string c_templ_name;
+        if (opts_["-constraint"].isSet()) {
+            c_templ_name = Tcl_GetString(opts_["-constraint"].objv_);
+
+            if (!ctx_->GetLibrary().HasTemplate(c_templ_name)) {
+                error("Template '%s' does not exist.", c_templ_name);
+                return TCL_ERROR;
+            }
+
+            Template& t = ctx_->GetLibrary().GetTemplate(c_templ_name);
+
+            if (t.GetKind() != TemplateKind::CONSTRAINT) {
+                error("Template '%s' is not a constraint template.", c_templ_name);
+                return TCL_ERROR;
+            }
         }
 
         const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
@@ -70,7 +98,11 @@ CREATE_TCL_COMMAND(
             return TCL_ERROR;
         }
 
-        cell.SetDelayTemplate(&(ctx_->GetLibrary().GetTemplate(templ_name)));
+        cell.SetDelayTemplate(&(ctx_->GetLibrary().GetTemplate(d_templ_name)));
+
+        if (opts_["-constraint"].isSet()) {
+            cell.SetConstraintTemplate(&(ctx_->GetLibrary().GetTemplate(c_templ_name)));
+        }
 
         if (opts_["-output"].isSet()) {
             const std::string s = Tcl_GetString(opts_["-output"].objv_);
@@ -159,8 +191,8 @@ CREATE_TCL_COMMAND(
         }
 
         std::string type = Tcl_GetString(opts_["-type"].objv_);
-        if (type != "delay" && type != "power") {
-            error("Allowed values for -type are: 'delay' or 'power'.\n");
+        if (type != "delay" && type != "power" && type != "constraint") {
+            error("Allowed values for -type are: 'delay', 'power' or 'constraint'.\n");
             return TCL_ERROR;
         }
 
@@ -174,8 +206,10 @@ CREATE_TCL_COMMAND(
 
         if (type == "delay") {
             template_p.first.SetKind(TemplateKind::DELAY);
-        } else {
+        } else if (type == "power") {
             template_p.first.SetKind(TemplateKind::POWER);
+        } else {
+            template_p.first.SetKind(TemplateKind::CONSTRAINT);
         }
 
         if (opts_["-index_1"].isSet()) {

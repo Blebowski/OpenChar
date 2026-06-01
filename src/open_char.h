@@ -73,7 +73,8 @@ namespace open_char {
 
     enum class TemplateKind {
         DELAY,
-        POWER
+        POWER,
+        CONSTRAINT
     };
 
     enum class EdgeKind {

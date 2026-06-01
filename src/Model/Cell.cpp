@@ -11,6 +11,8 @@ namespace open_char {
 Cell::Cell(std::string name, Library *library) :
     name_(name),
     library_(library),
+    d_template_(nullptr),
+    c_template_(nullptr),
     seq_(this),
     charact_state_(CharactState::START)
 {};
@@ -74,6 +76,16 @@ Template* Cell::GetDelayTemplate()
 void Cell::SetDelayTemplate(Template *d_template)
 {
     d_template_ = d_template;
+}
+
+Template* Cell::GetConstraintTemplate()
+{
+    return c_template_;
+}
+
+void Cell::SetConstraintTemplate(Template *c_template)
+{
+    c_template_ = c_template;
 }
 
 void Cell::AddLeakageTableEntry(Expression *e, NanoWatt pwr)

@@ -68,6 +68,9 @@ class Cell {
         Template* GetDelayTemplate();
         void SetDelayTemplate(Template *d_template);
 
+        Template* GetConstraintTemplate();
+        void SetConstraintTemplate(Template *c_template);
+
         void AddSimulation(Simulation *simulation);
         std::vector<Simulation*>& GetSimulations();
         bool IsSimulationFinished();
@@ -82,6 +85,7 @@ class Cell {
         Library* library_;
         std::map<std::string, Pin> pins_;
         Template *d_template_;
+        Template *c_template_;
         CellKind kind_;
 
         // First value - Cell inputs
