@@ -2,6 +2,7 @@
 #include "open_char.h"
 #include "Context.h"
 #include "Utils.h"
+#include "StackTrace.h"
 
 #include <tcl.h>
 
@@ -213,6 +214,7 @@ int main(int argc, char *argv[])
         return 0;
     }
 
+    StackTraceInit();
     Tcl_FindExecutable(argv[0]);
     Tcl_Main(argc, argv, ShellInit);
 
