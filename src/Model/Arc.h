@@ -20,6 +20,8 @@ class Arc {
         Pin* GetRelatedPin();
         Template* GetTemplate();
 
+        ArcKind GetKind();
+
         void SetRiseDelay(size_t row, size_t col, NanoSecond delay);
         std::vector<std::vector<NanoSecond>>& GetRiseDelays();
 
@@ -38,8 +40,14 @@ class Arc {
         void SetFallPower(size_t row, size_t col, PicoJoule energy);
         std::vector<std::vector<NanoSecond>>& GetFallPowers();
 
-        void AddSimulation(Simulation *simulation);
-        std::vector<Simulation*>& GetSimulations();
+        void SetRiseConstraint(size_t row, size_t col, NanoSecond constr);
+        std::vector<std::vector<NanoSecond>>& GetRiseConstraints();
+
+        void SetFallConstraint(size_t row, size_t col, NanoSecond constr);
+        std::vector<std::vector<NanoSecond>>& GetFallConstraints();
+
+        void AddSimulation(size_t row, size_t col, Simulation *simulation);
+        std::vector<std::vector<std::vector<Simulation*>>>& GetSimulations();
 
     private:
         UnateKind GetUnateness();
@@ -53,10 +61,12 @@ class Arc {
         std::vector<std::vector<NanoSecond>> rise_delays_;
         std::vector<std::vector<NanoSecond>> rise_transitions_;
         std::vector<std::vector<PicoJoule>>  rise_powers_;
+        std::vector<std::vector<NanoSecond>> rise_constraints_;
 
         std::vector<std::vector<NanoSecond>> fall_delays_;
         std::vector<std::vector<NanoSecond>> fall_transitions_;
         std::vector<std::vector<PicoJoule>>  fall_powers_;
+        std::vector<std::vector<NanoSecond>> fall_constraints_;
 
         // Input and output pin states
         int64_t in_a_;

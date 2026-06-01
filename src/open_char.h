@@ -105,7 +105,9 @@ namespace open_char {
         COMBO,
         SEQ_CK,
         SEQ_SET,
-        SEQ_CLR
+        SEQ_CLR,
+        SEQ_SETUP,
+        SEQ_HOLD
     };
 
     enum class UnateKind {
@@ -125,6 +127,8 @@ namespace open_char {
         SEQ_CELL_KIND,
         SEQ_FF_CK_POL,
         SEQ_FF_DLY_PWR,
+        SEQ_FF_SETUP_START,
+        SEQ_FF_SETUP_FINISH,
 
         DONE
     };

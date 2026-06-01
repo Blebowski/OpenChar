@@ -225,10 +225,8 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
             TAB_FPRINTF(tab, f, "fall_capacitance_range(%.9f, %.9f) ;\n", cap_fall_min_, cap_fall_max_);
         }
 
-        if (direction_ == PinDirection::OUT) {
-            for (auto & arc : arcs_) {
-                arc.WriteLiberty(f, tab);
-            }
+        for (auto & arc : arcs_) {
+            arc.WriteLiberty(f, tab);
         }
 
         tab--;

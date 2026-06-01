@@ -43,6 +43,14 @@ class Algorithms {
         void MeasureFFClockTransition(Cell &cell);
         void MeasureFFClockPowers(Cell &cell);
 
+        void PrepareSetupSims(Cell &cell);
+        void PrepareOneSetupSim(Cell &cell, size_t arc_index,
+                                size_t d_tran_index, NanoSecond d_tran,
+                                size_t ck_tran_index, NanoSecond ck_tran,
+                                NanoSecond ck_q_base, NanoSecond ck_d_skew,
+                                NanoSecond step);
+        bool MeasureSetup(Cell &cell);
+
         void CharacterizeLibrary();
 
     private:

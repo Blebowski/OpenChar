@@ -126,6 +126,11 @@ void Arc::AddSimulation(size_t row, size_t col, Simulation *simulation)
     simulations_[row][col].push_back(simulation);
 }
 
+ArcKind Arc::GetKind()
+{
+    return kind_;
+}
+
 std::vector<std::vector<std::vector<Simulation*>>>& Arc::GetSimulations()
 {
     return simulations_;
@@ -198,6 +203,8 @@ Pin* Arc::GetRelatedPin()
         return rel_pin;
     }
     case ArcKind::SEQ_CK:
+    case ArcKind::SEQ_SETUP:
+    case ArcKind::SEQ_HOLD:
     {
         return pin_->cell_->GetSequential().GetClockPin();
     }
@@ -285,7 +292,7 @@ void Arc::WriteLiberty(FILE *f, size_t tab)
     tab++;
 
     Pin* rel_pin = GetRelatedPin();
-    TAB_FPRINTF(tab, f, "related_pin : %s ;\n", rel_pin->name_);
+    TAB_FPRINTF(tab, f, "related_pin : \"%s\" ;\n", rel_pin->name_);
 
     TAB_FPRINTF(tab, f, "timing_type : ");
     switch (kind_) {
@@ -308,19 +315,33 @@ void Arc::WriteLiberty(FILE *f, size_t tab)
     case ArcKind::SEQ_SET:
         fprintf(f, "set ;\n");
         break;
+    case ArcKind::SEQ_SETUP:
+    {
+        EdgeKind kind = pin_->cell_->GetSequential().GetClockPolarity();
+        fprintf(f, "setup_%s ;\n", (kind == EdgeKind::RISING) ? "rising" : "falling");
+        break;
+    }
+    case ArcKind::SEQ_HOLD:
+    {
+        EdgeKind kind = pin_->cell_->GetSequential().GetClockPolarity();
+        fprintf(f, "hold_%s ;\n", (kind == EdgeKind::RISING) ? "rising" : "falling");
+        break;
+    }
     }
 
-    TAB_FPRINTF(tab, f, "timing_sense : ");
-    switch (GetUnateness()) {
-    case UnateKind::POSITIVE_UNATE:
-        fprintf(f, "positive_unate ;\n");
-        break;
-    case UnateKind::NEGATIVE_UNATE:
-        fprintf(f, "negative_unate ;\n");
-        break;
-    case UnateKind::NON_UNATE:
-        fprintf(f, "non_unate ;\n");
-        break;
+    if (kind_ == ArcKind::COMBO) {
+        TAB_FPRINTF(tab, f, "timing_sense : ");
+        switch (GetUnateness()) {
+        case UnateKind::POSITIVE_UNATE:
+            fprintf(f, "positive_unate ;\n");
+            break;
+        case UnateKind::NEGATIVE_UNATE:
+            fprintf(f, "negative_unate ;\n");
+            break;
+        case UnateKind::NON_UNATE:
+            fprintf(f, "non_unate ;\n");
+            break;
+        }
     }
 
     if (rise_delays_.size() > 0) {
@@ -331,12 +352,20 @@ void Arc::WriteLiberty(FILE *f, size_t tab)
         WriteTable(f, tab, rise_transitions_, "rise_transition");
     }
 
+    if (rise_constraints_.size() > 0) {
+        WriteTable(f, tab, rise_constraints_, "rise_constraint");
+    }
+
     if (fall_delays_.size() > 0) {
         WriteTable(f, tab, fall_delays_, "cell_fall");
     }
 
     if (fall_transitions_.size() > 0) {
         WriteTable(f, tab, fall_transitions_, "fall_transition");
+    }
+
+    if (fall_constraints_.size() > 0) {
+        WriteTable(f, tab, fall_constraints_, "fall_constraint");
     }
     tab--;
 
@@ -346,7 +375,7 @@ void Arc::WriteLiberty(FILE *f, size_t tab)
         TAB_FPRINTF(tab, f, "internal_power () {\n");
         tab++;
 
-        TAB_FPRINTF(tab, f, "related_pin : %s ;\n", rel_pin->name_);
+        TAB_FPRINTF(tab, f, "related_pin : \"%s\" ;\n", rel_pin->name_);
 
         if (rise_powers_.size() > 0) {
             WriteTable(f, tab, rise_powers_, "rise_power");
