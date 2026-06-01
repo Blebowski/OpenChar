@@ -11,14 +11,22 @@ namespace open_char {
 #define MOVE_TILL_SPACE(ptr) while (*ptr != ' ' && *ptr != '\t') ptr++
 #define PRINT_LINE(len) printf("%s\n", std::string(len, '-'));
 
-#define READ_LINE_AND_CHECK(line, len, f)                                       \
-            do {                                                                \
-                line = NULL;                                                    \
-                len = 0;                                                        \
-                ssize_t read = getline(&line, &len, f);                         \
-                if (read == -1) {                                               \
-                    fatal("Failed to read line from waveform file.");           \
-                }                                                               \
+#define READ_LINE_AND_CHECK(line, len, f)                                           \
+            do {                                                                    \
+                line = NULL;                                                        \
+                len = 0;                                                            \
+                ssize_t read = getline(&line, &len, f);                             \
+                if (read == -1) {                                                   \
+                    fatal("Failed to read line from waveform file.");               \
+                }                                                                   \
+            } while (0)
+
+#define RAED_DOUBLE_AND_CHECK(val, f)                                               \
+            do {                                                                    \
+                size_t n = fread(&val, sizeof(double), 1, f);                       \
+                if (n != 1) {                                                       \
+                    fatal("Failed to read floating number from waveform file.");    \
+                }                                                                   \
             } while (0)
 
 Waves::Waves(std::string path)
@@ -31,8 +39,8 @@ Waves::Waves(std::string path)
 
     char *line;
     size_t len;
-    size_t n_vars;
-    size_t n_points;
+    size_t n_vars = 0;
+    size_t n_points = 0;
 
     std::vector<std::string> sig_names;
 
@@ -87,8 +95,8 @@ Waves::Waves(std::string path)
                 curr++;
 
             key = std::string(start + 1 , curr - start - 1);
-            for (auto & c: key)
-                c = toupper(c);
+            for (size_t i = 0; i < key.size(); i++)
+                key[i] = static_cast<char>(toupper(key[i]));
 
             MOVE_TILL_SPACE(curr);
             MOVE_TILL_CHAR(curr);
@@ -121,7 +129,7 @@ Waves::Waves(std::string path)
 
         // Assume first read is always reference -> True for NGSPICE TRAN and DC!
         double val;
-        fread(&val, sizeof(double), 1, f);
+        RAED_DOUBLE_AND_CHECK(val, f);
 
         // Convert to nanoseconds
         if (kind_ == WaveKind::TIME)
@@ -131,8 +139,8 @@ Waves::Waves(std::string path)
 
         size_t i = 1;
         for (const auto &sig_name : sig_names) {
-            double val;
-            fread(&val, sizeof(double), 1, f);
+
+            RAED_DOUBLE_AND_CHECK(val, f);
 
             if (currents_.contains(sig_name)) {
                 if (currents_[sig_name].first == i) {
@@ -275,7 +283,6 @@ size_t Waves::FindTransitionIndex(std::string name, Volt th,
     assert(index_stop  < d.size());
 
     Volt v_first = d[index_start];
-    Volt v_last  = d[index_stop];
 
     while (step > 1.0) {
         step /= 2;
