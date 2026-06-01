@@ -57,9 +57,8 @@ class Simulation {
 
         NanoSecond duration_;
 
-        // TODO: Precision may be configurable either manually by user,
-        //       or somehow determine based on quickness of response.
-        NanoSecond time_step_ = 0.0001;
+        // TODO: Make precision configurable by user!
+        NanoSecond time_step_ = 0.001;
 
         std::vector<std::string> includes_;
         std::vector<std::string> models_;

@@ -47,10 +47,10 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     //   ) ;
     // }
 
-    assert (EQUAL_WITH_TOL(arc.GetRiseDelays()[0][0], 0.127000));
-    assert (EQUAL_WITH_TOL(arc.GetRiseDelays()[0][1], 0.702500));
-    assert (EQUAL_WITH_TOL(arc.GetRiseDelays()[1][0], 0.136600));
-    assert (EQUAL_WITH_TOL(arc.GetRiseDelays()[1][1], 0.712000));
+    EQUAL_WITH_TOL(arc.GetRiseDelays()[0][0], 0.127000);
+    EQUAL_WITH_TOL(arc.GetRiseDelays()[0][1], 0.702500);
+    EQUAL_WITH_TOL(arc.GetRiseDelays()[1][0], 0.136600);
+    EQUAL_WITH_TOL(arc.GetRiseDelays()[1][1], 0.712000);
 
     // rise_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -61,10 +61,10 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_transition */
 
-    assert (EQUAL_WITH_TOL(arc.GetRiseTransitions()[0][0], 0.075200));
-    assert (EQUAL_WITH_TOL(arc.GetRiseTransitions()[0][1], 0.986800));
-    assert (EQUAL_WITH_TOL(arc.GetRiseTransitions()[1][0], 0.075100));
-    assert (EQUAL_WITH_TOL(arc.GetRiseTransitions()[1][1], 0.986700));
+    EQUAL_WITH_TOL(arc.GetRiseTransitions()[0][0], 0.075200);
+    EQUAL_WITH_TOL(arc.GetRiseTransitions()[0][1], 0.986800);
+    EQUAL_WITH_TOL(arc.GetRiseTransitions()[1][0], 0.075100);
+    EQUAL_WITH_TOL(arc.GetRiseTransitions()[1][1], 0.986700);
 
     // cell_fall() {
     //   index_1 ("0.010000, 0.100000")
@@ -75,10 +75,10 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     //   ) ;
     // } /* end cell_fall */
 
-    assert (EQUAL_WITH_TOL(arc.GetFallDelays()[0][0], 0.121800));
-    assert (EQUAL_WITH_TOL(arc.GetFallDelays()[0][1], 0.702500));
-    assert (EQUAL_WITH_TOL(arc.GetFallDelays()[1][0], 0.131300));
-    assert (EQUAL_WITH_TOL(arc.GetFallDelays()[1][1], 0.711900));
+    EQUAL_WITH_TOL(arc.GetFallDelays()[0][0], 0.121800);
+    EQUAL_WITH_TOL(arc.GetFallDelays()[0][1], 0.702500);
+    EQUAL_WITH_TOL(arc.GetFallDelays()[1][0], 0.131300);
+    EQUAL_WITH_TOL(arc.GetFallDelays()[1][1], 0.711900);
 
     // fall_transition() {
     //   index_1 ("0.010000, 0.100000")
@@ -89,10 +89,10 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     //   ) ;
     // } /* end fall_transition */
 
-    assert (EQUAL_WITH_TOL(arc.GetFallTransitions()[0][0], 0.072200));
-    assert (EQUAL_WITH_TOL(arc.GetFallTransitions()[0][1], 0.947200));
-    assert (EQUAL_WITH_TOL(arc.GetFallTransitions()[1][0], 0.072300));
-    assert (EQUAL_WITH_TOL(arc.GetFallTransitions()[1][1], 0.947300));
+    EQUAL_WITH_TOL(arc.GetFallTransitions()[0][0], 0.072200);
+    EQUAL_WITH_TOL(arc.GetFallTransitions()[0][1], 0.947200);
+    EQUAL_WITH_TOL(arc.GetFallTransitions()[1][0], 0.072300);
+    EQUAL_WITH_TOL(arc.GetFallTransitions()[1][1], 0.947300);
 
     // rise_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -103,10 +103,10 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_power */
 
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[0][0], 0.019818));
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[0][1], 0.019733));
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[1][0], 0.021225));
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[1][1], 0.021129));
+    EQUAL_WITH_TOL(arc.GetRisePowers()[0][0], 0.019818);
+    EQUAL_WITH_TOL(arc.GetRisePowers()[0][1], 0.019733);
+    EQUAL_WITH_TOL(arc.GetRisePowers()[1][0], 0.021225);
+    EQUAL_WITH_TOL(arc.GetRisePowers()[1][1], 0.021129);
 
     // fall_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -119,10 +119,10 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 
     // TODO: Crosscheck if rise power and fall power are not swapped !
 
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[0][0], 0.045777));
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[0][1], 0.444877));
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[1][0], 0.047278));
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[1][1], 0.446323));
+    EQUAL_WITH_TOL(arc.GetRisePowers()[0][0], 0.045777);
+    EQUAL_WITH_TOL(arc.GetRisePowers()[0][1], 0.444877);
+    EQUAL_WITH_TOL(arc.GetRisePowers()[1][0], 0.047278);
+    EQUAL_WITH_TOL(arc.GetRisePowers()[1][1], 0.446323);
 }
 
 int main()

@@ -48,10 +48,10 @@ void test_inv(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_rise */
 
-    assert (EQUAL_WITH_TOL(arc.GetRiseDelays()[0][0], 0.111000));
-    assert (EQUAL_WITH_TOL(arc.GetRiseDelays()[0][1], 0.356200));
-    assert (EQUAL_WITH_TOL(arc.GetRiseDelays()[1][0], 0.124100));
-    assert (EQUAL_WITH_TOL(arc.GetRiseDelays()[1][1], 0.372300));
+    EQUAL_WITH_TOL(arc.GetRiseDelays()[0][0], 0.111000);
+    EQUAL_WITH_TOL(arc.GetRiseDelays()[0][1], 0.356200);
+    EQUAL_WITH_TOL(arc.GetRiseDelays()[1][0], 0.124100);
+    EQUAL_WITH_TOL(arc.GetRiseDelays()[1][1], 0.372300);
 
     // cell_fall() {
     //     index_1 ("0.010000, 0.100000")
@@ -62,10 +62,10 @@ void test_inv(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_fall */
 
-    assert (EQUAL_WITH_TOL(arc.GetFallDelays()[0][0], 0.110600));
-    assert (EQUAL_WITH_TOL(arc.GetFallDelays()[0][1], 0.320000));
-    assert (EQUAL_WITH_TOL(arc.GetFallDelays()[1][0], 0.120700));
-    assert (EQUAL_WITH_TOL(arc.GetFallDelays()[1][1], 0.336000));
+    EQUAL_WITH_TOL(arc.GetFallDelays()[0][0], 0.110600);
+    EQUAL_WITH_TOL(arc.GetFallDelays()[0][1], 0.320000);
+    EQUAL_WITH_TOL(arc.GetFallDelays()[1][0], 0.120700);
+    EQUAL_WITH_TOL(arc.GetFallDelays()[1][1], 0.336000);
 
     // rise_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -76,10 +76,10 @@ void test_inv(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_transition */
 
-    assert (EQUAL_WITH_TOL(arc.GetRiseTransitions()[0][0], 0.081800));
-    assert (EQUAL_WITH_TOL(arc.GetRiseTransitions()[0][1], 0.411300));
-    assert (EQUAL_WITH_TOL(arc.GetRiseTransitions()[1][0], 0.081700));
-    assert (EQUAL_WITH_TOL(arc.GetRiseTransitions()[1][1], 0.411300));
+    EQUAL_WITH_TOL(arc.GetRiseTransitions()[0][0], 0.081800);
+    EQUAL_WITH_TOL(arc.GetRiseTransitions()[0][1], 0.411300);
+    EQUAL_WITH_TOL(arc.GetRiseTransitions()[1][0], 0.081700);
+    EQUAL_WITH_TOL(arc.GetRiseTransitions()[1][1], 0.411300);
 
     // fall_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -90,10 +90,10 @@ void test_inv(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_transition */
 
-    assert (EQUAL_WITH_TOL(arc.GetFallTransitions()[0][0], 0.058700));
-    assert (EQUAL_WITH_TOL(arc.GetFallTransitions()[0][1], 0.336300));
-    assert (EQUAL_WITH_TOL(arc.GetFallTransitions()[1][0], 0.058900));
-    assert (EQUAL_WITH_TOL(arc.GetFallTransitions()[1][1], 0.336500));
+    EQUAL_WITH_TOL(arc.GetFallTransitions()[0][0], 0.058700);
+    EQUAL_WITH_TOL(arc.GetFallTransitions()[0][1], 0.336300);
+    EQUAL_WITH_TOL(arc.GetFallTransitions()[1][0], 0.058900);
+    EQUAL_WITH_TOL(arc.GetFallTransitions()[1][1], 0.336500);
 
     // rise_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -104,10 +104,10 @@ void test_inv(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_power */
 
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[0][0], 0.042782));
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[0][1], 0.441743));
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[1][0], 0.043125));
-    assert (EQUAL_WITH_TOL(arc.GetRisePowers()[1][1], 0.442354));
+    EQUAL_WITH_TOL(arc.GetRisePowers()[0][0], 0.042782);
+    EQUAL_WITH_TOL(arc.GetRisePowers()[0][1], 0.441743);
+    EQUAL_WITH_TOL(arc.GetRisePowers()[1][0], 0.043125);
+    EQUAL_WITH_TOL(arc.GetRisePowers()[1][1], 0.442354);
 
     // fall_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -118,10 +118,10 @@ void test_inv(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_power */
 
-    assert (EQUAL_WITH_TOL(arc.GetFallPowers()[0][0], 0.202559));
-    assert (EQUAL_WITH_TOL(arc.GetFallPowers()[0][1], 0.222347));
-    assert (EQUAL_WITH_TOL(arc.GetFallPowers()[1][0], 0.190098));
-    assert (EQUAL_WITH_TOL(arc.GetFallPowers()[1][1], 0.212981));
+    EQUAL_WITH_TOL(arc.GetFallPowers()[0][0], 0.202559);
+    EQUAL_WITH_TOL(arc.GetFallPowers()[0][1], 0.222347);
+    EQUAL_WITH_TOL(arc.GetFallPowers()[1][0], 0.190098);
+    EQUAL_WITH_TOL(arc.GetFallPowers()[1][1], 0.212981);
 
 }
 

@@ -1,12 +1,12 @@
 
 Features:
 - Propagate Error code from simulation
+- Limit measurements where there can be unbound number of iterations
 - Add "sanity simulation" before the real characterization
     - Simple DC simp with the DUT inputs tied low!
     - Helps to find undefined DUT, syntax or simulation errors
 - Parse TCL values as TCL expression -> Supports variables and expression in arguments
 - Adjust simulation duration and/or precision based on initial run.
-- Detect non-monotonic behavior in the output ? How to do it fast ?
 - Support Flip-flops and latches:
     - Setup / Hold measurement
     - Async pins -> out arc + power measurement

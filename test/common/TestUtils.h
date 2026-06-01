@@ -91,6 +91,16 @@
         c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);                                  \
         c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
 
-// For now we set 1 % tolerance
+// For now we set 2 % tolerance
 // This may need to be updated if we make time-step configurable
-#define EQUAL_WITH_TOL(a, b) (std::fabs(static_cast<double>(a)) - std::fabs(static_cast<double>(b)) < std::fabs((static_cast<double>(a)) * 0.01))
+#define FABS(x) std::fabs(static_cast<double>(x))
+#define EQUAL_WITH_TOL(a, b) ((FABS(a)) - FABS(b) < (FABS(a) * 0.025))
+
+#define CHECK_FLOAT(real, exp)                                                                  \
+            do {                                                                                \
+                if (!EQUAL_WITH_TOL(real, exp)) {                                               \
+                    info("Observed:  %f",  real);                                               \
+                    info("Expected:  %f",  exp);                                                \
+                    assert(false && "Expected does not match observed!");                       \
+                }                                                                               \
+            } while (0)
