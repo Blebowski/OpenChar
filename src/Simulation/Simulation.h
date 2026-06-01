@@ -82,6 +82,10 @@ class Simulation {
         bool is_finished_;
         std::mutex lock_;
 
+        // TODO: Make series shunts on inputs configurable
+        size_t r_counter = 0;
+        KiloOhm in_shunt = 1E-12; //  1 microOhm should be sufficiently low
+
         void WriteTestBench();
 };
 

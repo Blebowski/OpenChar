@@ -91,7 +91,7 @@ void Simulation::WriteTestBench()
         if (s.first == nullptr)
             continue;
 
-        fprintf(f, "V%s %s %s ", s.first->name_, s.first->name_, supply_->GetGndName());
+        fprintf(f, "V%s %s_I %s ", s.first->name_, s.first->name_, supply_->GetGndName());
 
         const Stimulus &v = s.second;
         if (v.kind_ == StimulusKind::CONSTANT)
@@ -99,6 +99,9 @@ void Simulation::WriteTestBench()
         else
             fprintf(f, "PULSE(%fV %fV %fNS %fNS %fNS %fNS %fNS %d)\n", v.v1_, v.v2_, v.t_delay_, v.t_rise_,
                     v.t_fall_, v.pulse_width_, v.period_, v.num_pulses_);
+
+        fprintf(f, "R%d %s_I %s %fK \n\n", r_counter, s.first->name_, s.first->name_, in_shunt);
+        r_counter++;
     }
     fprintf(f, "\n");
 
