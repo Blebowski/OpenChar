@@ -78,6 +78,7 @@ void Simulation::WriteTestBench()
     fprintf(f, "\n");
 
     fprintf(f, ".temp %f\n", temp_);
+    fprintf(f, ".options method=gear\n\n");
 
     fprintf(f, "* Power Supply\n");
     fprintf(f, "V%s %s %s %f\n", supply_->GetVddName(), supply_->GetVddName(),
