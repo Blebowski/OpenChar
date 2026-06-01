@@ -8,6 +8,7 @@
 #include <cassert>
 #include <cstring>
 #include <cmath>
+#include <signal.h>
 
 #include <tcl.h>
 
@@ -64,6 +65,15 @@ std::string sprintf(std::string format, Args&&... args) {
     std::string rv = std::string(buf);
     free(buf);
     return rv;
+}
+
+template<typename... Args>
+void fatal(const std::string &fmt, const Args&... args)
+{
+    std::printf("Fatal: ");
+    std::printf(fmt.c_str(), format_arg(args)...);
+    std::printf("\n");
+    raise(SIGABRT);
 }
 
 template<typename... Args>

@@ -11,11 +11,21 @@ namespace open_char {
 #define MOVE_TILL_SPACE(ptr) while (*ptr != ' ' && *ptr != '\t') ptr++
 #define PRINT_LINE(len) printf("%s\n", std::string(len, '-'));
 
+#define READ_LINE_AND_CHECK(line, len, f)                                       \
+            do {                                                                \
+                line = NULL;                                                    \
+                len = 0;                                                        \
+                ssize_t read = getline(&line, &len, f);                         \
+                if (read == -1) {                                               \
+                    fatal("Failed to read line from waveform file.");           \
+                }                                                               \
+            } while (0)
+
 Waves::Waves(std::string path)
 {
     FILE *f = fopen(path.c_str(), "r");
     if (f == NULL) {
-        error("Failed to open file: %s\n", path);
+        fatal("Failed to open file: %s\n", path);
         return;
     }
 
@@ -30,11 +40,7 @@ Waves::Waves(std::string path)
     // TODO: Read flags (fourth line - index 4) and figure if other than "real" can exist!
 
     for (size_t i = 0; i < 7; i++) {
-
-        // TODO: Check line read OK
-        line = NULL;
-        len = 0;
-        getline(&line, &len, f);
+        READ_LINE_AND_CHECK(line, len, f);
 
         switch (i) {
         case 0:
@@ -52,16 +58,12 @@ Waves::Waves(std::string path)
         default:
             break;
         }
+        free(line);
     }
 
     for (size_t i = 0; i < n_vars; i++) {
 
-        line = NULL;
-        len = 0;
-
-        // TODO: Check line read OK
-        getline(&line, &len, f);
-
+        READ_LINE_AND_CHECK(line, len, f);
         char *curr = line;
 
         MOVE_TILL_CHAR(curr);
@@ -108,12 +110,11 @@ Waves::Waves(std::string path)
             } else
                 error("Invalid wave kind: '%s'\n", curr_str);
         }
+
+        free(line);
     }
 
-    // TODO: Check line read OK
-    line = NULL;
-    len = 0;
-    getline(&line, &len, f);
+    READ_LINE_AND_CHECK(line, len, f);
     free(line);
 
     for (size_t sample = 0; sample < n_points; sample++) {

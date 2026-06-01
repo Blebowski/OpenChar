@@ -11,7 +11,7 @@ static void SegFaultHandler(int sig) {
     void *array[10];
     int size = backtrace(array, 10);
 
-    fprintf(stderr, "Error: signal %d:\n", sig);
+    fprintf(stderr, "Signal %d:\n", sig);
 
     // TODO: Refactor this, it is quick AI generated slop!
     char **symbols = backtrace_symbols(array, size);
