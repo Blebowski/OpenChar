@@ -31,9 +31,12 @@ class Simulation {
         void AddStimuli(Pin *pin, Stimulus &&stim);
         void AddLoad(Pin *pin, PicoFarad cap);
 
+        // TODO: Somehow unify the metadata handling for arbitrary types
         void PutMetaData(int data);
-        void PutMetaData(double data);
         int GetMetaDataAt(size_t index);
+
+        void PutDoubleMetaData(double data);
+        double GetDoubleMetaDataAt(size_t index);
 
         int Simulate();
         Waves ReadWaves();
@@ -77,6 +80,7 @@ class Simulation {
         std::filesystem::path sim_dir_;
 
         std::vector<int> metadata_;
+        std::vector<double> double_metadata_;
 
         int exit_code_ = 0;
         bool is_finished_;

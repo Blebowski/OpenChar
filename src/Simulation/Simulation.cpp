@@ -213,6 +213,17 @@ int Simulation::GetMetaDataAt(size_t index)
     return metadata_[index];
 }
 
+void Simulation::PutDoubleMetaData(double data)
+{
+    double_metadata_.push_back(data);
+}
+
+double Simulation::GetDoubleMetaDataAt(size_t index)
+{
+    assert(index < double_metadata_.size());
+    return double_metadata_[index];
+}
+
 bool Simulation::IsFinished()
 {
     bool rv;
