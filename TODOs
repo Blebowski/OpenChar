@@ -8,7 +8,7 @@ Features:
 - Parse TCL values as TCL expression -> Supports variables and expression in arguments
 - Adjust simulation duration and/or precision based on initial run.
 - Support Flip-flops and latches:
-    - Setup / Hold measurement
+    - Hold measurement
     - Async pins -> out arc + power measurement
     - Generate logic function of the flop or latch:
         1. Now we know if it is latch of FLOP.
@@ -22,6 +22,7 @@ Features:
             - Add logic table entry with all inputs an previous value of states
             - Cover the expression and simplify -> Logic function extracted.
     - Measure min pulse width on CK pin, Async pins
+
 - Support clock gating cells:
     - Recognize type of gating from simulation.
     - Measure Clock gating check -> How to recognize this messed up ??
