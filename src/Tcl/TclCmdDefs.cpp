@@ -19,8 +19,10 @@ CREATE_TCL_COMMAND(
 
     ARG({}),
     ARG({
-        ctx_->GetAlgorithms().CharacterizeLibrary();
-        return TCL_OK;
+        if (ctx_->GetAlgorithms().CharacterizeLibrary()) {
+            return TCL_OK;
+        }
+        return TCL_ERROR;
     })
 )
 

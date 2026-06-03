@@ -118,6 +118,7 @@ namespace open_char {
 
     enum class CharactState {
         START,
+        SANITY,
         INPUT_CAP,
 
         COM_LOG_TBL_LKG,
@@ -130,7 +131,8 @@ namespace open_char {
         SEQ_FF_SETUP_START,
         SEQ_FF_SETUP_FINISH,
 
-        DONE
+        ERROR,
+        DONE,
     };
 
     typedef double Celsius;

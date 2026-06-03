@@ -48,6 +48,7 @@ class Simulation {
         void ExecutePostSimCb();
 
         bool IsFinished();
+        bool CheckSucesfull();
 
         const std::string name_;
 

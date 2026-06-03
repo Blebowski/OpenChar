@@ -47,7 +47,7 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     CREATE_HALF_ADDER_CELL(ctx, c1);
 
     RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
-    algs.MeasureComboLogicTables(c1);
+    assert(algs.MeasureComboLogicTables(c1));
 
     assert (c1.GetPin("CO").GetLogicTableEntry(0).first == 0b00);
     assert (c1.GetPin("CO").GetLogicTableEntry(0).second == 0);

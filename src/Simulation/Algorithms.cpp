@@ -49,6 +49,46 @@ Simulation *Algorithms::NewSimulation(std::string name, SimulationKind kind, Cel
     return sim;
 }
 
+void Algorithms::PrepareSanitySim(Cell &cell)
+{
+    Template *templ = cell.GetDelayTemplate();
+    assert(templ != nullptr);
+
+    std::string sim_name = "SANITY";
+    Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
+
+    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+    Volt log0_v = supply->GetGndVoltage();
+    Volt log1_v = supply->GetVddVoltage();
+
+    NanoSecond t_offset = 0.1;
+    NanoSecond t_rise = templ->GetIndex1()[0];
+
+    // Toggle all device pins at once with fastest possible input transition.
+    // This generates total rubbish and potentially conflicting Set/Reset drivers,
+    // Hopefully this is reasonable way to try if we invoke som convergence issues!
+    for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+        sim->AddStimuli(&i_pin, Stimulus(log0_v, log1_v, t_offset, t_rise, t_rise,
+                                         2 * t_rise, 10, 1));
+    }
+
+    // TODO: Make the simulation duration minimal necessary!
+    sim->SetDuration(1.0);
+    cell.AddSimulation(sim);
+    ctx_->GetSimulationPool().EnqueueSimulation(sim);
+}
+
+bool Algorithms::CheckSanitySim(Cell &cell)
+{
+    for (Simulation *sim : cell.GetSimulations()) {
+        if (!sim->name_.starts_with("SANITY")) {
+            continue;
+        }
+        return sim->CheckSucesfull();
+    }
+    return false;
+}
+
 void Algorithms::PrepareInputCapSims(Cell &cell)
 {
     size_t i_pin_index = 0;
@@ -79,7 +119,7 @@ void Algorithms::PrepareInputCapSims(Cell &cell)
     }
 }
 
-void Algorithms::MeasureInputCap(Cell &cell)
+bool Algorithms::MeasureInputCap(Cell &cell)
 {
     for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
         for (Simulation *sim : i_pin.GetSimulations()) {
@@ -87,6 +127,10 @@ void Algorithms::MeasureInputCap(Cell &cell)
             // TODO: Better approach for filtering!
             if (!sim->name_.starts_with("ICAP_")) {
                 continue;
+            }
+
+            if (!sim->CheckSucesfull()) {
+                return false;
             }
 
             Waves w = sim->ReadWaves();
@@ -163,6 +207,8 @@ void Algorithms::MeasureInputCap(Cell &cell)
             i_pin.SetCapacitanceFall(i_cap_fall_min, i_cap_fall_max, i_cap_fall_avg);
         }
     }
+
+    return true;
 }
 
 void Algorithms::PrepareComboLogicTableAndLeakageSims(Cell &cell)
@@ -205,19 +251,32 @@ void Algorithms::PrepareComboLogicTableAndLeakageSims(Cell &cell)
     }
 }
 
-void Algorithms::MeasureComboLogicTables(Cell &cell)
+bool Algorithms::MeasureComboLogicTables(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (Simulation *sim : o_pin.GetSimulations()) {
+
+            // TODO: Find better way of filtering sims
+            if (!sim->name_.starts_with("COMBO_LOGTBLLKG")) {
+                continue;
+            }
+            assert(sim->IsFinished());
+
+            if (!sim->CheckSucesfull()) {
+                return false;
+            }
+
             Waves w = sim->ReadWaves();
-            w.Print();
+
             int64_t i_pin_vect = sim->GetMetaDataAt(0);
             o_pin.AddLogicTableEntry(i_pin_vect, ToLogic(w.GetVoltage(o_pin.name_)[0]));
         }
     }
+
+    return true;
 }
 
-void Algorithms::MeasureComboLeakage(Cell &cell)
+bool Algorithms::MeasureComboLeakage(Cell &cell)
 {
     // Logic Table simulations contain all combinations of input pin states so
     // they are used to extract leakage upon each input combination.
@@ -225,7 +284,19 @@ void Algorithms::MeasureComboLeakage(Cell &cell)
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (Simulation *sim : o_pin.GetSimulations()) {
 
+            // TODO: Find better way of filtering sims
+            if (!sim->name_.starts_with("COMBO_LOGTBLLKG")) {
+                continue;
+            }
+
+            assert(sim->IsFinished());
+
+            if (!sim->CheckSucesfull()) {
+                return false;
+            }
+
             Waves w = sim->ReadWaves();
+
             Supply *s = cell.GetLibrary()->GetOpCond().GetSupply();
             NanoWatt lkg = w.GetCurrent(s->GetVddName())[0] * s->GetVddVoltage() * 1E3;
 
@@ -246,6 +317,8 @@ void Algorithms::MeasureComboLeakage(Cell &cell)
         }
         break;
     }
+
+    return true;
 }
 
 Expression* Algorithms::ComboSumOfProducts(Cell& cell, Pin& o_pin)
@@ -372,7 +445,6 @@ void Algorithms::CalculateComboLogicFunctions(Cell &cell)
 
         e->Simplify();
         o_pin.SetLogicFunction(e);
-        o_pin.PrintLogicFunction();
     }
 }
 
@@ -431,12 +503,12 @@ void Algorithms::PrepareComboDelayAndPowerSims(Cell &cell)
 
         // Simulate all test vectors - Both directions
         for (const auto & tv : test_vects) {
-            PrepareComboArcSims(o_pin, tv.in_i, tv.in_j, tv.out_i, tv.out_j);
+            PrepareOneComboArcSims(o_pin, tv.in_i, tv.in_j, tv.out_i, tv.out_j);
         }
     }
 }
 
-int Algorithms::PrepareComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, int out_a, int out_b)
+int Algorithms::PrepareOneComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, int out_a, int out_b)
 {
     Cell *cell = o_pin.cell_;
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
@@ -530,7 +602,7 @@ int Algorithms::PrepareComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, int 
     return 0;
 }
 
-void Algorithms::MeasureComboDelays(Cell &cell)
+bool Algorithms::MeasureComboDelays(Cell &cell)
 {
     assert (cell.GetKind() == CellKind::COMBINATIONAL);
 
@@ -556,6 +628,15 @@ void Algorithms::MeasureComboDelays(Cell &cell)
                     assert(sims_row_coll.size() == 2);
 
                     for (Simulation *sim : sims_row_coll) {
+
+                        // TODO: Find better way of filtering sims
+                        if (!sim->name_.starts_with("COMBO_DLYPWR")) {
+                            continue;
+                        }
+
+                        if (!sim->CheckSucesfull()) {
+                            return false;
+                        }
 
                         Waves w = sim->ReadWaves();
                         Pin *related_pin = arc.GetRelatedPin();
@@ -586,9 +667,11 @@ void Algorithms::MeasureComboDelays(Cell &cell)
             }
         }
     }
+
+    return true;
 }
 
-void Algorithms::MeasureComboTransitions(Cell &cell)
+bool Algorithms::MeasureComboTransitions(Cell &cell)
 {
     assert (cell.GetKind() == CellKind::COMBINATIONAL);
 
@@ -614,6 +697,16 @@ void Algorithms::MeasureComboTransitions(Cell &cell)
                     assert(sims_row_coll.size() == 2);
 
                     for (Simulation *sim : sims_row_coll) {
+
+                        // TODO: Find better way of filtering sims
+                        if (!sim->name_.starts_with("COMBO_DLYPWR")) {
+                            continue;
+                        }
+
+                        if (!sim->CheckSucesfull()) {
+                            return false;
+                        }
+
                         Waves w = sim->ReadWaves();
                         int o_from = sim->GetMetaDataAt(1);
 
@@ -638,9 +731,11 @@ void Algorithms::MeasureComboTransitions(Cell &cell)
             }
         }
     }
+
+    return true;
 }
 
-void Algorithms::MeasureComboPowers(Cell &cell)
+bool Algorithms::MeasureComboPowers(Cell &cell)
 {
     assert (cell.GetKind() == CellKind::COMBINATIONAL);
 
@@ -659,6 +754,16 @@ void Algorithms::MeasureComboPowers(Cell &cell)
                     assert(sims_row_coll.size() == 2);
 
                     for (Simulation* sim : sims_row_coll) {
+
+                        // TODO: Find better way of filtering sims
+                        if (!sim->name_.starts_with("COMBO_DLYPWR")) {
+                            continue;
+                        }
+
+                        if (!sim->CheckSucesfull()) {
+                            return false;
+                        }
+
                         Waves w = sim->ReadWaves();
                         Pin *related_pin = arc.GetRelatedPin();
 
@@ -720,6 +825,8 @@ void Algorithms::MeasureComboPowers(Cell &cell)
             }
         }
     }
+
+    return true;
 }
 
 // Now works for D-type latch or flop. R/S or J-K flop don't work!
@@ -742,7 +849,7 @@ void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
     }
 
     // Support only single bit flip flops.
-    assert(d_pin_cnt == 1);
+    assert (d_pin_cnt == 1);
 
     for (int64_t a_pin_vect = 0; a_pin_vect < (1 << a_pin_cnt); a_pin_vect++) {
 
@@ -795,7 +902,7 @@ void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
     }
 }
 
-void Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
+bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
 {
     assert(cell.GetKind() == CellKind::SEQUENTIAL);
 
@@ -810,11 +917,17 @@ void Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
     size_t n_set_candidates = 0;
     size_t n_clr_candidates = 0;
 
-    for (auto & a_pin : cell.GetPins(PinKind::ASYNC))
-        printf("%s ", a_pin.name_);
-
-    printf("D SC CC Q\n");
     for (Simulation *sim : cell.GetSimulations()) {
+
+        // TODO: Find better way of filtering sims
+        if (!sim->name_.starts_with("SEQ_ASYNCFUNC")) {
+            continue;
+        }
+
+        if (!sim->CheckSucesfull()) {
+            return false;
+        }
+
         a_pin_data row = {};
         row.a_pin_vect = sim->GetMetaDataAt(0);
         row.d = sim->GetMetaDataAt(1);
@@ -830,11 +943,6 @@ void Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
             n_clr_candidates++;
             row.clr_candidate = true;
         }
-        for (int i = 0; i < 2; i++) {
-            printf("%b  ", (row.a_pin_vect >> i) & 0x1);
-        }
-        printf("%d  %d  %d  %f\n",
-                row.d, row.set_candidate, row.clr_candidate, q_val);
 
         tbl.push_back(row);
     }
@@ -955,6 +1063,8 @@ void Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
 
     cell.GetSequential().SetPreset(set_e);
     cell.GetSequential().SetClear(clr_e);
+
+    return true;
 }
 
 void Algorithms::PrepareSeqCellKindSims(Cell &cell)
@@ -997,14 +1107,19 @@ void Algorithms::PrepareSeqCellKindSims(Cell &cell)
     }
 }
 
-void Algorithms::MeasureSeqCellKind(Cell &cell)
+bool Algorithms::MeasureSeqCellKind(Cell &cell)
 {
-    bool is_latch = false;
+    SequentialKind seq_kind = SequentialKind::FLIP_FLOP;
 
     for (Simulation *sim : cell.GetSimulations()) {
+
         // TODO: Find better way of filtering sims from previous ones ?
         if (!sim->name_.starts_with("SEQ_EDGEVSLVL")) {
             continue;
+        }
+
+        if (!sim->CheckSucesfull()) {
+            return false;
         }
 
         Waves w = sim->ReadWaves();
@@ -1023,17 +1138,14 @@ void Algorithms::MeasureSeqCellKind(Cell &cell)
         }
 
         if (has_logic_0 && has_logic_1) {
-            is_latch = true;
+            seq_kind = SequentialKind::LATCH;
             int active_clock = sim->GetMetaDataAt(0);
             cell.GetSequential().SetEnablePolarity(active_clock);
         }
     }
 
-    if (is_latch) {
-        cell.GetSequential().SetKind(SequentialKind::LATCH);
-    } else {
-        cell.GetSequential().SetKind(SequentialKind::FLIP_FLOP);
-    }
+    cell.GetSequential().SetKind(seq_kind);
+    return true;
 }
 
 void Algorithms::PrepareFFClockPolaritySims(Cell &cell)
@@ -1093,7 +1205,7 @@ void Algorithms::PrepareFFClockPolaritySims(Cell &cell)
     }
 }
 
-void Algorithms::MeasureFFClockPolarity(Cell &cell)
+bool Algorithms::MeasureFFClockPolarity(Cell &cell)
 {
     assert(cell.GetSequential().GetKind() == SequentialKind::FLIP_FLOP);
 
@@ -1101,9 +1213,14 @@ void Algorithms::MeasureFFClockPolarity(Cell &cell)
     bool out_change_negedge = false;
 
     for (Simulation *sim : cell.GetSimulations()) {
+
         // TODO: Find better way of filtering sims from previous ones ?
         if (!sim->name_.starts_with("FF_CKPOL")) {
             continue;
+        }
+
+        if (!sim->CheckSucesfull()) {
+            return false;
         }
 
         Waves w = sim->ReadWaves();
@@ -1134,6 +1251,8 @@ void Algorithms::MeasureFFClockPolarity(Cell &cell)
     } else {
         cell.GetSequential().SetClockPolarity(EdgeKind::FALLING);
     }
+
+    return true;
 }
 
 void Algorithms::PrepareFFClockDelaySims(Cell &cell)
@@ -1202,7 +1321,7 @@ void Algorithms::PrepareFFClockDelaySims(Cell &cell)
     }
 }
 
-void Algorithms::MeasureFFClockDelay(Cell &cell)
+bool Algorithms::MeasureFFClockDelay(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
@@ -1215,6 +1334,16 @@ void Algorithms::MeasureFFClockDelay(Cell &cell)
 
                     assert(sims_row_coll.size() == 2);
                     for (Simulation *sim : sims_row_coll) {
+
+                        // TODO: Find better way of filtering sims
+                        if (!sim->name_.starts_with("SEQ_DLY")) {
+                            continue;
+                        }
+
+                        if (!sim->CheckSucesfull()) {
+                            return false;
+                        }
+
                         Waves w = sim->ReadWaves();
 
                         int d_val = sim->GetMetaDataAt(0);
@@ -1250,9 +1379,11 @@ void Algorithms::MeasureFFClockDelay(Cell &cell)
             }
         }
     }
+
+    return true;
 }
 
-void Algorithms::MeasureFFClockTransition(Cell &cell)
+bool Algorithms::MeasureFFClockTransition(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
@@ -1265,6 +1396,15 @@ void Algorithms::MeasureFFClockTransition(Cell &cell)
 
                     assert(sims_row_coll.size() == 2);
                     for (Simulation *sim : sims_row_coll) {
+
+                        // TODO: Find better way of filtering sims
+                        if (!sim->name_.starts_with("SEQ_DLY")) {
+                            continue;
+                        }
+
+                        if (!sim->CheckSucesfull()) {
+                            return false;
+                        }
 
                         Waves w = sim->ReadWaves();
 
@@ -1296,9 +1436,11 @@ void Algorithms::MeasureFFClockTransition(Cell &cell)
             }
         }
     }
+
+    return true;
 }
 
-void Algorithms::MeasureFFClockPowers(Cell &cell)
+bool Algorithms::MeasureFFClockPowers(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
@@ -1311,6 +1453,16 @@ void Algorithms::MeasureFFClockPowers(Cell &cell)
 
                     assert(sims_row_coll.size() == 2);
                     for (Simulation *sim : sims_row_coll) {
+
+                        // TODO: Find better way of filtering sims
+                        if (!sim->name_.starts_with("SEQ_DLY")) {
+                            continue;
+                        }
+
+                        if (!sim->CheckSucesfull()) {
+                            return false;
+                        }
+
                         Waves w = sim->ReadWaves();
 
                         int d_val = sim->GetMetaDataAt(0);
@@ -1367,6 +1519,8 @@ void Algorithms::MeasureFFClockPowers(Cell &cell)
             }
         }
     }
+
+    return true;
 }
 
 void Algorithms::PrepareSetupSims(Cell &cell)
@@ -1608,7 +1762,17 @@ bool Algorithms::MeasureSetup(Cell &cell)
     return all_finished;
 }
 
-void Algorithms::CharacterizeLibrary()
+#define PROCESS_RESULTS(cell, func)                                             \
+    {                                                                           \
+        bool ok = func(cell);                                                   \
+        if (!ok) {                                                              \
+            error("%s - Aborting characterization !", cell.GetName());          \
+            cell.SetCharactState(CharactState::ERROR);                          \
+            break;                                                              \
+        }                                                                       \
+    }
+
+bool Algorithms::CharacterizeLibrary()
 {
     SimulationPool &sp = ctx_->GetSimulationPool();
 
@@ -1617,151 +1781,166 @@ void Algorithms::CharacterizeLibrary()
 
     bool finished = false;
     do {
-        for (auto & cell : ctx_->GetLibrary().GetCells()) {
+        for (auto & [cell_name, cell] : ctx_->GetLibrary().GetCells()) {
 
             // Per-cell simulations jobs state machine
-            switch (cell.second.GetCharactState()) {
+            switch (cell.GetCharactState()) {
 
             case CharactState::START:
-                info("%s - Launching input capacitance simulations", cell.second.GetName());
-                PrepareInputCapSims(cell.second);
-                cell.second.SetCharactState(CharactState::INPUT_CAP);
+                info("%s - Launching sanity simulation", cell.GetName());
+                PrepareSanitySim(cell);
+                cell.SetCharactState(CharactState::SANITY);
                 break;
+
+            case CharactState::SANITY:
+            {
+                if (!cell.IsSimulationFinished()) {
+                    continue;
+                }
+
+                PROCESS_RESULTS(cell, CheckSanitySim);
+
+                info("%s - Launching input capacitance simulations", cell.GetName());
+                PrepareInputCapSims(cell);
+
+                cell.SetCharactState(CharactState::INPUT_CAP);
+                break;
+            }
 
             case CharactState::INPUT_CAP:
-                if (!cell.second.IsSimulationFinished()) {
+            {
+                if (!cell.IsSimulationFinished()) {
                     continue;
                 }
 
-                info("%s - Measuring input capacitance", cell.second.GetName());
-                MeasureInputCap(cell.second);
+                info("%s - Measuring input capacitance", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureInputCap);
 
-                if (cell.second.GetKind() == CellKind::COMBINATIONAL) {
-                    info("%s - Launching Combinatorial Logic table simulations",
-                         cell.second.GetName());
-                    PrepareComboLogicTableAndLeakageSims(cell.second);
-                    cell.second.SetCharactState(CharactState::COM_LOG_TBL_LKG);
+                if (cell.GetKind() == CellKind::COMBINATIONAL) {
+                    info("%s - Launching combinatorial logic table simulations", cell.GetName());
+                    PrepareComboLogicTableAndLeakageSims(cell);
+                    cell.SetCharactState(CharactState::COM_LOG_TBL_LKG);
                 } else {
-                    info("%s - Launching Asynchronous pins simulations",
-                         cell.second.GetName());
-                    PrepareSeqAsyncFunctionSims(cell.second);
-                    cell.second.SetCharactState(CharactState::SEQ_ASYNC_FUNCS);
+                    info("%s - Launching asynchronous pins simulations", cell.GetName());
+                    PrepareSeqAsyncFunctionSims(cell);
+                    cell.SetCharactState(CharactState::SEQ_ASYNC_FUNCS);
                 }
                 break;
+            }
 
             case CharactState::COM_LOG_TBL_LKG:
-                if (!cell.second.IsSimulationFinished()) {
+            {
+                if (!cell.IsSimulationFinished()) {
                     continue;
                 }
 
-                info("%s - Measuring logic table", cell.second.GetName());
-                MeasureComboLogicTables(cell.second);
+                info("%s - Measuring logic table", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureComboLogicTables);
 
-                info("%s - Measuring leakage", cell.second.GetName());
-                MeasureComboLeakage(cell.second);
+                info("%s - Measuring leakage", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureComboLeakage);
 
-                info("%s - Calculating logic function", cell.second.GetName());
-                CalculateComboLogicFunctions(cell.second);
+                info("%s - Calculating logic function", cell.GetName());
+                CalculateComboLogicFunctions(cell);
 
-                info("%s - Launching delay and power simulations", cell.second.GetName());
-                PrepareComboDelayAndPowerSims(cell.second);
+                info("%s - Launching delay and power simulations", cell.GetName());
+                PrepareComboDelayAndPowerSims(cell);
 
-                cell.second.SetCharactState(CharactState::COM_DLY_PWR);
+                cell.SetCharactState(CharactState::COM_DLY_PWR);
                 break;
+            }
 
             case CharactState::COM_DLY_PWR:
-                if (!cell.second.IsSimulationFinished()) {
+                if (!cell.IsSimulationFinished()) {
                     continue;
                 }
 
-                info("%s - Measuring output delays", cell.second.GetName());
-                MeasureComboDelays(cell.second);
+                info("%s - Measuring output delays", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureComboDelays);
 
-                info("%s - Measuring output transitions", cell.second.GetName());
-                MeasureComboTransitions(cell.second);
+                info("%s - Measuring output transitions", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureComboTransitions);
 
-                info("%s - Measuring internal power", cell.second.GetName());
-                MeasureComboPowers(cell.second);
+                info("%s - Measuring internal power", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureComboPowers);
 
-                cell.second.SetCharactState(CharactState::DONE);
+                cell.SetCharactState(CharactState::DONE);
                 break;
 
             case CharactState::SEQ_ASYNC_FUNCS:
-                if (!cell.second.IsSimulationFinished()) {
+                if (!cell.IsSimulationFinished()) {
                     continue;
                 }
 
-                info("%s - Measuring async pin functions", cell.second.GetName());
-                MeasureSeqAsyncFunctions(cell.second);
+                info("%s - Measuring async pin functions", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureSeqAsyncFunctions);
 
-                info("%s - Launching sequential cell kind detection simulations",
-                     cell.second.GetName());
-                PrepareSeqCellKindSims(cell.second);
+                info("%s - Launching sequential cell kind detection simulations", cell.GetName());
+                PrepareSeqCellKindSims(cell);
 
-                cell.second.SetCharactState(CharactState::SEQ_CELL_KIND);
+                cell.SetCharactState(CharactState::SEQ_CELL_KIND);
                 break;
 
             case CharactState::SEQ_CELL_KIND:
-                if (!cell.second.IsSimulationFinished()) {
+                if (!cell.IsSimulationFinished()) {
                     continue;
                 }
 
-                info("%s - Measuring if cell is level sensitive or edge sensitive",
-                      cell.second.GetName());
-                MeasureSeqCellKind(cell.second);
+                info("%s - Measuring if cell is edge or level sensitive", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureSeqCellKind);
 
-                if (cell.second.GetSequential().GetKind() == SequentialKind::FLIP_FLOP) {
+                if (cell.GetSequential().GetKind() == SequentialKind::FLIP_FLOP) {
                     info("%s - Preparing flip-flop clock polarity detection simulations",
-                         cell.second.GetName());
-                    PrepareFFClockPolaritySims(cell.second);
-                    cell.second.SetCharactState(CharactState::SEQ_FF_CK_POL);
+                         cell.GetName());
+                    PrepareFFClockPolaritySims(cell);
+                    cell.SetCharactState(CharactState::SEQ_FF_CK_POL);
                 } else {
-                    cell.second.SetCharactState(CharactState::DONE);
+                    cell.SetCharactState(CharactState::DONE);
                 }
                 break;
 
             case CharactState::SEQ_FF_CK_POL:
-                if (!cell.second.IsSimulationFinished()) {
+                if (!cell.IsSimulationFinished()) {
                     continue;
                 }
 
-                info("%s - Measuring clock polarity", cell.second.GetName());
-                MeasureFFClockPolarity(cell.second);
+                info("%s - Measuring clock polarity", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureFFClockPolarity);
 
-                info("%s - Launching clock to output delay simulations", cell.second.GetName());
-                PrepareFFClockDelaySims(cell.second);
+                info("%s - Launching clock to output delay simulations", cell.GetName());
+                PrepareFFClockDelaySims(cell);
 
-                cell.second.SetCharactState(CharactState::SEQ_FF_DLY_PWR);
+                cell.SetCharactState(CharactState::SEQ_FF_DLY_PWR);
                 break;
 
             case CharactState::SEQ_FF_DLY_PWR:
-                if (!cell.second.IsSimulationFinished()) {
+                if (!cell.IsSimulationFinished()) {
                     continue;
                 }
 
-                info("%s - Measuring clock to output delay", cell.second.GetName());
-                MeasureFFClockDelay(cell.second);
-                info("%s - Measuring output transition", cell.second.GetName());
-                MeasureFFClockTransition(cell.second);
-                info("%s - Measuring internal power", cell.second.GetName());
-                MeasureFFClockPowers(cell.second);
+                info("%s - Measuring clock to output delay", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureFFClockDelay);
+                info("%s - Measuring output transition", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureFFClockTransition);
+                info("%s - Measuring internal power", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureFFClockPowers);
 
-                cell.second.SetCharactState(CharactState::SEQ_FF_SETUP_START);
+                cell.SetCharactState(CharactState::SEQ_FF_SETUP_START);
                 break;
 
             case CharactState::SEQ_FF_SETUP_START:
-                info("%s - Preparing flip-flop Setup Simulations", cell.second.GetName());
-                PrepareSetupSims(cell.second);
-                cell.second.SetCharactState(CharactState::SEQ_FF_SETUP_FINISH);
+                info("%s - Preparing flip-flop Setup Simulations", cell.GetName());
+                PrepareSetupSims(cell);
+                cell.SetCharactState(CharactState::SEQ_FF_SETUP_FINISH);
                 break;
 
             case CharactState::SEQ_FF_SETUP_FINISH:
             {
-                if (!cell.second.IsSimulationFinished()) {
+                if (!cell.IsSimulationFinished()) {
                     continue;
                 }
-                if (MeasureSetup(cell.second)) {
-                    cell.second.SetCharactState(CharactState::DONE);
+                if (MeasureSetup(cell)) {
+                    cell.SetCharactState(CharactState::DONE);
                 }
                 break;
             }
@@ -1772,8 +1951,9 @@ void Algorithms::CharacterizeLibrary()
         }
 
         finished = true;
-        for (auto & cell : ctx_->GetLibrary().GetCells()) {
-            if (cell.second.GetCharactState() != CharactState::DONE) {
+        for (auto & [cell_name, cell] : ctx_->GetLibrary().GetCells()) {
+            CharactState state = cell.GetCharactState();
+            if (state != CharactState::DONE && state != CharactState::ERROR) {
                 finished = false;
             }
         }
@@ -1783,7 +1963,31 @@ void Algorithms::CharacterizeLibrary()
 
     sp.WaitDone();
 
-    info("All cells characterized!");
+    size_t ok_cells = 0;
+    size_t err_cells = 0;
+
+    for (auto & [cell_name, cell] : ctx_->GetLibrary().GetCells()) {
+        CharactState state = cell.GetCharactState();
+        if (state == CharactState::DONE) {
+            ok_cells++;
+        }
+        if (state == CharactState::ERROR) {
+            err_cells++;
+        }
+    }
+
+    info(std::string(80, '*'));
+    if (err_cells == 0) {
+        info("Characterization SUCEEDED:");
+    } else {
+        info("Characterization FAILED:");
+    }
+    info(std::string(80, '*'));
+    info("Sucessfull cells:  %d", ok_cells);
+    info("Error cells:       %d", err_cells);
+    info(std::string(80, '*'));
+
+    return (err_cells == 0) ? true : false;
 }
 
 }

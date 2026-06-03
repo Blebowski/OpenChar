@@ -18,7 +18,7 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     c1.GetPin("SB").SetPolarity(0);
 
     RUN_SIMULATIONS(ctx, algs.PrepareFFClockPolaritySims(c1));
-    algs.MeasureFFClockPolarity(c1);
+    assert(algs.MeasureFFClockPolarity(c1));
 
     assert(c1.GetSequential().GetClockPolarity() == EdgeKind::FALLING);
 }
@@ -31,7 +31,7 @@ void test_dff_ck_rb_sb(Context &ctx, Algorithms &algs)
     c1.GetPin("SB").SetPolarity(0);
 
     RUN_SIMULATIONS(ctx, algs.PrepareFFClockPolaritySims(c1));
-    algs.MeasureFFClockPolarity(c1);
+    assert(algs.MeasureFFClockPolarity(c1));
 
     assert(c1.GetSequential().GetClockPolarity() == EdgeKind::RISING);
 }

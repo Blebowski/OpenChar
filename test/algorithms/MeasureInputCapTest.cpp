@@ -15,7 +15,7 @@ void test_inv(Context &ctx, Algorithms &algs)
     CREATE_INV_CELL(ctx, c1);
 
     RUN_SIMULATIONS(ctx, algs.PrepareInputCapSims(c1));
-    algs.MeasureInputCap(c1);
+    assert (algs.MeasureInputCap(c1));
 
     CHECK_FLOAT(c1.GetPin("A").GetCapacitanceRiseMax(), 0.276150415);
     CHECK_FLOAT(c1.GetPin("A").GetCapacitanceRiseMin(), 0.075892807);

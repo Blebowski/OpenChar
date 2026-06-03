@@ -27,13 +27,13 @@ void test_inv(Context &ctx, Algorithms &algs)
 
     // Logic table and logic function are precondition for combo delays
     RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
-    algs.MeasureComboLogicTables(c1);
+    assert(algs.MeasureComboLogicTables(c1));
     algs.CalculateComboLogicFunctions(c1);
 
     RUN_SIMULATIONS(ctx, algs.PrepareComboDelayAndPowerSims(c1));
-    algs.MeasureComboDelays(c1);
-    algs.MeasureComboTransitions(c1);
-    algs.MeasureComboPowers(c1);
+    assert(algs.MeasureComboDelays(c1));
+    assert(algs.MeasureComboTransitions(c1));
+    assert(algs.MeasureComboPowers(c1));
 
     Pin& pin = c1.GetPin("Y");
 

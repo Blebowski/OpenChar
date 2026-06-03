@@ -234,4 +234,40 @@ bool Simulation::IsFinished()
     return rv;
 }
 
+bool Simulation::CheckSucesfull()
+{
+    assert (is_finished_);
+    if (exit_code_ != 0) {
+        error("%s - %s simulation failed with exit code %d", dut_->GetName(), name_, exit_code_);
+
+        std::filesystem::path log_path = sim_dir_ / log_file_;
+        error("%s - %s simulation log:", dut_->GetName(), name_);
+
+        FILE *log_f = fopen(log_path.c_str(), "r");
+        if (log_f == NULL) {
+            fatal("Failed to open log file: %s\n", log_path);
+            return false;
+        }
+
+        size_t i = 1;
+        while (true) {
+            char *line = NULL;
+            size_t len = 0;
+            // TODO: Check getline result
+            ssize_t rv = getline(&line, &len, log_f);
+            if (rv == -1) {
+                free(line);
+                break;
+            }
+            printf("%d:   %s", i, line);
+            free(line);
+            i++;
+        }
+        fclose(log_f);
+
+        return false;
+    }
+    return true;
+}
+
 }

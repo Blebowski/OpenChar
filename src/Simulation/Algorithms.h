@@ -16,32 +16,35 @@ class Algorithms {
     public:
         Algorithms(Context *ctx);
 
+        void PrepareSanitySim(Cell &cell);
+        bool CheckSanitySim(Cell &cell);
+
         void PrepareInputCapSims(Cell &cell);
-        void MeasureInputCap(Cell &cell);
+        bool MeasureInputCap(Cell &cell);
 
         void PrepareComboLogicTableAndLeakageSims(Cell &cell);
-        void MeasureComboLogicTables(Cell &cell);
-        void MeasureComboLeakage(Cell &cell);
+        bool MeasureComboLogicTables(Cell &cell);
+        bool MeasureComboLeakage(Cell &cell);
         void CalculateComboLogicFunctions(Cell &cell);
 
         void PrepareComboDelayAndPowerSims(Cell &cell);
-        void MeasureComboDelays(Cell &cell);
-        void MeasureComboTransitions(Cell &cell);
-        void MeasureComboPowers(Cell &cell);
+        bool MeasureComboDelays(Cell &cell);
+        bool MeasureComboTransitions(Cell &cell);
+        bool MeasureComboPowers(Cell &cell);
 
         void PrepareSeqAsyncFunctionSims(Cell &cell);
-        void MeasureSeqAsyncFunctions(Cell &cell);
+        bool MeasureSeqAsyncFunctions(Cell &cell);
 
         void PrepareSeqCellKindSims(Cell &cell);
-        void MeasureSeqCellKind(Cell &cell);
+        bool MeasureSeqCellKind(Cell &cell);
 
         void PrepareFFClockPolaritySims(Cell &cell);
-        void MeasureFFClockPolarity(Cell &cell);
+        bool MeasureFFClockPolarity(Cell &cell);
 
         void PrepareFFClockDelaySims(Cell &cell);
-        void MeasureFFClockDelay(Cell &cell);
-        void MeasureFFClockTransition(Cell &cell);
-        void MeasureFFClockPowers(Cell &cell);
+        bool MeasureFFClockDelay(Cell &cell);
+        bool MeasureFFClockTransition(Cell &cell);
+        bool MeasureFFClockPowers(Cell &cell);
 
         void PrepareSetupSims(Cell &cell);
         void PrepareOneSetupSim(Cell &cell, size_t arc_index,
@@ -51,7 +54,7 @@ class Algorithms {
                                 NanoSecond step);
         bool MeasureSetup(Cell &cell);
 
-        void CharacterizeLibrary();
+        bool CharacterizeLibrary();
 
     private:
         Context *ctx_;
@@ -62,8 +65,8 @@ class Algorithms {
         Expression* ComboProductOfSums(Cell& cell, Pin& o_pin);
         Expression* ComboRecognizeXor(Cell& cell, Pin& o_pin);
 
-        int PrepareComboArcSims(Pin &o_pin, int64_t in_from, int64_t in_to,
-                                int out_from, int out_to);
+        int PrepareOneComboArcSims(Pin &o_pin, int64_t in_from, int64_t in_to,
+                                   int out_from, int out_to);
 };
 
 }

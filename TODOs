@@ -1,42 +1,73 @@
 
 Features:
-- Propagate Error code from simulation
-- Limit measurements where there can be unbound number of iterations
-- Add "sanity simulation" before the real characterization
-    - Simple DC simp with the DUT inputs tied low!
-    - Helps to find undefined DUT, syntax or simulation errors
-- Parse TCL values as TCL expression -> Supports variables and expression in arguments
-- Adjust simulation duration and/or precision based on initial run.
-- Support Flip-flops and latches:
-    - Hold measurement
-    - Async pins -> out arc + power measurement
-    - Generate logic function of the flop or latch:
-        1. Now we know if it is latch of FLOP.
-        2. We know clock / enable polarity.
-        3. Approach is:
-            - Tie low
-            - Tie async pins inactive, tie clock inactive.
-            - Apply input combination
-            - Activate clock / enable.
-            - Capture output.
-            - Add logic table entry with all inputs an previous value of states
-            - Cover the expression and simplify -> Logic function extracted.
-    - Measure min pulse width on CK pin, Async pins
 
-- Support clock gating cells:
-    - Recognize type of gating from simulation.
-    - Measure Clock gating check -> How to recognize this messed up ??
-- Simple "database" dumper and reader:
-    - Store data model
-    - Store Simulation results (compress on the fly due to size).
+- Limit measurements where there can be unbound number of iterations
+
+- Parse TCL values as TCL expression
+    - Supports variables and expression in arguments
+
+- Simulation duration
+    - How to measure "expected simulation duration" ?
+      IDEA: Estimate output resistance from time constant with highest possible load.
+            Then scale simulation accordingly for other loads - Assume fixed out resistance.
+    - Scale duration based on expected load + output resistance in scenarios where
+      output changes and needs to settle
+    - Minimize simulation durations in cases where it does not matter
+
+- Combo-Cells:
+    - Three state output enable arcs
+
+- Flip-Flops:
+    - Support determining logic function of the flop (other FF than DFF).
+      Can this be made generically, or will we need to restrict to types of
+      flops like DFF, JKFF, RS, etc... With generic approach we could support
+      e.g. clocks with enable, scan function detection, etc...
+      IDEA: Approach:
+        - Tie low
+        - Tie async pins inactive, tie clock inactive.
+        - Apply input combination
+        - Activate clock / enable.
+        - Capture output.
+        - Add logic table entry with all inputs an previous value of states
+        - Cover the expression and simplify -> Logic function extracted.
+    - Measure hold times of FF
+    - Measure "min-pulse-width" on clock
+        - How to measure this ?
+        IDEAS: check at what minimal pulse width stable D propagates to Q.
+    - Measure asynchronous pins to output arcs
+    - Support multi-bit flip-flops
+
+- Latches:
+    - Enable polarity
+    - Measure Enable -> Output delays, Transitions and Powers
+    - Determine logic function (similar as with the FF)
+    - Support other latch kinds than DFF (RS, JK)
+    - Measure Setup / Hold of the enable pin
+    - Measure min-pulse-width of the enable pin.
+
+- Clock gating cells:
+    - Recognize clock gating cell (-clock and -gated_clock switches in TCL)
+    - Recognize if the cell is latch gating cell, or latch free clock gating cell
+        - For latch free cells the delayas / transitions / powers are the same as
+          in the combinatorial cells
+        - For latch based clock gating cell need to recognize the logic function
+          (latch + AND or LATCH + OR).
+    - Measure clock gating Setup + Hold checks
+    - Measure min pulse width on CK pin
+
 - Verilog writer
     - First step - With UDPs, no timing for starters
     - Optionally behavioral description
     - Second step - Dump specify blocks with delays and timing checks.
+
 - VHDL writer
-    - Secon step - Add VITAL writer
     - First step - Behavioral logic only
-- Add CCS model support.
+    - Second step - Add VITAL writer
+
+- Simple "database" dumper and reader:
+    - Store data model
+    - Store Simulation results (compress on the fly due to size).
+
 - Detect weird cases
     - E.g. Pin value does not start / end in expected value as per simulation.
 
@@ -49,7 +80,15 @@ Wishlist:
 - Support "Analog" pin / block -> Create dummy liberty with capacitance only.
 - Support multi-voltage domain cells: Level-shifters, power-switches, etc... -> Need to study how this
   works in Liberty.
+- Support CCS model.
+- Support other simulators (Xyce, VACAKS, Commercial tools) ?
 
+Infrastructure:
+- Setup build + test in Github CI
+- Setup sanitizer (valgrind)
+- Write user manual
+- Setup "install" in CMake
+- Docker image with the built tool
 
 Tests:
 
