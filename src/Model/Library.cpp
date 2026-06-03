@@ -134,11 +134,25 @@ void Library::WriteLiberty(const std::string &name)
 
     op_cond_.WriteLiberty(f, tab);
 
-    for (auto & cell : cells_) {
-        cell.second.WriteLiberty(f, tab);
+    for (auto & [cell_name, cell] : cells_) {
+        cell.WriteLiberty(f, tab);
     }
 
     TAB_FPRINTF(0, f, "} /* end library */\n", name);
+}
+
+void Library::WriteVerilog(const std::string &name)
+{
+    FILE *f = fopen(name.c_str(), "w");
+
+    // TODO: Make timescale configurable
+    TAB_FPRINTF(0, f, "`timescale 1ns/1ps\n\n", name);
+
+    for (auto & [cell_name, cell] : cells_) {
+        cell.WriteVerilog(f);
+    }
+
+    fclose(f);
 }
 
 }

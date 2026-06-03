@@ -457,7 +457,7 @@ CREATE_TCL_COMMAND(
 CREATE_TCL_COMMAND(
     WriteLibrary,
     "write_library",
-    "Write all the defined cells into a library",
+    "Create liberty file for the cells in the library",
     true,
 
     ARG({
@@ -467,6 +467,24 @@ CREATE_TCL_COMMAND(
 
         std::string name = Tcl_GetString(opts_["library_name"].objv_);
         ctx_->GetLibrary().WriteLiberty(name);
+
+        return TCL_OK;
+    })
+)
+
+CREATE_TCL_COMMAND(
+    WriteVerilog,
+    "write_verilog",
+    "Create verilog model file for the cells in the library",
+    true,
+
+    ARG({
+        {"output_file",            TclCmdOpt(true,     "string",       "Output file name.")},
+        }),
+    ARG({
+
+        std::string name = Tcl_GetString(opts_["output_file"].objv_);
+        ctx_->GetLibrary().WriteVerilog(name);
 
         return TCL_OK;
     })
@@ -483,6 +501,7 @@ void RegisterTclCommands(Context *ctx)
     ctx->AddTclCommand(SetGnd(ctx),                 SetGndCb );
     ctx->AddTclCommand(SetOperatingCondition(ctx),  SetOperatingConditionCb );
     ctx->AddTclCommand(WriteLibrary(ctx),           WriteLibraryCb );
+    ctx->AddTclCommand(WriteVerilog(ctx),           WriteVerilogCb );
     ctx->AddTclCommand(Help(ctx),                   HelpCb );
 
     for (const auto &c : ctx->GetTclCommands()) {

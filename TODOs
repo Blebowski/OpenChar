@@ -1,9 +1,13 @@
 
 Features:
 
-- Limit measurements where there can be unbound number of iterations
 
-- Parse TCL values as TCL expression
+Checks / Bugs
+    - Limit measurements where there can be unbound number of iterations
+    - If a cell is specified with correct name, but incorrect pin, it is not noticed!
+
+- TCL commands
+    - Parse TCL values as TCL expression
     - Supports variables and expression in arguments
 
 - Simulation duration
@@ -59,6 +63,7 @@ Features:
     - First step - With UDPs, no timing for starters
     - Optionally behavioral description
     - Second step - Dump specify blocks with delays and timing checks.
+    - Third step - Add option to dump supply rails.
 
 - VHDL writer
     - First step - Behavioral logic only

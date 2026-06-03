@@ -192,4 +192,25 @@ void Cell::WriteLiberty(FILE *f, size_t tab)
     TAB_FPRINTF(tab, f, "} /* end cell */\n");
 }
 
+void Cell::WriteVerilog(FILE *f)
+{
+    switch (kind_) {
+    case CellKind::COMBINATIONAL:
+    {
+        TAB_FPRINTF(0, f, "module %s\n", name_);
+
+        for (auto & o_pin : GetPins(PinDirection::OUT)) {
+            TAB_FPRINTF(2, f, "assign %s = ", o_pin.name_);
+            o_pin.GetLogicFunction()->Print(f);
+            TAB_FPRINTF(0, f, ";\n");
+        }
+
+        TAB_FPRINTF(0, f, "endmodule\n\n");
+    }
+
+    default:
+        break;
+    }
+}
+
 }

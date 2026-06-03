@@ -79,6 +79,7 @@ class Cell {
         CharactState GetCharactState();
 
         void WriteLiberty(FILE *f, size_t tab);
+        void WriteVerilog(FILE *f);
 
     private:
         const std::string name_;
