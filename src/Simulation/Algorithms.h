@@ -52,7 +52,7 @@ class Algorithms {
                                 size_t ck_tran_index, NanoSecond ck_tran,
                                 NanoSecond ck_q_base, NanoSecond ck_d_skew,
                                 NanoSecond step);
-        bool MeasureSetup(Cell &cell);
+        std::pair<bool,bool> MeasureSetup(Cell &cell);
 
         bool CharacterizeLibrary();
 

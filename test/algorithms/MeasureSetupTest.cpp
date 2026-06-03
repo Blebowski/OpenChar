@@ -38,8 +38,9 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
         if (!c1.IsSimulationFinished()) {
             continue;
         }
-        bool done = algs.MeasureSetup(c1);
-        if (done) {
+        auto [all_setups_measured, sims_ok] = algs.MeasureSetup(c1);
+        assert(sims_ok);
+        if (all_setups_measured) {
             break;
         }
     }

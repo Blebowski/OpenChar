@@ -1606,7 +1606,7 @@ void Algorithms::PrepareOneSetupSim(Cell &cell, size_t arc_index,
     ctx_->GetSimulationPool().EnqueueSimulation(sim);
 }
 
-bool Algorithms::MeasureSetup(Cell &cell)
+std::pair<bool,bool> Algorithms::MeasureSetup(Cell &cell)
 {
     assert(cell.GetKind() == CellKind::SEQUENTIAL);
 
@@ -1632,6 +1632,7 @@ bool Algorithms::MeasureSetup(Cell &cell)
     assert(templ != nullptr);
 
     bool all_finished = true;
+    bool all_ok = true;
 
     size_t d_tran_index = 0;
     for (NanoSecond d_tran : templ->GetIndex1()) {
@@ -1645,6 +1646,11 @@ bool Algorithms::MeasureSetup(Cell &cell)
 
             if (!sim->IsFinished()) {
                 all_finished = false;
+                continue;
+            }
+
+            if (!sim->CheckSucesfull()) {
+                all_ok = false;
                 continue;
             }
 
@@ -1759,7 +1765,7 @@ bool Algorithms::MeasureSetup(Cell &cell)
         d_tran_index++;
     }
 
-    return all_finished;
+    return std::pair<bool,bool>(all_finished, all_ok);
 }
 
 #define PROCESS_RESULTS(cell, func)                                             \
@@ -1939,9 +1945,18 @@ bool Algorithms::CharacterizeLibrary()
                 if (!cell.IsSimulationFinished()) {
                     continue;
                 }
-                if (MeasureSetup(cell)) {
-                    cell.SetCharactState(CharactState::DONE);
+
+                auto [all_setups_found, sim_ok] = MeasureSetup(cell);
+                if (!sim_ok) {
+                    error("%s - Aborting characterization !", cell.GetName());
+                    cell.SetCharactState(CharactState::ERROR);
                 }
+
+                if (!all_setups_found) {
+                    continue;
+                }
+
+                cell.SetCharactState(CharactState::DONE);
                 break;
             }
 
