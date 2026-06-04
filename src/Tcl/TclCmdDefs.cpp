@@ -39,6 +39,8 @@ CREATE_TCL_COMMAND(
         {"-async",      TclCmdOpt(true,         "{pin_names}",          "Asynchrnous set/clear pin or pins.")},
         {"-delay",      TclCmdOpt(true,         "delay_template",       "Name of delay template to use when characterizing the cell.")},
         {"-constraint", TclCmdOpt(true,         "constraint_template",  "Name of constraint template to use when characterizing the cell.")},
+        {"-area",       TclCmdOpt(true,         "number",               "Cell area (in square microns).")},
+        {"-footprint",  TclCmdOpt(true,         "footprint_name",       "Cell footprint.")},
         {"cell_name",   TclCmdOpt(false,        "cell_name",            "Name of the cell.")}
         }),
     ARG({
@@ -92,6 +94,26 @@ CREATE_TCL_COMMAND(
             }
         }
 
+        double area = 0.0;
+        if (opts_["-area"].isSet()) {
+            char *end;
+            std::string val = std::string(Tcl_GetString(opts_["-area"].objv_));
+            area = strtof(val.c_str(), &end);
+            if (*end != '\0') {
+                error("%s is not float value in definition of -area\n", val);
+                return TCL_ERROR;
+            }
+            if (area < 0.0) {
+                error("-area can't be negative (%f)\n", area);
+                return TCL_ERROR;
+            }
+        }
+
+        std::string footprint = "";
+        if (opts_["-footprint"].isSet()) {
+            footprint = std::string(Tcl_GetString(opts_["-footprint"].objv_));
+        }
+
         const std::string cell_name = Tcl_GetString(opts_["cell_name"].objv_);
 
         auto [cell, was_added] = ctx_->GetLibrary().AddCell(cell_name);
@@ -100,6 +122,8 @@ CREATE_TCL_COMMAND(
             return TCL_ERROR;
         }
 
+        cell.SetArea(area);
+        cell.SetFootprint(footprint);
         cell.SetDelayTemplate(&(ctx_->GetLibrary().GetTemplate(d_templ_name)));
 
         if (opts_["-constraint"].isSet()) {

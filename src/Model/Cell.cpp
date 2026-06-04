@@ -13,6 +13,8 @@ Cell::Cell(std::string name, Library *library) :
     library_(library),
     d_template_(nullptr),
     c_template_(nullptr),
+    area_(0.0),
+    footprint_(""),
     seq_(this),
     charact_state_(CharactState::START)
 {};
@@ -42,6 +44,26 @@ CellKind Cell::GetKind()
 void Cell::SetKind(CellKind kind)
 {
     kind_ = kind;
+}
+
+void Cell::SetArea(double area)
+{
+    area_ = area;
+}
+
+double Cell::GetArea()
+{
+    return area_;
+}
+
+void Cell::SetFootprint(std::string footprint)
+{
+    footprint_ = footprint;
+}
+
+std::string& Cell::GetFootPrint()
+{
+    return footprint_;
 }
 
 std::pair<Pin&, bool> Cell::AddPin(std::string name, PinDirection direction, PinKind kind)
@@ -151,7 +173,10 @@ void Cell::WriteLiberty(FILE *f, size_t tab)
     TAB_FPRINTF(tab, f, "cell (%s) {\n", name_);
     tab++;
 
-    TAB_FPRINTF(tab, f, "area: 0.00\n");
+    TAB_FPRINTF(tab, f, "area: %f\n", area_);
+    if (footprint_ != "") {
+        TAB_FPRINTF(tab, f, "cell_footprint: %s\n", footprint_);
+    }
 
     for (auto & lkg : leakage_table_) {
         TAB_FPRINTF(tab, f, "leakage_power () {\n");

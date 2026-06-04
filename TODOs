@@ -3,9 +3,12 @@ Features:
 
  - Bugs
     - If a cell is specified with correct name, but incorrect pin, it is not noticed!
+    - Sequential Cells do not have leakage power in the .lib
+    - Gating of failed cells from write_* commands
 
 - Checks
     - Limit measurements where there can be unbound number of iterations
+    - Add timeout to each simulation after which it is killed
     - E.g. Pin value does not start / end in expected value as per simulation ?
 
 - TCL commands
@@ -19,6 +22,11 @@ Features:
     - Scale duration based on expected load + output resistance in scenarios where
       output changes and needs to settle
     - Minimize simulation durations in cases where it does not matter
+
+- Liberty
+    - Add Max transition to input pins
+    - Add Max capacitance to output pins
+    - Add Templates
 
 - Combo-Cells:
     - Three state output enable arcs
@@ -40,6 +48,7 @@ Features:
         - How to measure this ?
         IDEAS: check at what minimal pulse width stable D propagates to Q.
     - Measure asynchronous pins to output arcs
+    - Measure recovery / removal arcs.
     - Support multi-bit flip-flops
 
 - Latches:

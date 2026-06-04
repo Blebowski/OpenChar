@@ -65,6 +65,12 @@ class Cell {
 
         Sequential& GetSequential();
 
+        void SetArea(double area);
+        double GetArea();
+
+        void SetFootprint(std::string footprint);
+        std::string &GetFootPrint();
+
         Template* GetDelayTemplate();
         void SetDelayTemplate(Template *d_template);
 
@@ -88,6 +94,8 @@ class Cell {
         Template *d_template_;
         Template *c_template_;
         CellKind kind_;
+        double area_;
+        std::string footprint_;
 
         // First value - Cell inputs
         // Second value - Leakage power upon such state
