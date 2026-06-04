@@ -537,7 +537,7 @@ int Algorithms::PrepareOneComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, i
             int o_cap_index = 0;
             for (const PicoFarad o_cap : templ->GetIndex2()) {
 
-                std::string sim_name = sprintf("%s_TRAN_%f_CAP_%f", prefix, i_tran, o_cap);
+                std::string sim_name = sprintf("%s_TRAN_%f_%s_CAP_%f", prefix, i_tran, o_pin.name_, o_cap);
                 Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, cell);
 
                 Volt log0_v = op_cond.GetSupply()->GetGndVoltage();

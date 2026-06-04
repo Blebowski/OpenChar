@@ -1,10 +1,12 @@
 
 Features:
 
-
-Checks / Bugs
-    - Limit measurements where there can be unbound number of iterations
+ - Bugs
     - If a cell is specified with correct name, but incorrect pin, it is not noticed!
+
+- Checks
+    - Limit measurements where there can be unbound number of iterations
+    - E.g. Pin value does not start / end in expected value as per simulation ?
 
 - TCL commands
     - Parse TCL values as TCL expression
@@ -60,7 +62,8 @@ Checks / Bugs
     - Measure min pulse width on CK pin
 
 - Verilog writer
-    - First step - With UDPs, no timing for starters
+    - First step - Functional description only
+        - UDP vs. direct expression
     - Optionally behavioral description
     - Second step - Dump specify blocks with delays and timing checks.
     - Third step - Add option to dump supply rails.
@@ -72,9 +75,6 @@ Checks / Bugs
 - Simple "database" dumper and reader:
     - Store data model
     - Store Simulation results (compress on the fly due to size).
-
-- Detect weird cases
-    - E.g. Pin value does not start / end in expected value as per simulation.
 
 
 Wishlist:
