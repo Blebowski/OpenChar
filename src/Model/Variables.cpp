@@ -12,14 +12,6 @@ namespace open_char {
 
 Variables::Variables() :
     variables_ ({
-        {"run_directory",
-            {
-                .kind = VarKind::STRING,
-                .s_val = std::filesystem::current_path(),
-                .i_val = 0,
-                .d_val = 0
-            }
-        },
         {"delay_in_rise",
             {
                 .kind = VarKind::DOUBLE,
@@ -52,12 +44,36 @@ Variables::Variables() :
                 .d_val = 0.5
             }
         },
+        {"max_threads",
+            {
+                .kind = VarKind::INT,
+                .s_val = "",
+                .i_val = static_cast<int>(std::thread::hardware_concurrency()),
+                .d_val = 0
+            }
+        },
+        {"run_directory",
+            {
+                .kind = VarKind::STRING,
+                .s_val = std::filesystem::current_path(),
+                .i_val = 0,
+                .d_val = 0
+            }
+        },
         {"slew_lower_fall",
             {
                 .kind = VarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
                 .d_val = 0.2
+            }
+        },
+        {"simulation_timestep",
+            {
+                .kind = VarKind::DOUBLE,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0.001
             }
         },
         {"slew_upper_fall",
@@ -84,14 +100,6 @@ Variables::Variables() :
                 .d_val = 0.8
             }
         },
-        {"max_threads",
-            {
-                .kind = VarKind::INT,
-                .s_val = "",
-                .i_val = static_cast<int>(std::thread::hardware_concurrency()),
-                .d_val = 0.8
-            }
-        }
     })
 {}
 

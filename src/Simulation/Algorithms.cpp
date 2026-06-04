@@ -36,6 +36,8 @@ Simulation *Algorithms::NewSimulation(std::string name, SimulationKind kind, Cel
 {
     Simulation *sim = new Simulation(ctx_, name, cell, kind);
 
+    sim->SetTimeStep(ctx_->GetVariables().GetDoubleVariable("simulation_timestep"));
+
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
     sim->SetTemp(op_cond.GetTemperature());
     sim->SetSupply(op_cond.GetSupply());

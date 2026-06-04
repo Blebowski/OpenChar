@@ -41,7 +41,9 @@ class Simulation {
         int Simulate();
         Waves ReadWaves();
 
+        void SetTimeStep(NanoSecond time_step);
         NanoSecond GetTimeStep();
+
         void SetDuration(NanoSecond duration);
 
         void SetPostSimCb(std::function<int(void)> post_sim_cb);

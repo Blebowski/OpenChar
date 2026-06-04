@@ -192,6 +192,11 @@ Waves Simulation::ReadWaves()
     return Waves(wave_path);
 }
 
+void Simulation::SetTimeStep(NanoSecond time_step)
+{
+    time_step_ = time_step;
+}
+
 NanoSecond Simulation::GetTimeStep()
 {
     return time_step_;
