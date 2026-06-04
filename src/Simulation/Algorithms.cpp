@@ -1110,6 +1110,7 @@ void Algorithms::PrepareSeqCellKindSims(Cell &cell)
 bool Algorithms::MeasureSeqCellKind(Cell &cell)
 {
     SequentialKind seq_kind = SequentialKind::FLIP_FLOP;
+    int active_clocks = 0;
 
     for (Simulation *sim : cell.GetSimulations()) {
 
@@ -1138,6 +1139,7 @@ bool Algorithms::MeasureSeqCellKind(Cell &cell)
         }
 
         if (has_logic_0 && has_logic_1) {
+            active_clocks++;
             seq_kind = SequentialKind::LATCH;
             int active_clock = sim->GetMetaDataAt(0);
             cell.GetSequential().SetEnablePolarity(active_clock);
@@ -1145,6 +1147,13 @@ bool Algorithms::MeasureSeqCellKind(Cell &cell)
     }
 
     cell.GetSequential().SetKind(seq_kind);
+
+    if (active_clocks > 1) {
+        Pin &c_pin = cell.GetPins(PinKind::CLK).front();
+        error("%s - Latch clock pin %s is active both at 1 and 0.", c_pin.name_);
+        return false;
+    }
+
     return true;
 }
 
@@ -1242,9 +1251,19 @@ bool Algorithms::MeasureFFClockPolarity(Cell &cell)
         }
     }
 
-    // TODO: Throw user visible error when changes occur on both edges
-    assert(out_change_negedge || out_change_posedge);
-    assert(!(out_change_negedge && out_change_posedge));
+    if (out_change_negedge && out_change_posedge) {
+        Pin &c_pin = cell.GetPins(PinKind::CLK).front();
+        error("%s - Flip-flop clock pin %s is active on both rising and falling edge. "
+              "Both polarity flip-flops are not supported", c_pin.name_);
+        return false;
+    }
+
+    if (!(out_change_negedge || out_change_posedge)) {
+        Pin &c_pin = cell.GetPins(PinKind::CLK).front();
+        error("%s - Flip-flop clock pin %s is not active on rising nor falling edge. ",
+              c_pin.name_);
+        return false;
+    }
 
     if (out_change_posedge) {
         cell.GetSequential().SetClockPolarity(EdgeKind::RISING);

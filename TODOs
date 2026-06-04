@@ -44,7 +44,6 @@ Features:
     - Support multi-bit flip-flops
 
 - Latches:
-    - Enable polarity
     - Measure Enable -> Output delays, Transitions and Powers
     - Determine logic function (similar as with the FF)
     - Support other latch kinds than DFF (RS, JK)
