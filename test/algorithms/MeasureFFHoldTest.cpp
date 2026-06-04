@@ -10,7 +10,7 @@
 
 using namespace open_char;
 
-void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
+static void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 {
     CREATE_DFF_CKB_SB_RB_CELL(ctx, c1);
     c1.GetSequential().SetKind(SequentialKind::FLIP_FLOP);
@@ -58,10 +58,10 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     Pin& pin = c1.GetPin("D");
     Arc& arc = pin.GetArcs()[0];
 
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[0][0], -0.036123);
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[0][1], 0.110197);
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[1][0], -0.270233);
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[1][1], -0.133588);
+    CHECK_FLOAT(arc.GetFallConstraints()[0][0], -0.036123);
+    CHECK_FLOAT(arc.GetFallConstraints()[0][1], 0.110197);
+    CHECK_FLOAT(arc.GetFallConstraints()[1][0], -0.270233);
+    CHECK_FLOAT(arc.GetFallConstraints()[1][1], -0.133588);
 }
 
 int main()

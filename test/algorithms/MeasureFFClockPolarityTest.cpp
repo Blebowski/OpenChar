@@ -10,7 +10,7 @@
 
 using namespace open_char;
 
-void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
+static void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 {
     CREATE_DFF_CKB_SB_RB_CELL(ctx, c1);
     c1.GetSequential().SetKind(SequentialKind::FLIP_FLOP);
@@ -23,7 +23,7 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     assert(c1.GetSequential().GetClockPolarity() == EdgeKind::FALLING);
 }
 
-void test_dff_ck_rb_sb(Context &ctx, Algorithms &algs)
+static void test_dff_ck_rb_sb(Context &ctx, Algorithms &algs)
 {
     CREATE_DFF_CK_SB_RB_CELL(ctx, c1);
     c1.GetSequential().SetKind(SequentialKind::FLIP_FLOP);

@@ -9,11 +9,11 @@
 
 using namespace open_char;
 
-void test_and2(Context &ctx, Algorithms &algs)
+static void test_and2(Context &ctx, Algorithms &algs)
 {
     CREATE_AND2_CELL(ctx, c1)
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
     algs.MeasureComboLogicTables(c1);
     algs.CalculateComboLogicFunctions(c1);
 
@@ -33,11 +33,11 @@ void test_and2(Context &ctx, Algorithms &algs)
     assert (rhs->GetPin() == &(c1.GetPin("B")));
 }
 
-void test_half_adder(Context &ctx, Algorithms &algs)
+static void test_half_adder(Context &ctx, Algorithms &algs)
 {
     CREATE_HALF_ADDER_CELL(ctx, c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
     algs.MeasureComboLogicTables(c1);
     algs.CalculateComboLogicFunctions(c1);
 

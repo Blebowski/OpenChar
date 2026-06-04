@@ -10,7 +10,7 @@
 
 using namespace open_char;
 
-void test_inv(Context &ctx, Algorithms &algs)
+static void test_inv(Context &ctx, Algorithms &algs)
 {
     CREATE_INV_CELL(ctx, c1);
 

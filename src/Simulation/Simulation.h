@@ -46,9 +46,6 @@ class Simulation {
 
         void SetDuration(NanoSecond duration);
 
-        void SetPostSimCb(std::function<int(void)> post_sim_cb);
-        void ExecutePostSimCb();
-
         bool IsFinished();
         bool CheckSucesfull();
 

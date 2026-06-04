@@ -10,7 +10,7 @@
 
 using namespace open_char;
 
-void test_inv(Context &ctx, Algorithms &algs)
+static void test_inv(Context &ctx, Algorithms &algs)
 {
     CREATE_INV_CELL(ctx, c1)
 
@@ -26,14 +26,12 @@ void test_inv(Context &ctx, Algorithms &algs)
     c1.SetDelayTemplate(&t);
 
     // Logic table and logic function are precondition for combo delays
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
     assert(algs.MeasureComboLogicTables(c1));
     algs.CalculateComboLogicFunctions(c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboDelayAndPowerSims(c1));
-    assert(algs.MeasureComboDelays(c1));
-    assert(algs.MeasureComboTransitions(c1));
-    assert(algs.MeasureComboPowers(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboDelayTransitionPowerSims(c1));
+    assert(algs.MeasureComboDelaysTransitionsPowers(c1));
 
     Pin& pin = c1.GetPin("Y");
 
@@ -43,88 +41,88 @@ void test_inv(Context &ctx, Algorithms &algs)
     //     index_1 ("0.010000, 0.100000")
     //     index_2 ("0.020000, 0.300000")
     //     values (
-    //     "0.111000, 0.356200"
-    //     "0.124100, 0.372300"
+    //          "0.111000, 0.355000"
+    //          "0.125000, 0.373000"
     //     ) ;
     // } /* end cell_rise */
 
-    EQUAL_WITH_TOL(arc.GetRiseDelays()[0][0], 0.111000);
-    EQUAL_WITH_TOL(arc.GetRiseDelays()[0][1], 0.356200);
-    EQUAL_WITH_TOL(arc.GetRiseDelays()[1][0], 0.124100);
-    EQUAL_WITH_TOL(arc.GetRiseDelays()[1][1], 0.372300);
-
-    // cell_fall() {
-    //     index_1 ("0.010000, 0.100000")
-    //     index_2 ("0.020000, 0.300000")
-    //     values (
-    //     "0.110600, 0.320000"
-    //     "0.120700, 0.336000"
-    //     ) ;
-    // } /* end cell_fall */
-
-    EQUAL_WITH_TOL(arc.GetFallDelays()[0][0], 0.110600);
-    EQUAL_WITH_TOL(arc.GetFallDelays()[0][1], 0.320000);
-    EQUAL_WITH_TOL(arc.GetFallDelays()[1][0], 0.120700);
-    EQUAL_WITH_TOL(arc.GetFallDelays()[1][1], 0.336000);
+    CHECK_FLOAT(arc.GetRiseDelays()[0][0], 0.111000);
+    CHECK_FLOAT(arc.GetRiseDelays()[0][1], 0.355000);
+    CHECK_FLOAT(arc.GetRiseDelays()[1][0], 0.125000);
+    CHECK_FLOAT(arc.GetRiseDelays()[1][1], 0.373000);
 
     // rise_transition() {
     //     index_1 ("0.010000, 0.100000")
     //     index_2 ("0.020000, 0.300000")
     //     values (
-    //     "0.081800, 0.411300"
-    //     "0.081700, 0.411300"
+    //        "0.081000, 0.410000"
+    //        "0.081000, 0.411000"
     //     ) ;
     // } /* end rise_transition */
 
-    EQUAL_WITH_TOL(arc.GetRiseTransitions()[0][0], 0.081800);
-    EQUAL_WITH_TOL(arc.GetRiseTransitions()[0][1], 0.411300);
-    EQUAL_WITH_TOL(arc.GetRiseTransitions()[1][0], 0.081700);
-    EQUAL_WITH_TOL(arc.GetRiseTransitions()[1][1], 0.411300);
+    CHECK_FLOAT(arc.GetRiseTransitions()[0][0], 0.081800);
+    CHECK_FLOAT(arc.GetRiseTransitions()[0][1], 0.410000);
+    CHECK_FLOAT(arc.GetRiseTransitions()[1][0], 0.081000);
+    CHECK_FLOAT(arc.GetRiseTransitions()[1][1], 0.411000);
+
+    // cell_fall() {
+    //     index_1 ("0.010000, 0.100000")
+    //     index_2 ("0.020000, 0.300000")
+    //     values (
+    //       "0.111000, 0.320000"
+    //       "0.122000, 0.336000"
+    //     ) ;
+    // } /* end cell_fall */
+
+    CHECK_FLOAT(arc.GetFallDelays()[0][0], 0.111000);
+    CHECK_FLOAT(arc.GetFallDelays()[0][1], 0.320000);
+    CHECK_FLOAT(arc.GetFallDelays()[1][0], 0.122000);
+    CHECK_FLOAT(arc.GetFallDelays()[1][1], 0.336000);
 
     // fall_transition() {
     //     index_1 ("0.010000, 0.100000")
     //     index_2 ("0.020000, 0.300000")
     //     values (
-    //     "0.058700, 0.336300"
-    //     "0.058900, 0.336500"
+    //          "0.057000, 0.336000"
+    //          "0.058000, 0.336000"
     //     ) ;
     // } /* end fall_transition */
 
-    EQUAL_WITH_TOL(arc.GetFallTransitions()[0][0], 0.058700);
-    EQUAL_WITH_TOL(arc.GetFallTransitions()[0][1], 0.336300);
-    EQUAL_WITH_TOL(arc.GetFallTransitions()[1][0], 0.058900);
-    EQUAL_WITH_TOL(arc.GetFallTransitions()[1][1], 0.336500);
+    CHECK_FLOAT(arc.GetFallTransitions()[0][0], 0.057000);
+    CHECK_FLOAT(arc.GetFallTransitions()[0][1], 0.336000);
+    CHECK_FLOAT(arc.GetFallTransitions()[1][0], 0.058000);
+    CHECK_FLOAT(arc.GetFallTransitions()[1][1], 0.336000);
 
     // rise_power() {
     //     index_1 ("0.010000, 0.100000")
     //     index_2 ("0.020000, 0.300000")
     //     values (
-    //     "-0.042782, -0.441743"
-    //     "-0.043125, -0.442354"
+    //          "0.040743, 0.433483"
+    //          "0.043632, 0.444537"
     //     ) ;
     // } /* end rise_power */
 
-    EQUAL_WITH_TOL(arc.GetRisePowers()[0][0], 0.042782);
-    EQUAL_WITH_TOL(arc.GetRisePowers()[0][1], 0.441743);
-    EQUAL_WITH_TOL(arc.GetRisePowers()[1][0], 0.043125);
-    EQUAL_WITH_TOL(arc.GetRisePowers()[1][1], 0.442354);
+    CHECK_FLOAT(arc.GetRisePowers()[0][0], 0.040743);
+    CHECK_FLOAT(arc.GetRisePowers()[0][1], 0.433483);
+    CHECK_FLOAT(arc.GetRisePowers()[1][0], 0.043632);
+    CHECK_FLOAT(arc.GetRisePowers()[1][1], 0.444537);
 
     // fall_power() {
     //     index_1 ("0.010000, 0.100000")
     //     index_2 ("0.020000, 0.300000")
     //     values (
-    //     "-0.202559, -0.222347"
-    //     "-0.190098, -0.212981"
+    //          "0.216491, 0.240236"
+    //          "0.192435, 0.214416"
     //     ) ;
     // } /* end fall_power */
 
-    EQUAL_WITH_TOL(arc.GetFallPowers()[0][0], 0.202559);
-    EQUAL_WITH_TOL(arc.GetFallPowers()[0][1], 0.222347);
-    EQUAL_WITH_TOL(arc.GetFallPowers()[1][0], 0.190098);
-    EQUAL_WITH_TOL(arc.GetFallPowers()[1][1], 0.212981);
+    CHECK_FLOAT(arc.GetFallPowers()[0][0], 0.216491);
+    CHECK_FLOAT(arc.GetFallPowers()[0][1], 0.240236);
+    CHECK_FLOAT(arc.GetFallPowers()[1][0], 0.192435);
+    CHECK_FLOAT(arc.GetFallPowers()[1][1], 0.214416);
 }
 
-void test_half_adder(Context &ctx, Algorithms &algs)
+static void test_half_adder(Context &ctx, Algorithms &algs)
 {
     CREATE_HALF_ADDER_CELL(ctx, c1);
 
@@ -140,15 +138,13 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     c1.SetDelayTemplate(&t);
 
     // Logic table and logic function are precondition for combo delays
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
     assert(algs.MeasureComboLogicTables(c1));
     algs.CalculateComboLogicFunctions(c1);
 
     // Measure Dealys
-    RUN_SIMULATIONS(ctx, algs.PrepareComboDelayAndPowerSims(c1));
-    assert(algs.MeasureComboDelays(c1));
-    assert(algs.MeasureComboTransitions(c1));
-    assert(algs.MeasureComboPowers(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboDelayTransitionPowerSims(c1));
+    assert(algs.MeasureComboDelaysTransitionsPowers(c1));
 
     Pin& co_pin = c1.GetPin("CO");
     Arc& co_b_arc = co_pin.GetArcs()[0];
@@ -168,10 +164,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_rise */
 
-    EQUAL_WITH_TOL(co_b_arc.GetRiseDelays()[0][0], 0.107000);
-    EQUAL_WITH_TOL(co_b_arc.GetRiseDelays()[0][1], 0.915000);
-    EQUAL_WITH_TOL(co_b_arc.GetRiseDelays()[1][0], 0.111000);
-    EQUAL_WITH_TOL(co_b_arc.GetRiseDelays()[1][1], 0.920000);
+    CHECK_FLOAT(co_b_arc.GetRiseDelays()[0][0], 0.107000);
+    CHECK_FLOAT(co_b_arc.GetRiseDelays()[0][1], 0.915000);
+    CHECK_FLOAT(co_b_arc.GetRiseDelays()[1][0], 0.111000);
+    CHECK_FLOAT(co_b_arc.GetRiseDelays()[1][1], 0.920000);
 
     // rise_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -182,10 +178,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_transition */
 
-    EQUAL_WITH_TOL(co_b_arc.GetRiseTransitions()[0][0], 0.102000);
-    EQUAL_WITH_TOL(co_b_arc.GetRiseTransitions()[0][1], 1.385000);
-    EQUAL_WITH_TOL(co_b_arc.GetRiseTransitions()[1][0], 0.103000);
-    EQUAL_WITH_TOL(co_b_arc.GetRiseTransitions()[1][1], 1.385000);
+    CHECK_FLOAT(co_b_arc.GetRiseTransitions()[0][0], 0.102000);
+    CHECK_FLOAT(co_b_arc.GetRiseTransitions()[0][1], 1.385000);
+    CHECK_FLOAT(co_b_arc.GetRiseTransitions()[1][0], 0.103000);
+    CHECK_FLOAT(co_b_arc.GetRiseTransitions()[1][1], 1.385000);
 
     // cell_fall() {
     //     index_1 ("0.010000, 0.100000")
@@ -196,10 +192,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_fall */
 
-    EQUAL_WITH_TOL(co_b_arc.GetFallDelays()[0][0], 0.105000);
-    EQUAL_WITH_TOL(co_b_arc.GetFallDelays()[0][1], 0.948000);
-    EQUAL_WITH_TOL(co_b_arc.GetFallDelays()[1][0], 0.120000);
-    EQUAL_WITH_TOL(co_b_arc.GetFallDelays()[1][1], 0.963000);
+    CHECK_FLOAT(co_b_arc.GetFallDelays()[0][0], 0.105000);
+    CHECK_FLOAT(co_b_arc.GetFallDelays()[0][1], 0.948000);
+    CHECK_FLOAT(co_b_arc.GetFallDelays()[1][0], 0.120000);
+    CHECK_FLOAT(co_b_arc.GetFallDelays()[1][1], 0.963000);
 
     // fall_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -210,10 +206,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_transition */
 
-    EQUAL_WITH_TOL(co_b_arc.GetFallTransitions()[0][0], 0.103000);
-    EQUAL_WITH_TOL(co_b_arc.GetFallTransitions()[0][1], 1.376000);
-    EQUAL_WITH_TOL(co_b_arc.GetFallTransitions()[1][0], 0.104000);
-    EQUAL_WITH_TOL(co_b_arc.GetFallTransitions()[1][1], 1.376000);
+    CHECK_FLOAT(co_b_arc.GetFallTransitions()[0][0], 0.103000);
+    CHECK_FLOAT(co_b_arc.GetFallTransitions()[0][1], 1.376000);
+    CHECK_FLOAT(co_b_arc.GetFallTransitions()[1][0], 0.104000);
+    CHECK_FLOAT(co_b_arc.GetFallTransitions()[1][1], 1.376000);
 
     // rise_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -224,10 +220,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_power */
 
-    EQUAL_WITH_TOL(co_b_arc.GetRisePowers()[0][0], 0.040429);
-    EQUAL_WITH_TOL(co_b_arc.GetRisePowers()[0][1], 0.439443);
-    EQUAL_WITH_TOL(co_b_arc.GetRisePowers()[1][0], 0.042533);
-    EQUAL_WITH_TOL(co_b_arc.GetRisePowers()[1][1], 0.441363);
+    CHECK_FLOAT(co_b_arc.GetRisePowers()[0][0], 0.040429);
+    CHECK_FLOAT(co_b_arc.GetRisePowers()[0][1], 0.439443);
+    CHECK_FLOAT(co_b_arc.GetRisePowers()[1][0], 0.042533);
+    CHECK_FLOAT(co_b_arc.GetRisePowers()[1][1], 0.441363);
 
     //fall_power() {
     //    index_1 ("0.010000, 0.100000")
@@ -239,10 +235,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //} /* end fall_power */
 
     // TODO: Check Fall and Rise Powers are OK here, the numbers don't seem right
-    EQUAL_WITH_TOL(co_b_arc.GetFallPowers()[0][0], 0.009084);
-    EQUAL_WITH_TOL(co_b_arc.GetFallPowers()[0][1], 0.008838);
-    EQUAL_WITH_TOL(co_b_arc.GetFallPowers()[1][0], 0.009888);
-    EQUAL_WITH_TOL(co_b_arc.GetFallPowers()[1][1], 0.009409);
+    CHECK_FLOAT(co_b_arc.GetFallPowers()[0][0], 0.009084);
+    CHECK_FLOAT(co_b_arc.GetFallPowers()[0][1], 0.008838);
+    CHECK_FLOAT(co_b_arc.GetFallPowers()[1][0], 0.009888);
+    CHECK_FLOAT(co_b_arc.GetFallPowers()[1][1], 0.009409);
 
     ///////////////////////////////////////////////////////////////////////////
     // A -> CO
@@ -260,10 +256,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_rise */
 
-    EQUAL_WITH_TOL(co_a_arc.GetRiseDelays()[0][0], 0.102000);
-    EQUAL_WITH_TOL(co_a_arc.GetRiseDelays()[0][1], 0.911000);
-    EQUAL_WITH_TOL(co_a_arc.GetRiseDelays()[1][0], 0.110000);
-    EQUAL_WITH_TOL(co_a_arc.GetRiseDelays()[1][1], 0.918000);
+    CHECK_FLOAT(co_a_arc.GetRiseDelays()[0][0], 0.102000);
+    CHECK_FLOAT(co_a_arc.GetRiseDelays()[0][1], 0.911000);
+    CHECK_FLOAT(co_a_arc.GetRiseDelays()[1][0], 0.110000);
+    CHECK_FLOAT(co_a_arc.GetRiseDelays()[1][1], 0.918000);
 
     // rise_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -274,10 +270,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_transition */
 
-    EQUAL_WITH_TOL(co_a_arc.GetRiseTransitions()[0][0], 0.103000);
-    EQUAL_WITH_TOL(co_a_arc.GetRiseTransitions()[0][1], 1.384000);
-    EQUAL_WITH_TOL(co_a_arc.GetRiseTransitions()[1][0], 0.105000);
-    EQUAL_WITH_TOL(co_a_arc.GetRiseTransitions()[1][1], 1.385000);
+    CHECK_FLOAT(co_a_arc.GetRiseTransitions()[0][0], 0.103000);
+    CHECK_FLOAT(co_a_arc.GetRiseTransitions()[0][1], 1.384000);
+    CHECK_FLOAT(co_a_arc.GetRiseTransitions()[1][0], 0.105000);
+    CHECK_FLOAT(co_a_arc.GetRiseTransitions()[1][1], 1.385000);
 
     // cell_fall() {
     //     index_1 ("0.010000, 0.100000")
@@ -288,10 +284,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_fall */
 
-    EQUAL_WITH_TOL(co_a_arc.GetFallDelays()[0][0], 0.100000);
-    EQUAL_WITH_TOL(co_a_arc.GetFallDelays()[0][1], 0.944000);
-    EQUAL_WITH_TOL(co_a_arc.GetFallDelays()[1][0], 0.115000);
-    EQUAL_WITH_TOL(co_a_arc.GetFallDelays()[1][1], 0.957000);
+    CHECK_FLOAT(co_a_arc.GetFallDelays()[0][0], 0.100000);
+    CHECK_FLOAT(co_a_arc.GetFallDelays()[0][1], 0.944000);
+    CHECK_FLOAT(co_a_arc.GetFallDelays()[1][0], 0.115000);
+    CHECK_FLOAT(co_a_arc.GetFallDelays()[1][1], 0.957000);
 
     // fall_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -303,10 +299,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     // } /* end fall_transition */
 
     // TODO: Check 2nd and 4th being equal
-    EQUAL_WITH_TOL(co_a_arc.GetFallTransitions()[0][0], 0.100000);
-    EQUAL_WITH_TOL(co_a_arc.GetFallTransitions()[0][1], 1.376000);
-    EQUAL_WITH_TOL(co_a_arc.GetFallTransitions()[1][0], 0.102000);
-    EQUAL_WITH_TOL(co_a_arc.GetFallTransitions()[1][1], 1.376000);
+    CHECK_FLOAT(co_a_arc.GetFallTransitions()[0][0], 0.100000);
+    CHECK_FLOAT(co_a_arc.GetFallTransitions()[0][1], 1.376000);
+    CHECK_FLOAT(co_a_arc.GetFallTransitions()[1][0], 0.102000);
+    CHECK_FLOAT(co_a_arc.GetFallTransitions()[1][1], 1.376000);
 
     // rise_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -317,10 +313,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_power */
 
-    EQUAL_WITH_TOL(co_a_arc.GetRisePowers()[0][0], 0.040200);
-    EQUAL_WITH_TOL(co_a_arc.GetRisePowers()[0][1], 0.439251);
-    EQUAL_WITH_TOL(co_a_arc.GetRisePowers()[1][0], 0.042166);
-    EQUAL_WITH_TOL(co_a_arc.GetRisePowers()[1][1], 0.441069);
+    CHECK_FLOAT(co_a_arc.GetRisePowers()[0][0], 0.040200);
+    CHECK_FLOAT(co_a_arc.GetRisePowers()[0][1], 0.439251);
+    CHECK_FLOAT(co_a_arc.GetRisePowers()[1][0], 0.042166);
+    CHECK_FLOAT(co_a_arc.GetRisePowers()[1][1], 0.441069);
 
     // fall_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -331,10 +327,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_power */
 
-    EQUAL_WITH_TOL(co_a_arc.GetFallPowers()[0][0], 0.009122);
-    EQUAL_WITH_TOL(co_a_arc.GetFallPowers()[0][1], 0.008904);
-    EQUAL_WITH_TOL(co_a_arc.GetFallPowers()[1][0], 0.010413);
-    EQUAL_WITH_TOL(co_a_arc.GetFallPowers()[1][1], 0.009880);
+    CHECK_FLOAT(co_a_arc.GetFallPowers()[0][0], 0.009122);
+    CHECK_FLOAT(co_a_arc.GetFallPowers()[0][1], 0.008904);
+    CHECK_FLOAT(co_a_arc.GetFallPowers()[1][0], 0.010413);
+    CHECK_FLOAT(co_a_arc.GetFallPowers()[1][1], 0.009880);
 
     ///////////////////////////////////////////////////////////////////////////
     // A -> S (positive_unate)
@@ -352,10 +348,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_rise */
 
-    EQUAL_WITH_TOL(s_a_arc.GetRiseDelays()[0][0], 0.102000);
-    EQUAL_WITH_TOL(s_a_arc.GetRiseDelays()[0][1], 0.911000);
-    EQUAL_WITH_TOL(s_a_arc.GetRiseDelays()[1][0], 0.109000);
-    EQUAL_WITH_TOL(s_a_arc.GetRiseDelays()[1][1], 0.917000);
+    CHECK_FLOAT(s_a_arc.GetRiseDelays()[0][0], 0.102000);
+    CHECK_FLOAT(s_a_arc.GetRiseDelays()[0][1], 0.911000);
+    CHECK_FLOAT(s_a_arc.GetRiseDelays()[1][0], 0.109000);
+    CHECK_FLOAT(s_a_arc.GetRiseDelays()[1][1], 0.917000);
 
     // rise_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -366,10 +362,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_transition */
 
-    EQUAL_WITH_TOL(s_a_arc.GetRiseTransitions()[0][0], 0.100000);
-    EQUAL_WITH_TOL(s_a_arc.GetRiseTransitions()[0][1], 1.384000);
-    EQUAL_WITH_TOL(s_a_arc.GetRiseTransitions()[1][0], 0.102000);
-    EQUAL_WITH_TOL(s_a_arc.GetRiseTransitions()[1][1], 1.385000);
+    CHECK_FLOAT(s_a_arc.GetRiseTransitions()[0][0], 0.100000);
+    CHECK_FLOAT(s_a_arc.GetRiseTransitions()[0][1], 1.384000);
+    CHECK_FLOAT(s_a_arc.GetRiseTransitions()[1][0], 0.102000);
+    CHECK_FLOAT(s_a_arc.GetRiseTransitions()[1][1], 1.385000);
 
     // cell_fall() {
     //     index_1 ("0.010000, 0.100000")
@@ -380,10 +376,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_fall */
 
-    EQUAL_WITH_TOL(s_a_arc.GetFallDelays()[0][0], 0.105000);
-    EQUAL_WITH_TOL(s_a_arc.GetFallDelays()[0][1], 0.948000);
-    EQUAL_WITH_TOL(s_a_arc.GetFallDelays()[1][0], 0.115000);
-    EQUAL_WITH_TOL(s_a_arc.GetFallDelays()[1][1], 0.958000);
+    CHECK_FLOAT(s_a_arc.GetFallDelays()[0][0], 0.105000);
+    CHECK_FLOAT(s_a_arc.GetFallDelays()[0][1], 0.948000);
+    CHECK_FLOAT(s_a_arc.GetFallDelays()[1][0], 0.115000);
+    CHECK_FLOAT(s_a_arc.GetFallDelays()[1][1], 0.958000);
 
     // fall_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -394,10 +390,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_transition */
 
-    EQUAL_WITH_TOL(s_a_arc.GetFallTransitions()[0][0], 0.102000);
-    EQUAL_WITH_TOL(s_a_arc.GetFallTransitions()[0][1], 1.376000);
-    EQUAL_WITH_TOL(s_a_arc.GetFallTransitions()[1][0], 0.101000);
-    EQUAL_WITH_TOL(s_a_arc.GetFallTransitions()[1][1], 1.377000);
+    CHECK_FLOAT(s_a_arc.GetFallTransitions()[0][0], 0.102000);
+    CHECK_FLOAT(s_a_arc.GetFallTransitions()[0][1], 1.376000);
+    CHECK_FLOAT(s_a_arc.GetFallTransitions()[1][0], 0.101000);
+    CHECK_FLOAT(s_a_arc.GetFallTransitions()[1][1], 1.377000);
 
     // rise_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -408,10 +404,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_power */
 
-    EQUAL_WITH_TOL(s_a_arc.GetRisePowers()[0][0], 0.034337);
-    EQUAL_WITH_TOL(s_a_arc.GetRisePowers()[0][1], 0.433431);
-    EQUAL_WITH_TOL(s_a_arc.GetRisePowers()[1][0], 0.035717);
-    EQUAL_WITH_TOL(s_a_arc.GetRisePowers()[1][1], 0.434675);
+    CHECK_FLOAT(s_a_arc.GetRisePowers()[0][0], 0.034337);
+    CHECK_FLOAT(s_a_arc.GetRisePowers()[0][1], 0.433431);
+    CHECK_FLOAT(s_a_arc.GetRisePowers()[1][0], 0.035717);
+    CHECK_FLOAT(s_a_arc.GetRisePowers()[1][1], 0.434675);
 
     // fall_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -422,10 +418,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_power */
 
-    EQUAL_WITH_TOL(s_a_arc.GetFallPowers()[0][0], 0.003953);
-    EQUAL_WITH_TOL(s_a_arc.GetFallPowers()[0][1], 0.003903);
-    EQUAL_WITH_TOL(s_a_arc.GetFallPowers()[1][0], 0.004238);
-    EQUAL_WITH_TOL(s_a_arc.GetFallPowers()[1][1], 0.004004);
+    CHECK_FLOAT(s_a_arc.GetFallPowers()[0][0], 0.003953);
+    CHECK_FLOAT(s_a_arc.GetFallPowers()[0][1], 0.003903);
+    CHECK_FLOAT(s_a_arc.GetFallPowers()[1][0], 0.004238);
+    CHECK_FLOAT(s_a_arc.GetFallPowers()[1][1], 0.004004);
 
     ///////////////////////////////////////////////////////////////////////////
     // B -> S (positive_unate)
@@ -442,10 +438,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_rise */
 
-    EQUAL_WITH_TOL(s_b_arc.GetRiseDelays()[0][0], 0.111000);
-    EQUAL_WITH_TOL(s_b_arc.GetRiseDelays()[0][1], 0.920000);
-    EQUAL_WITH_TOL(s_b_arc.GetRiseDelays()[1][0], 0.117000);
-    EQUAL_WITH_TOL(s_b_arc.GetRiseDelays()[1][1], 0.925000);
+    CHECK_FLOAT(s_b_arc.GetRiseDelays()[0][0], 0.111000);
+    CHECK_FLOAT(s_b_arc.GetRiseDelays()[0][1], 0.920000);
+    CHECK_FLOAT(s_b_arc.GetRiseDelays()[1][0], 0.117000);
+    CHECK_FLOAT(s_b_arc.GetRiseDelays()[1][1], 0.925000);
 
     // rise_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -456,10 +452,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_transition */
 
-    EQUAL_WITH_TOL(s_b_arc.GetRiseTransitions()[0][0], 0.101000);
-    EQUAL_WITH_TOL(s_b_arc.GetRiseTransitions()[0][1], 1.385000);
-    EQUAL_WITH_TOL(s_b_arc.GetRiseTransitions()[1][0], 0.104000);
-    EQUAL_WITH_TOL(s_b_arc.GetRiseTransitions()[1][1], 1.385000);
+    CHECK_FLOAT(s_b_arc.GetRiseTransitions()[0][0], 0.101000);
+    CHECK_FLOAT(s_b_arc.GetRiseTransitions()[0][1], 1.385000);
+    CHECK_FLOAT(s_b_arc.GetRiseTransitions()[1][0], 0.104000);
+    CHECK_FLOAT(s_b_arc.GetRiseTransitions()[1][1], 1.385000);
 
     // cell_fall() {
     //     index_1 ("0.010000, 0.100000")
@@ -470,10 +466,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_fall */
 
-    EQUAL_WITH_TOL(s_b_arc.GetFallDelays()[0][0], 0.108000);
-    EQUAL_WITH_TOL(s_b_arc.GetFallDelays()[0][1], 0.954000);
-    EQUAL_WITH_TOL(s_b_arc.GetFallDelays()[1][0], 0.118000);
-    EQUAL_WITH_TOL(s_b_arc.GetFallDelays()[1][1], 0.963000);
+    CHECK_FLOAT(s_b_arc.GetFallDelays()[0][0], 0.108000);
+    CHECK_FLOAT(s_b_arc.GetFallDelays()[0][1], 0.954000);
+    CHECK_FLOAT(s_b_arc.GetFallDelays()[1][0], 0.118000);
+    CHECK_FLOAT(s_b_arc.GetFallDelays()[1][1], 0.963000);
 
     // fall_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -484,10 +480,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_transition */
 
-    EQUAL_WITH_TOL(s_b_arc.GetFallTransitions()[0][0], 0.102000);
-    EQUAL_WITH_TOL(s_b_arc.GetFallTransitions()[0][1], 1.376000);
-    EQUAL_WITH_TOL(s_b_arc.GetFallTransitions()[1][0], 0.103000);
-    EQUAL_WITH_TOL(s_b_arc.GetFallTransitions()[1][1], 1.376000);
+    CHECK_FLOAT(s_b_arc.GetFallTransitions()[0][0], 0.102000);
+    CHECK_FLOAT(s_b_arc.GetFallTransitions()[0][1], 1.376000);
+    CHECK_FLOAT(s_b_arc.GetFallTransitions()[1][0], 0.103000);
+    CHECK_FLOAT(s_b_arc.GetFallTransitions()[1][1], 1.376000);
 
     // rise_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -498,10 +494,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_power */
 
-    EQUAL_WITH_TOL(s_b_arc.GetRisePowers()[0][0], 0.035031);
-    EQUAL_WITH_TOL(s_b_arc.GetRisePowers()[0][1], 0.434159);
-    EQUAL_WITH_TOL(s_b_arc.GetRisePowers()[1][0], 0.035943);
-    EQUAL_WITH_TOL(s_b_arc.GetRisePowers()[1][1], 0.434978);
+    CHECK_FLOAT(s_b_arc.GetRisePowers()[0][0], 0.035031);
+    CHECK_FLOAT(s_b_arc.GetRisePowers()[0][1], 0.434159);
+    CHECK_FLOAT(s_b_arc.GetRisePowers()[1][0], 0.035943);
+    CHECK_FLOAT(s_b_arc.GetRisePowers()[1][1], 0.434978);
 
     // fall_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -512,10 +508,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_power */
 
-    EQUAL_WITH_TOL(s_b_arc.GetFallPowers()[0][0], 0.004303);
-    EQUAL_WITH_TOL(s_b_arc.GetFallPowers()[0][1], 0.004171);
-    EQUAL_WITH_TOL(s_b_arc.GetFallPowers()[1][0], 0.004487);
-    EQUAL_WITH_TOL(s_b_arc.GetFallPowers()[1][1], 0.004147);
+    CHECK_FLOAT(s_b_arc.GetFallPowers()[0][0], 0.004303);
+    CHECK_FLOAT(s_b_arc.GetFallPowers()[0][1], 0.004171);
+    CHECK_FLOAT(s_b_arc.GetFallPowers()[1][0], 0.004487);
+    CHECK_FLOAT(s_b_arc.GetFallPowers()[1][1], 0.004147);
 
     ///////////////////////////////////////////////////////////////////////////
     // B -> S (negative_unate)
@@ -532,10 +528,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_rise */
 
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRiseDelays()[0][0], 0.133000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRiseDelays()[0][1], 0.941000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRiseDelays()[1][0], 0.148000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRiseDelays()[1][1], 0.957000);
+    CHECK_FLOAT(s_b_neg_arc.GetRiseDelays()[0][0], 0.133000);
+    CHECK_FLOAT(s_b_neg_arc.GetRiseDelays()[0][1], 0.941000);
+    CHECK_FLOAT(s_b_neg_arc.GetRiseDelays()[1][0], 0.148000);
+    CHECK_FLOAT(s_b_neg_arc.GetRiseDelays()[1][1], 0.957000);
 
     // rise_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -546,10 +542,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_transition */
 
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRiseTransitions()[0][0], 0.100000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRiseTransitions()[0][1], 1.384000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRiseTransitions()[1][0], 0.101000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRiseTransitions()[1][1], 1.385000);
+    CHECK_FLOAT(s_b_neg_arc.GetRiseTransitions()[0][0], 0.100000);
+    CHECK_FLOAT(s_b_neg_arc.GetRiseTransitions()[0][1], 1.384000);
+    CHECK_FLOAT(s_b_neg_arc.GetRiseTransitions()[1][0], 0.101000);
+    CHECK_FLOAT(s_b_neg_arc.GetRiseTransitions()[1][1], 1.385000);
 
     // cell_fall() {
     //     index_1 ("0.010000, 0.100000")
@@ -560,10 +556,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_fall */
 
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallDelays()[0][0], 0.139000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallDelays()[0][1], 0.982000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallDelays()[1][0], 0.145000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallDelays()[1][1], 0.990000);
+    CHECK_FLOAT(s_b_neg_arc.GetFallDelays()[0][0], 0.139000);
+    CHECK_FLOAT(s_b_neg_arc.GetFallDelays()[0][1], 0.982000);
+    CHECK_FLOAT(s_b_neg_arc.GetFallDelays()[1][0], 0.145000);
+    CHECK_FLOAT(s_b_neg_arc.GetFallDelays()[1][1], 0.990000);
 
     // fall_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -574,10 +570,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_transition */
 
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallTransitions()[0][0], 0.100000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallTransitions()[0][1], 1.375000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallTransitions()[1][0], 0.099000);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallTransitions()[1][1], 1.375000);
+    CHECK_FLOAT(s_b_neg_arc.GetFallTransitions()[0][0], 0.100000);
+    CHECK_FLOAT(s_b_neg_arc.GetFallTransitions()[0][1], 1.375000);
+    CHECK_FLOAT(s_b_neg_arc.GetFallTransitions()[1][0], 0.099000);
+    CHECK_FLOAT(s_b_neg_arc.GetFallTransitions()[1][1], 1.375000);
 
     // rise_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -588,10 +584,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_power */
 
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRisePowers()[0][0], 0.037884);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRisePowers()[0][1], 0.436893);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRisePowers()[1][0], 0.039451);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetRisePowers()[1][1], 0.438445);
+    CHECK_FLOAT(s_b_neg_arc.GetRisePowers()[0][0], 0.037884);
+    CHECK_FLOAT(s_b_neg_arc.GetRisePowers()[0][1], 0.436893);
+    CHECK_FLOAT(s_b_neg_arc.GetRisePowers()[1][0], 0.039451);
+    CHECK_FLOAT(s_b_neg_arc.GetRisePowers()[1][1], 0.438445);
 
     // fall_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -602,10 +598,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_power */
 
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallPowers()[0][0], 0.012134);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallPowers()[0][1], 0.011989);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallPowers()[1][0], 0.014315);
-    EQUAL_WITH_TOL(s_b_neg_arc.GetFallPowers()[1][1], 0.014079);
+    CHECK_FLOAT(s_b_neg_arc.GetFallPowers()[0][0], 0.012134);
+    CHECK_FLOAT(s_b_neg_arc.GetFallPowers()[0][1], 0.011989);
+    CHECK_FLOAT(s_b_neg_arc.GetFallPowers()[1][0], 0.014315);
+    CHECK_FLOAT(s_b_neg_arc.GetFallPowers()[1][1], 0.014079);
 
     ///////////////////////////////////////////////////////////////////////////
     // A -> S (negative_unate)
@@ -622,10 +618,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_rise */
 
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRiseDelays()[0][0], 0.134000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRiseDelays()[0][1], 0.943000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRiseDelays()[1][0], 0.149000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRiseDelays()[1][1], 0.957000);
+    CHECK_FLOAT(s_a_neg_arc.GetRiseDelays()[0][0], 0.134000);
+    CHECK_FLOAT(s_a_neg_arc.GetRiseDelays()[0][1], 0.943000);
+    CHECK_FLOAT(s_a_neg_arc.GetRiseDelays()[1][0], 0.149000);
+    CHECK_FLOAT(s_a_neg_arc.GetRiseDelays()[1][1], 0.957000);
 
     // rise_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -636,10 +632,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_transition */
 
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRiseTransitions()[0][0], 0.103000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRiseTransitions()[0][1], 1.385000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRiseTransitions()[1][0], 0.103000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRiseTransitions()[1][1], 1.386000);
+    CHECK_FLOAT(s_a_neg_arc.GetRiseTransitions()[0][0], 0.103000);
+    CHECK_FLOAT(s_a_neg_arc.GetRiseTransitions()[0][1], 1.385000);
+    CHECK_FLOAT(s_a_neg_arc.GetRiseTransitions()[1][0], 0.103000);
+    CHECK_FLOAT(s_a_neg_arc.GetRiseTransitions()[1][1], 1.386000);
 
     // cell_fall() {
     //     index_1 ("0.010000, 0.100000")
@@ -650,10 +646,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end cell_fall */
 
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallDelays()[0][0], 0.134000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallDelays()[0][1], 0.979000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallDelays()[1][0], 0.142000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallDelays()[1][1], 0.985000);
+    CHECK_FLOAT(s_a_neg_arc.GetFallDelays()[0][0], 0.134000);
+    CHECK_FLOAT(s_a_neg_arc.GetFallDelays()[0][1], 0.979000);
+    CHECK_FLOAT(s_a_neg_arc.GetFallDelays()[1][0], 0.142000);
+    CHECK_FLOAT(s_a_neg_arc.GetFallDelays()[1][1], 0.985000);
 
     // fall_transition() {
     //     index_1 ("0.010000, 0.100000")
@@ -664,10 +660,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_transition */
 
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallTransitions()[0][0], 0.100000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallTransitions()[0][1], 1.375000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallTransitions()[1][0], 0.100000);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallTransitions()[1][1], 1.375000);
+    CHECK_FLOAT(s_a_neg_arc.GetFallTransitions()[0][0], 0.100000);
+    CHECK_FLOAT(s_a_neg_arc.GetFallTransitions()[0][1], 1.375000);
+    CHECK_FLOAT(s_a_neg_arc.GetFallTransitions()[1][0], 0.100000);
+    CHECK_FLOAT(s_a_neg_arc.GetFallTransitions()[1][1], 1.375000);
 
     // rise_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -678,10 +674,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end rise_power */
 
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRisePowers()[0][0], 0.037885);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRisePowers()[0][1], 0.436884);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRisePowers()[1][0], 0.040093);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetRisePowers()[1][1], 0.439097);
+    CHECK_FLOAT(s_a_neg_arc.GetRisePowers()[0][0], 0.037885);
+    CHECK_FLOAT(s_a_neg_arc.GetRisePowers()[0][1], 0.436884);
+    CHECK_FLOAT(s_a_neg_arc.GetRisePowers()[1][0], 0.040093);
+    CHECK_FLOAT(s_a_neg_arc.GetRisePowers()[1][1], 0.439097);
 
     // fall_power() {
     //     index_1 ("0.010000, 0.100000")
@@ -692,10 +688,10 @@ void test_half_adder(Context &ctx, Algorithms &algs)
     //     ) ;
     // } /* end fall_power */
 
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallPowers()[0][0], 0.011259);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallPowers()[0][1], 0.011032);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallPowers()[1][0], 0.013447);
-    EQUAL_WITH_TOL(s_a_neg_arc.GetFallPowers()[1][1], 0.013117);
+    CHECK_FLOAT(s_a_neg_arc.GetFallPowers()[0][0], 0.011259);
+    CHECK_FLOAT(s_a_neg_arc.GetFallPowers()[0][1], 0.011032);
+    CHECK_FLOAT(s_a_neg_arc.GetFallPowers()[1][0], 0.013447);
+    CHECK_FLOAT(s_a_neg_arc.GetFallPowers()[1][1], 0.013117);
 }
 
 

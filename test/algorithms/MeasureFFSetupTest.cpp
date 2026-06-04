@@ -10,7 +10,7 @@
 
 using namespace open_char;
 
-void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
+static void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 {
     CREATE_DFF_CKB_SB_RB_CELL(ctx, c1);
     c1.GetSequential().SetKind(SequentialKind::FLIP_FLOP);
@@ -47,21 +47,21 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     ctx.GetSimulationPool().WaitDone();
 
     // fall_constraint() {
-    //       index_1 ("0.020000, 0.100000")
-    //       index_2 ("0.020000, 0.100000")
-    //       values (
-    //         "0.016865, -0.021671"
-    //         "0.072623, 0.011918"
-    //       ) ;
-    //     } /* end fall_constraint */
+    //     index_1 ("0.050000, 0.200000")
+    //     index_2 ("0.050000, 0.300000")
+    //     values (
+    //      "0.020291, -0.115605"
+    //      "0.107735, -0.036123"
+    //     ) ;
+    // } /* end fall_constraint */
 
     Pin& pin = c1.GetPin("D");
     Arc& arc = pin.GetArcs()[0];
 
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[0][0], 0.016865);
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[0][1], -0.021671);
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[1][0], 0.072623);
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[1][1], 0.011918);
+    CHECK_FLOAT(arc.GetFallConstraints()[0][0], 0.020291);
+    CHECK_FLOAT(arc.GetFallConstraints()[0][1], -0.115605);
+    CHECK_FLOAT(arc.GetFallConstraints()[1][0], 0.107735);
+    CHECK_FLOAT(arc.GetFallConstraints()[1][1], -0.036123);
 }
 
 int main()

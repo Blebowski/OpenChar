@@ -8,11 +8,11 @@
 
 using namespace open_char;
 
-void test_inv(Context &ctx, Algorithms &algs)
+static void test_inv(Context &ctx, Algorithms &algs)
 {
     CREATE_INV_CELL(ctx, c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
     algs.MeasureComboLogicTables(c1);
 
     assert (c1.GetPin("Y").GetLogicTableEntry(0).first == 0);
@@ -22,11 +22,11 @@ void test_inv(Context &ctx, Algorithms &algs)
     assert (c1.GetPin("Y").GetLogicTableEntry(1).second == 0);
 }
 
-void test_nand2(Context &ctx, Algorithms &algs)
+static void test_nand2(Context &ctx, Algorithms &algs)
 {
     CREATE_NAND2_CELL(ctx, c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
     algs.MeasureComboLogicTables(c1);
 
     assert (c1.GetPin("Y").GetLogicTableEntry(0).first == 0b00);
@@ -42,11 +42,11 @@ void test_nand2(Context &ctx, Algorithms &algs)
     assert (c1.GetPin("Y").GetLogicTableEntry(3).second == 0);
 }
 
-void test_half_adder(Context &ctx, Algorithms &algs)
+static void test_half_adder(Context &ctx, Algorithms &algs)
 {
     CREATE_HALF_ADDER_CELL(ctx, c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableAndLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
     assert(algs.MeasureComboLogicTables(c1));
 
     assert (c1.GetPin("CO").GetLogicTableEntry(0).first == 0b00);

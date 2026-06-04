@@ -7,6 +7,7 @@
 #include "open_char.h"
 
 #include "Expression.h"
+#include "Arc.h"
 #include "Utils.h"
 
 namespace open_char {
@@ -22,15 +23,13 @@ class Algorithms {
         void PrepareInputCapSims(Cell &cell);
         bool MeasureInputCap(Cell &cell);
 
-        void PrepareComboLogicTableAndLeakageSims(Cell &cell);
+        void PrepareComboLogicTableLeakageSims(Cell &cell);
         bool MeasureComboLogicTables(Cell &cell);
         bool MeasureComboLeakage(Cell &cell);
         void CalculateComboLogicFunctions(Cell &cell);
 
-        void PrepareComboDelayAndPowerSims(Cell &cell);
-        bool MeasureComboDelays(Cell &cell);
-        bool MeasureComboTransitions(Cell &cell);
-        bool MeasureComboPowers(Cell &cell);
+        void PrepareComboDelayTransitionPowerSims(Cell &cell);
+        bool MeasureComboDelaysTransitionsPowers(Cell &cell);
 
         void PrepareSeqAsyncFunctionSims(Cell &cell);
         bool MeasureSeqAsyncFunctions(Cell &cell);
@@ -62,6 +61,12 @@ class Algorithms {
 
         int PrepareOneComboArcSims(Pin &o_pin, int64_t in_from, int64_t in_to,
                                    int out_from, int out_to);
+        void MeasureOneComboDelay(Simulation *sim, Waves &w, Pin &o_pin, Arc &arc,
+                                  size_t i_tran_index, size_t o_cap_index);
+        void MeasureOneComboTransition(Simulation *sim, Waves &w, Pin &o_pin, Arc &arc,
+                                       size_t i_tran_index, size_t o_cap_index);
+        void MeasureOneComboPower(Simulation *sim, Waves &w, Pin &o_pin, Arc &arc,
+                                  size_t i_tran_index, size_t o_cap_index);
 
         void PrepareOneFFSetupOrHoldSim(Cell &cell, ArcKind a_kind, size_t arc_index,
                                         size_t d_tran_index, NanoSecond d_tran,

@@ -1,6 +1,10 @@
 
+#include <filesystem>
+
 #include "StackTrace.h"
 #include "Utils.h"
+
+#define TEST_RUN_DIR "characterization_data"
 
 #define RUN_SIMULATIONS(ctx, prep_func)                                                         \
         do {                                                                                    \
@@ -12,8 +16,31 @@
 #define ALG_TEST_INIT(ctx, algs)                                                                \
         StackTraceInit();                                                                       \
         Context ctx(nullptr);                                                                   \
+        ctx.GetVariables().SetVariable("run_directory", TEST_RUN_DIR);                          \
+        std::filesystem::remove_all(TEST_RUN_DIR);                                              \
         ctx.GetSimulationPool().SetNumThreads(10);                                              \
         Algorithms algs(&ctx);
+
+// For now we set 2.5 % tolerance
+// This may need to be updated if we make time-step configurable
+#define FABS(x) std::fabs(static_cast<double>(x))
+#define TOLERANCE 0.025
+#define EQUAL_WITH_TOL(obs, exp) ((FABS(obs - exp)) < (FABS(exp) * TOLERANCE))
+
+#define CHECK_FLOAT(obs, exp)                                                                   \
+            do {                                                                                \
+                if (!EQUAL_WITH_TOL(obs, exp)) {                                                \
+                    info("Observed:  %f",  obs);                                                \
+                    info("Expected:  %f +- %f (%f - %f)",  exp, exp * TOLERANCE,                \
+                         exp - exp * TOLERANCE, exp + exp * TOLERANCE);                         \
+                    assert(false && "Expected does not match observed!");                       \
+                }                                                                               \
+            } while (0)
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////
+// Cell creation wrappers
+/////////////////////////////////////////////////////////////////////////////////////////////////
 
 #define CREATE_INV_CELL(ctx, name)                                                              \
         ctx.GetLibrary().AddCell("INV");                                                        \
@@ -90,17 +117,3 @@
         c1.AddPin("SB",  PinDirection::IN,      PinKind::ASYNC);                                \
         c1.AddPin("VDD", PinDirection::INOUT,   PinKind::PWR);                                  \
         c1.AddPin("VSS", PinDirection::INOUT,   PinKind::PWR);
-
-// For now we set 2 % tolerance
-// This may need to be updated if we make time-step configurable
-#define FABS(x) std::fabs(static_cast<double>(x))
-#define EQUAL_WITH_TOL(a, b) ((FABS(a)) - FABS(b) < (FABS(a) * 0.025))
-
-#define CHECK_FLOAT(real, exp)                                                                  \
-            do {                                                                                \
-                if (!EQUAL_WITH_TOL(real, exp)) {                                               \
-                    info("Observed:  %f",  real);                                               \
-                    info("Expected:  %f",  exp);                                                \
-                    assert(false && "Expected does not match observed!");                       \
-                }                                                                               \
-            } while (0)

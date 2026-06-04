@@ -10,7 +10,7 @@
 
 using namespace open_char;
 
-void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
+static void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 {
     CREATE_DFF_CKB_SB_RB_CELL(ctx, c1);
 
@@ -20,7 +20,7 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     assert(c1.GetSequential().GetKind() == SequentialKind::FLIP_FLOP);
 }
 
-void test_lat_ckb_r_s(Context &ctx, Algorithms &algs)
+static void test_lat_ckb_r_s(Context &ctx, Algorithms &algs)
 {
     CREATE_LAT_CKB_R_S_CELL(ctx, c1);
     RUN_SIMULATIONS(ctx, algs.PrepareSeqCellKindSims(c1));
