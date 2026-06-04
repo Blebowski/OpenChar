@@ -1544,8 +1544,10 @@ bool Algorithms::MeasureFFClockPowers(Cell &cell)
     return true;
 }
 
-void Algorithms::PrepareSetupSims(Cell &cell)
+void Algorithms::PrepareFFSetupOrHoldSims(Cell &cell, ArcKind a_kind)
 {
+    assert(a_kind == ArcKind::SEQ_SETUP || a_kind == ArcKind::SEQ_HOLD);
+
     auto *templ = cell.GetConstraintTemplate();
     assert(templ != nullptr);
 
@@ -1553,7 +1555,7 @@ void Algorithms::PrepareSetupSims(Cell &cell)
 
     // TODO: This assumes DFF with single output
     auto & d_pin = cell.GetPins(PinDirection::IN, PinKind::DATA).front();
-    d_pin.AddArc(Arc(&d_pin, templ, ArcKind::SEQ_SETUP, 0, 1, 0, 1));
+    d_pin.AddArc(Arc(&d_pin, templ, a_kind, 0, 1, 0, 1));
     size_t arc_index = d_pin.GetArcs().size() - 1;
 
     const NanoSecond ck_q_base = std::numeric_limits<NanoSecond>::quiet_NaN();
@@ -1565,25 +1567,28 @@ void Algorithms::PrepareSetupSims(Cell &cell)
 
         size_t ck_tran_index = 0;
         for (PicoFarad ck_tran : templ->GetIndex2()) {
-            PrepareOneSetupSim(cell, arc_index, d_tran_index, d_tran, ck_tran_index,
-                               ck_tran, ck_q_base, ck_d_skew, step);
+            PrepareOneFFSetupOrHoldSim(cell, a_kind, arc_index, d_tran_index, d_tran,
+                                       ck_tran_index, ck_tran, ck_q_base, ck_d_skew, step);
             ck_tran_index++;
         }
         d_tran_index++;
     }
 }
 
-void Algorithms::PrepareOneSetupSim(Cell &cell, size_t arc_index,
-                                    size_t d_tran_index, NanoSecond d_tran,
-                                    size_t ck_tran_index, NanoSecond ck_tran,
-                                    NanoSecond ck_q_base, NanoSecond ck_d_skew,
-                                    NanoSecond step)
+void Algorithms::PrepareOneFFSetupOrHoldSim(Cell &cell, ArcKind a_kind, size_t arc_index,
+                                            size_t d_tran_index, NanoSecond d_tran,
+                                            size_t ck_tran_index, NanoSecond ck_tran,
+                                            NanoSecond ck_q_base, NanoSecond ck_d_skew,
+                                            NanoSecond step)
 {
+    assert(a_kind == ArcKind::SEQ_SETUP || a_kind == ArcKind::SEQ_HOLD);
+
     // TODO: This assumes DFF with single output
     auto & c_pin = cell.GetPins(PinKind::CLK).front();
     auto & d_pin = cell.GetPins(PinDirection::IN, PinKind::DATA).front();
 
-    std::string sim_name = sprintf("SEQ_SETUP_%s_TRAN_%f_%s_TRAN_%f_CK_D_SKEW_%f",
+    std::string sim_name = sprintf("SEQ_%s_%s_TRAN_%f_%s_TRAN_%f_CK_D_SKEW_%f",
+                                    (a_kind == ArcKind::SEQ_SETUP) ? "SETUP" : "HOLD",
                                     d_pin.name_, d_tran, c_pin.name_, ck_tran, ck_d_skew);
     Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
 
@@ -1600,12 +1605,22 @@ void Algorithms::PrepareOneSetupSim(Cell &cell, size_t arc_index,
 
     NanoSecond t_ck_offset = 5.0;
     NanoSecond t_ck_period = 10.0;
-    NanoSecond t_d = t_ck_offset + t_ck_period - ck_d_skew;
 
     // Drive D-pin
-    // First preset Q to 0 on first clock edge, then apply D=1 at ck_d_skew
-    // before second clock edge
-    sim->AddStimuli(&d_pin, Stimulus(log0_v, log1_v, t_d, d_tran, d_tran, 10.0, 100.0, 1));
+    if (a_kind == ArcKind::SEQ_SETUP) {
+        // ck_d_skew - How much is D BEFORE clock
+        // First preset Q to 0 on first clock edge, then apply D=1 at ck_d_skew
+        // before second clock edge.
+        NanoSecond t_d = t_ck_offset + t_ck_period - ck_d_skew;
+        sim->AddStimuli(&d_pin, Stimulus(log0_v, log1_v, t_d, d_tran, d_tran, 10.0, 100.0, 1));
+    } else {
+        // ck_d_skew - How much is D AFTER clock
+        // First preset Q to 0 on first clock edge, then apply D=1 at half of
+        // first clock cycle, then set D=0 at ck_d_skew before clock edge
+        NanoSecond t_d = 10.0;
+        NanoSecond t_pw = 5 + ck_d_skew;
+        sim->AddStimuli(&d_pin, Stimulus(log0_v, log1_v, t_d, d_tran, d_tran, t_pw, 100.0, 1));
+    }
 
     // Drive clock
     EdgeKind c_polarity = cell.GetSequential().GetClockPolarity();
@@ -1618,7 +1633,7 @@ void Algorithms::PrepareOneSetupSim(Cell &cell, size_t arc_index,
     sim->PutDoubleMetaData(ck_d_skew);
     sim->PutDoubleMetaData(step);
 
-    info("PrepareOneSetupSim:");
+    info("PrepareOneFFSetupOrHoldSim:");
     info("  ck_q_base:  %f ns", ck_q_base);
     info("  ck_d_skew:  %f ns", ck_d_skew);
     info("  step:       %f ns", step);
@@ -1627,8 +1642,9 @@ void Algorithms::PrepareOneSetupSim(Cell &cell, size_t arc_index,
     ctx_->GetSimulationPool().EnqueueSimulation(sim);
 }
 
-std::pair<bool,bool> Algorithms::MeasureSetup(Cell &cell)
+std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind)
 {
+    assert(a_kind == ArcKind::SEQ_SETUP || a_kind == ArcKind::SEQ_HOLD);
     assert(cell.GetKind() == CellKind::SEQUENTIAL);
 
     // TODO: This assumes DFF with single D and Q
@@ -1640,7 +1656,7 @@ std::pair<bool,bool> Algorithms::MeasureSetup(Cell &cell)
     // TODO: Move the search down to the Pin itself
     int arc_index = -1;
     for (int i = 0; auto & a : d_pin.GetArcs()) {
-        if (a.GetKind() == ArcKind::SEQ_SETUP) {
+        if (a.GetKind() == a_kind) {
             arc_index = i;
             break;
         }
@@ -1679,7 +1695,7 @@ std::pair<bool,bool> Algorithms::MeasureSetup(Cell &cell)
             NanoSecond ck_d_skew = sim->GetDoubleMetaDataAt(1);
             NanoSecond step = sim->GetDoubleMetaDataAt(2);
 
-            info("MeasureSetup:");
+            info("MeasureFFSetupOrHold:");
             info("  ck_q_base:  %f ns", ck_q_base);
             info("  ck_d_skew:  %f ns", ck_d_skew);
             info("  step:       %f ns", step);
@@ -1712,25 +1728,29 @@ std::pair<bool,bool> Algorithms::MeasureSetup(Cell &cell)
                 NanoSecond q_edge = w.FindTransitionTime(q_pin.name_, q_th, 12.5, 17.5);
                 ck_q_base = q_edge - ck_edge;
 
-                PrepareOneSetupSim(cell, arc_index, d_tran_index, d_tran,
-                                   ck_tran_index, ck_tran, ck_q_base, ck_d_skew,
-                                   step);
+                PrepareOneFFSetupOrHoldSim(cell, a_kind, arc_index, d_tran_index, d_tran,
+                                           ck_tran_index, ck_tran, ck_q_base, ck_d_skew,
+                                           step);
                 all_finished = false;
 
             // Q == 1 -> CK edge took the D -> Mesure CK -> Q delay
             } else if (q_end == 1) {
                 info("  Q == 1");
+
                 NanoSecond ck_edge = w.FindTransitionTime(c_pin.name_, ck_th, 12.5, 17.5);
                 NanoSecond q_edge = w.FindTransitionTime(q_pin.name_, q_th, 12.5, 17.5);
                 NanoSecond ck_q_delay = q_edge - ck_edge;
 
+                info("  q_edge:     %f", q_edge);
+                info("  ck_edge:    %f", ck_edge);
                 info("  ck_q_delay: %f", ck_q_delay);
 
                 // TODO: This branch will repeat mutliple times -> Not needed!
                 // TODO: Make the percentage range configurable by user!
+
                 info("  Delay increment: %f %", (ck_q_delay - ck_q_base) / (ck_q_base) * 100.0);
 
-                // Upon 2.5 - 5 % delay increment, consider this as S/H time
+                // Upon 2.5 - 5 % delay increment, measured skew becomes the S/H time
                 if (ck_q_delay > ck_q_base * 1.025) {
 
                     if (ck_q_delay < ck_q_base * 1.05) {
@@ -1741,45 +1761,43 @@ std::pair<bool,bool> Algorithms::MeasureSetup(Cell &cell)
                             arc.SetFallConstraint(d_tran_index, ck_tran_index, ck_d_skew);
                         }
 
-                    // Q=1, but the delay is above 5 %, iterate down as-if we missed!
+                    // Q=1, but the delay is above 5 % -> Increment ck_d_skew
                     } else {
                         info("  Delay more than 5 % increment...\n");
                         ck_d_skew += step;
                         step *= 2.0/3.0;
                         all_finished = false;
-                        PrepareOneSetupSim(cell, arc_index,
-                                           d_tran_index, d_tran,
-                                           ck_tran_index, ck_tran,
-                                           ck_q_base, ck_d_skew,
-                                           step);
+                        PrepareOneFFSetupOrHoldSim(cell, a_kind, arc_index,
+                                                   d_tran_index, d_tran,
+                                                   ck_tran_index, ck_tran,
+                                                   ck_q_base, ck_d_skew,
+                                                   step);
                     }
 
-                // Q=1, but the CK->Q delay is less than 2.5 % increment.
-                // Need to decrement the skew for next simulation.
+                // Q=1, but the CK->Q delay is less than 2.5 % increment -> Decrement the skew
                 } else {
                     info("  Delay less than 2.5 % increment...\n");
                     ck_d_skew -= step;
                     step *= 2.0/3.0;
                     all_finished = false;
-                    PrepareOneSetupSim(cell, arc_index,
-                                       d_tran_index, d_tran,
-                                       ck_tran_index, ck_tran,
-                                       ck_q_base, ck_d_skew,
-                                       step);
+                    PrepareOneFFSetupOrHoldSim(cell, a_kind, arc_index,
+                                               d_tran_index, d_tran,
+                                               ck_tran_index, ck_tran,
+                                               ck_q_base, ck_d_skew,
+                                               step);
                 }
 
-            // Q == 0 -> Missed by CK edge -> Skew too low (or negative) ->
-            // Need to increase the skew.
+            // Q == 0 -> Missed by CK edge -> Increment the skew
             } else if (q_end == 0) {
                 info("  Q == 0\n");
                 ck_d_skew += step;
                 step *= 2.0/3.0;
                 all_finished = false;
-                PrepareOneSetupSim(cell, arc_index,
-                                   d_tran_index, d_tran,
-                                   ck_tran_index, ck_tran,
-                                   ck_q_base, ck_d_skew,
-                                   step);
+                PrepareOneFFSetupOrHoldSim(cell, a_kind, arc_index,
+                                           d_tran_index, d_tran,
+                                           ck_tran_index, ck_tran,
+                                           ck_q_base, ck_d_skew,
+                                           step);
             }
             ck_tran_index++;
         }
@@ -1957,7 +1975,7 @@ bool Algorithms::CharacterizeLibrary()
 
             case CharactState::SEQ_FF_SETUP_START:
                 info("%s - Preparing flip-flop Setup Simulations", cell.GetName());
-                PrepareSetupSims(cell);
+                PrepareFFSetupOrHoldSims(cell, ArcKind::SEQ_SETUP);
                 cell.SetCharactState(CharactState::SEQ_FF_SETUP_FINISH);
                 break;
 
@@ -1967,13 +1985,41 @@ bool Algorithms::CharacterizeLibrary()
                     continue;
                 }
 
-                auto [all_setups_found, sim_ok] = MeasureSetup(cell);
+                auto [all_setups_found, sim_ok] = MeasureFFSetupOrHold(cell, ArcKind::SEQ_SETUP);
                 if (!sim_ok) {
                     error("%s - Aborting characterization !", cell.GetName());
                     cell.SetCharactState(CharactState::ERROR);
+                    break;
                 }
 
                 if (!all_setups_found) {
+                    continue;
+                }
+
+                cell.SetCharactState(CharactState::SEQ_FF_HOLD_START);
+                break;
+            }
+
+            case CharactState::SEQ_FF_HOLD_START:
+                info("%s - Preparing flip-flop Hold Simulations", cell.GetName());
+                PrepareFFSetupOrHoldSims(cell, ArcKind::SEQ_HOLD);
+                cell.SetCharactState(CharactState::SEQ_FF_HOLD_FINISH);
+                break;
+
+            case CharactState::SEQ_FF_HOLD_FINISH:
+            {
+                if (!cell.IsSimulationFinished()) {
+                    continue;
+                }
+
+                auto [all_holds_found, sim_ok] = MeasureFFSetupOrHold(cell, ArcKind::SEQ_HOLD);
+                if (!sim_ok) {
+                    error("%s - Aborting characterization !", cell.GetName());
+                    cell.SetCharactState(CharactState::ERROR);
+                    break;
+                }
+
+                if (!all_holds_found) {
                     continue;
                 }
 

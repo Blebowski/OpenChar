@@ -36,7 +36,6 @@ Features:
         - Capture output.
         - Add logic table entry with all inputs an previous value of states
         - Cover the expression and simplify -> Logic function extracted.
-    - Measure hold times of FF
     - Measure "min-pulse-width" on clock
         - How to measure this ?
         IDEAS: check at what minimal pulse width stable D propagates to Q.

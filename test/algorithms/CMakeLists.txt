@@ -6,6 +6,8 @@ OPEN_CHAR_TEST(MeasureComboDelayPowerTransitionTest)
 OPEN_CHAR_TEST(CalculateComboLogicFunctionTest)
 
 OPEN_CHAR_TEST(MeasureSequentialCellKindTest)
+
 OPEN_CHAR_TEST(MeasureFFClockPolarityTest)
 OPEN_CHAR_TEST(MeasureFFClockDelayPowerTransitionTest)
-OPEN_CHAR_TEST(MeasureSetupTest)
+OPEN_CHAR_TEST(MeasureFFSetupTest)
+OPEN_CHAR_TEST(MeasureFFHoldTest)

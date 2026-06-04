@@ -46,13 +46,8 @@ class Algorithms {
         bool MeasureFFClockTransition(Cell &cell);
         bool MeasureFFClockPowers(Cell &cell);
 
-        void PrepareSetupSims(Cell &cell);
-        void PrepareOneSetupSim(Cell &cell, size_t arc_index,
-                                size_t d_tran_index, NanoSecond d_tran,
-                                size_t ck_tran_index, NanoSecond ck_tran,
-                                NanoSecond ck_q_base, NanoSecond ck_d_skew,
-                                NanoSecond step);
-        std::pair<bool,bool> MeasureSetup(Cell &cell);
+        void PrepareFFSetupOrHoldSims(Cell &cell, ArcKind a_kind);
+        std::pair<bool,bool> MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind);
 
         bool CharacterizeLibrary();
 
@@ -67,6 +62,12 @@ class Algorithms {
 
         int PrepareOneComboArcSims(Pin &o_pin, int64_t in_from, int64_t in_to,
                                    int out_from, int out_to);
+
+        void PrepareOneFFSetupOrHoldSim(Cell &cell, ArcKind a_kind, size_t arc_index,
+                                        size_t d_tran_index, NanoSecond d_tran,
+                                        size_t ck_tran_index, NanoSecond ck_tran,
+                                        NanoSecond ck_q_base, NanoSecond ck_d_skew,
+                                        NanoSecond step);
 };
 
 }

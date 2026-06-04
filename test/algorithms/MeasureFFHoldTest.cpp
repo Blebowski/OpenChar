@@ -31,14 +31,14 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     c1.SetConstraintTemplate(&t);
 
     ctx.GetSimulationPool().Start();
-    algs.PrepareSetupSims(c1);
+    algs.PrepareFFSetupOrHoldSims(c1, ArcKind::SEQ_HOLD);
 
     while (true) {
         std::this_thread::sleep_for(std::chrono::milliseconds(100));
         if (!c1.IsSimulationFinished()) {
             continue;
         }
-        auto [all_setups_measured, sims_ok] = algs.MeasureSetup(c1);
+        auto [all_setups_measured, sims_ok] = algs.MeasureFFSetupOrHold(c1, ArcKind::SEQ_HOLD);
         assert(sims_ok);
         if (all_setups_measured) {
             break;
@@ -47,21 +47,21 @@ void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
     ctx.GetSimulationPool().WaitDone();
 
     // fall_constraint() {
-    //       index_1 ("0.020000, 0.100000")
-    //       index_2 ("0.020000, 0.100000")
-    //       values (
-    //         "0.016865, -0.021671"
-    //         "0.072623, 0.011918"
-    //       ) ;
-    //     } /* end fall_constraint */
+    //     index_1 ("0.050000, 0.200000")
+    //     index_2 ("0.050000, 0.300000")
+    //     values (
+    //     "-0.036123, 0.110197"
+    //     "-0.270233, -0.133588"
+    //     ) ;
+    // } /* end fall_constraint */
 
     Pin& pin = c1.GetPin("D");
     Arc& arc = pin.GetArcs()[0];
 
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[0][0], 0.016865);
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[0][1], -0.021671);
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[1][0], 0.072623);
-    EQUAL_WITH_TOL(arc.GetFallConstraints()[1][1], 0.011918);
+    EQUAL_WITH_TOL(arc.GetFallConstraints()[0][0], -0.036123);
+    EQUAL_WITH_TOL(arc.GetFallConstraints()[0][1], 0.110197);
+    EQUAL_WITH_TOL(arc.GetFallConstraints()[1][0], -0.270233);
+    EQUAL_WITH_TOL(arc.GetFallConstraints()[1][1], -0.133588);
 }
 
 int main()

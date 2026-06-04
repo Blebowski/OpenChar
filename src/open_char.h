@@ -130,6 +130,8 @@ namespace open_char {
         SEQ_FF_DLY_PWR,
         SEQ_FF_SETUP_START,
         SEQ_FF_SETUP_FINISH,
+        SEQ_FF_HOLD_START,
+        SEQ_FF_HOLD_FINISH,
 
         ERROR,
         DONE,
