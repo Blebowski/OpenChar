@@ -1216,7 +1216,7 @@ bool Algorithms::MeasureFFClockPolarity(Cell &cell)
     return true;
 }
 
-void Algorithms::PrepareFFClockDelaySims(Cell &cell)
+void Algorithms::PrepareFFClockDelayTransitionPowerSims(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
 
@@ -1282,126 +1282,115 @@ void Algorithms::PrepareFFClockDelaySims(Cell &cell)
     }
 }
 
-bool Algorithms::MeasureFFClockDelay(Cell &cell)
+void Algorithms::MeasureOneFFClockDelay(Cell &cell, Simulation *sim, Waves &w, Arc &arc,
+                                        Pin &o_pin, size_t i_tran_index, size_t o_cap_index)
 {
-    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
-        for (auto & arc : o_pin.GetArcs()) {
+    int d_val = sim->GetMetaDataAt(0);
+    auto & c_pin = cell.GetPins(PinKind::CLK).front();
 
-            size_t i_tran_index = 0;
-            for (auto & sims_row : arc.GetSimulations()) {
+    Variables &vars = ctx_->GetVariables();
+    double q_th = (d_val == 1) ? vars.GetDoubleVariable("delay_out_rise") :
+                                 vars.GetDoubleVariable("delay_out_fall");
+    double c_th = (cell.GetSequential().GetClockPolarity() == EdgeKind::RISING) ?
+                            vars.GetDoubleVariable("delay_in_rise") :
+                            vars.GetDoubleVariable("delay_in_fall");
 
-                size_t o_cap_index = 0;
-                for (auto & sims_row_coll : sims_row) {
+    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+    Volt vdd_voltage = supply->GetVddVoltage();
+    q_th *= vdd_voltage;
+    c_th *= vdd_voltage;
 
-                    assert(sims_row_coll.size() == 2);
-                    for (Simulation *sim : sims_row_coll) {
+    // TODO: Pass the expected times via Simulation Object
+    NanoSecond q_edge = w.FindTransitionTime(o_pin.name_, q_th, 10.0, 25.0);
+    NanoSecond c_edge = w.FindTransitionTime(c_pin.name_, c_th, 12.5, 17.5);
 
-                        // TODO: Find better way of filtering sims
-                        if (!sim->name_.starts_with("SEQ_DLY")) {
-                            continue;
-                        }
-
-                        if (!sim->CheckSucesfull()) {
-                            return false;
-                        }
-
-                        Waves w = sim->ReadWaves();
-
-                        int d_val = sim->GetMetaDataAt(0);
-                        auto & c_pin = cell.GetPins(PinKind::CLK).front();
-
-                        Variables &vars = ctx_->GetVariables();
-                        double q_th = (d_val == 1) ? vars.GetDoubleVariable("delay_out_rise") :
-                                                    vars.GetDoubleVariable("delay_out_fall");
-                        double c_th = (cell.GetSequential().GetClockPolarity() == EdgeKind::RISING) ?
-                                                vars.GetDoubleVariable("delay_in_rise") :
-                                                vars.GetDoubleVariable("delay_in_fall");
-
-                        Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-                        Volt vdd_voltage = supply->GetVddVoltage();
-                        q_th *= vdd_voltage;
-                        c_th *= vdd_voltage;
-
-                        // TODO: Pass the expected times via Simulation Object
-                        NanoSecond q_edge = w.FindTransitionTime(o_pin.name_, q_th, 10.0, 25.0);
-                        NanoSecond c_edge = w.FindTransitionTime(c_pin.name_, c_th, 12.5, 17.5);
-
-                        NanoSecond ck_to_q = q_edge - c_edge;
-                        if (d_val == 1) {
-                            arc.SetRiseDelay(i_tran_index, o_cap_index, ck_to_q);
-                        } else {
-                            arc.SetFallDelay(i_tran_index, o_cap_index, ck_to_q);
-                        }
-                    }
-
-                    o_cap_index++;
-                }
-                i_tran_index++;
-            }
-        }
+    NanoSecond ck_to_q = q_edge - c_edge;
+    if (d_val == 1) {
+        arc.SetRiseDelay(i_tran_index, o_cap_index, ck_to_q);
+    } else {
+        arc.SetFallDelay(i_tran_index, o_cap_index, ck_to_q);
     }
-
-    return true;
 }
 
-bool Algorithms::MeasureFFClockTransition(Cell &cell)
+void Algorithms::MeasureOneFFClockTransition(Simulation *sim, Waves &w, Arc &arc,
+                                             Pin &o_pin, size_t i_tran_index, size_t o_cap_index)
 {
-    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
-        for (auto & arc : o_pin.GetArcs()) {
+    int d_val = sim->GetMetaDataAt(0);
 
-            size_t i_tran_index = 0;
-            for (auto & sims_row : arc.GetSimulations()) {
+    Variables &vars = ctx_->GetVariables();
+    double hi_th = (d_val == 1) ? vars.GetDoubleVariable("slew_upper_rise") :
+                                  vars.GetDoubleVariable("slew_upper_fall");
+    double lo_th = (d_val == 1) ? vars.GetDoubleVariable("slew_lower_rise") :
+                                  vars.GetDoubleVariable("slew_lower_fall");
+    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+    Volt vdd_voltage = supply->GetVddVoltage();
+    hi_th *= vdd_voltage;
+    lo_th *= vdd_voltage;
 
-                size_t o_cap_index = 0;
-                for (auto & sims_row_coll : sims_row) {
+    // TODO: Pass the expected times via Simulation Object
+    NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th, 12.5, 17.5);
+    NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th, 12.5, 17.5);
 
-                    assert(sims_row_coll.size() == 2);
-                    for (Simulation *sim : sims_row_coll) {
-
-                        // TODO: Find better way of filtering sims
-                        if (!sim->name_.starts_with("SEQ_DLY")) {
-                            continue;
-                        }
-
-                        if (!sim->CheckSucesfull()) {
-                            return false;
-                        }
-
-                        Waves w = sim->ReadWaves();
-
-                        int d_val = sim->GetMetaDataAt(0);
-
-                        Variables &vars = ctx_->GetVariables();
-                        double hi_th = (d_val == 1) ? vars.GetDoubleVariable("slew_upper_rise") :
-                                                    vars.GetDoubleVariable("slew_upper_fall");
-                        double lo_th = (d_val == 1) ? vars.GetDoubleVariable("slew_lower_rise") :
-                                                    vars.GetDoubleVariable("slew_lower_fall");
-                        Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-                        Volt vdd_voltage = supply->GetVddVoltage();
-                        hi_th *= vdd_voltage;
-                        lo_th *= vdd_voltage;
-
-                        // TODO: Pass the expected times via Simulation Object
-                        NanoSecond hi_time = w.FindTransitionTime(o_pin.name_, hi_th, 12.5, 17.5);
-                        NanoSecond lo_time = w.FindTransitionTime(o_pin.name_, lo_th, 12.5, 17.5);
-
-                        if (d_val == 1) {
-                            arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
-                        } else {
-                            arc.SetFallTransition(i_tran_index, o_cap_index, lo_time - hi_time);
-                        }
-                    }
-                    o_cap_index++;
-                }
-                i_tran_index++;
-            }
-        }
+    if (d_val == 1) {
+        arc.SetRiseTransition(i_tran_index, o_cap_index, hi_time - lo_time);
+    } else {
+        arc.SetFallTransition(i_tran_index, o_cap_index, lo_time - hi_time);
     }
-
-    return true;
 }
 
-bool Algorithms::MeasureFFClockPowers(Cell &cell)
+void Algorithms::MeasureOneFFClockPower(Cell &cell, Simulation *sim, Waves &w, Arc &arc,
+                                        Pin &o_pin, size_t i_tran_index, size_t o_cap_index)
+{
+    int d_val = sim->GetMetaDataAt(0);
+
+    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+    Volt vdd_voltage = supply->GetVddVoltage();
+    Pin *c_pin = cell.GetSequential().GetClockPin();
+    EdgeKind edge_pol = cell.GetSequential().GetClockPolarity();
+
+    double ck_th = vdd_voltage;
+    ck_th *= (edge_pol == EdgeKind::RISING) ? 0.01 : 0.99;
+
+    double q_th = vdd_voltage;
+    q_th *= (d_val == 1) ? 0.99 : 0.01;
+
+    // TODO: Pass the look-up times via the Simulation object
+    size_t start_index = w.FindTransitionIndex(c_pin->name_, ck_th, 12.5, 17.5);
+    size_t end_index = w.FindTransitionIndex(o_pin.name_, q_th, 12.5, 17.5);
+
+    // Integrate
+    PicoJoule e = 0;
+    auto & i_vdd = w.GetCurrent(supply->GetVddName());
+    auto & i_q = w.GetCurrent(o_pin.name_);
+    NanoSecond time_step = sim->GetTimeStep();
+
+    NanoWatt lkg = i_vdd[0] * vdd_voltage;
+
+    // TODO: Integrate with possibly varying time step ?
+    // The power is drain by the cell when i_vdd is negative.
+    // The power is drain by the load when i_out is positive.
+    // Sum of these therefore gives the current consumed by
+    // the cell.
+    // Also, if i_vdd is positive, it means current flows from
+    // VDD back to the supply network. We are conservative and
+    // ignore such flow as it would give more optimistic results.
+    for (size_t i = start_index; i < end_index; i++) {
+        MicroAmp i_vdd_cap = (i_vdd[i] < 0) ? i_vdd[i] : 0.0;
+        e += (((i_vdd_cap + i_q[i]) * vdd_voltage) - lkg) * time_step;
+    }
+
+    // uA * V = uW ;  uW * ns = femtoJ -> Convert to Pico
+    e /= 1E3;
+    e = std::fabs(e);
+
+    if (d_val == 1) {
+        arc.SetRisePower(i_tran_index, o_cap_index, e);
+    } else {
+        arc.SetFallPower(i_tran_index, o_cap_index, e);
+    }
+}
+
+bool Algorithms::MeasureFFClockDelaysTransitionsPowers(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
@@ -1426,54 +1415,11 @@ bool Algorithms::MeasureFFClockPowers(Cell &cell)
 
                         Waves w = sim->ReadWaves();
 
-                        int d_val = sim->GetMetaDataAt(0);
-
-                        Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-                        Volt vdd_voltage = supply->GetVddVoltage();
-                        Pin *c_pin = cell.GetSequential().GetClockPin();
-                        EdgeKind edge_pol = cell.GetSequential().GetClockPolarity();
-
-                        double ck_th = vdd_voltage;
-                        ck_th *= (edge_pol == EdgeKind::RISING) ? 0.01 : 0.99;
-
-                        double q_th = vdd_voltage;
-                        q_th *= (d_val == 1) ? 0.99 : 0.01;
-
-                        // TODO: Pass the look-up times via the Simulation object
-                        size_t start_index = w.FindTransitionIndex(c_pin->name_, ck_th, 12.5, 17.5);
-                        size_t end_index = w.FindTransitionIndex(o_pin.name_, q_th, 12.5, 17.5);
-
-                        // Integrate
-                        PicoJoule e = 0;
-                        auto & i_vdd = w.GetCurrent(supply->GetVddName());
-                        auto & i_q = w.GetCurrent(o_pin.name_);
-                        NanoSecond time_step = sim->GetTimeStep();
-
-                        NanoWatt lkg = i_vdd[0] * vdd_voltage;
-
-                        // TODO: Integrate with possibly varying time step ?
-                        // The power is drain by the cell when i_vdd is negative.
-                        // The power is drain by the load when i_out is positive.
-                        // Sum of these therefore gives the current consumed by
-                        // the cell.
-                        // Also, if i_vdd is positive, it means current flows from
-                        // VDD back to the supply network. We are conservative and
-                        // ignore such flow as it would give more optimistic results.
-                        for (size_t i = start_index; i < end_index; i++) {
-                            MicroAmp i_vdd_cap = (i_vdd[i] < 0) ? i_vdd[i] : 0.0;
-                            e += (((i_vdd_cap + i_q[i]) * vdd_voltage) - lkg) * time_step;
-                        }
-
-                        // uA * V = uW ;  uW * ns = femtoJ -> Convert to Pico
-                        e /= 1E3;
-                        e = std::fabs(e);
-
-                        if (d_val == 1) {
-                            arc.SetRisePower(i_tran_index, o_cap_index, e);
-                        } else {
-                            arc.SetFallPower(i_tran_index, o_cap_index, e);
-                        }
+                        MeasureOneFFClockDelay(cell, sim, w, arc, o_pin, i_tran_index, o_cap_index);
+                        MeasureOneFFClockTransition(sim, w, arc, o_pin, i_tran_index, o_cap_index);
+                        MeasureOneFFClockPower(cell, sim, w, arc, o_pin, i_tran_index, o_cap_index);
                     }
+
                     o_cap_index++;
                 }
                 i_tran_index++;
@@ -1887,7 +1833,7 @@ bool Algorithms::CharacterizeLibrary()
                 PROCESS_RESULTS(cell, MeasureFFClockPolarity);
 
                 info("%s - Launching clock to output delay simulations", cell.GetName());
-                PrepareFFClockDelaySims(cell);
+                PrepareFFClockDelayTransitionPowerSims(cell);
 
                 cell.SetCharactState(CharactState::SEQ_FF_DLY_PWR);
                 break;
@@ -1897,12 +1843,8 @@ bool Algorithms::CharacterizeLibrary()
                     continue;
                 }
 
-                info("%s - Measuring clock to output delay", cell.GetName());
-                PROCESS_RESULTS(cell, MeasureFFClockDelay);
-                info("%s - Measuring output transition", cell.GetName());
-                PROCESS_RESULTS(cell, MeasureFFClockTransition);
-                info("%s - Measuring internal power", cell.GetName());
-                PROCESS_RESULTS(cell, MeasureFFClockPowers);
+                info("%s - Measuring clock to output delay, transition and power", cell.GetName());
+                PROCESS_RESULTS(cell, MeasureFFClockDelaysTransitionsPowers);
 
                 cell.SetCharactState(CharactState::SEQ_FF_SETUP_START);
                 break;

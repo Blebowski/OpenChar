@@ -79,10 +79,15 @@ Wishlist:
 - Support Scan cells -> Way too many unknowns ATM, need some study
 - Support IO cells -> kind-off like combo-cells -> Need to deal with three-state
 - Support one_hot muxes, and three-state cells -> Need to figure out how this works in Liberty.
-- Support SRAM cells -> Likely performance limiting thing, but lets try brute-force ? Easy to parallelize.
+- Support SRAM cells
+    - Likely performance will be problem here
+    - Lets try brute-force ? Easy to parallelize...
 - Support "Analog" pin / block -> Create dummy liberty with capacitance only.
-- Support multi-voltage domain cells: Level-shifters, power-switches, etc... -> Need to study how this
-  works in Liberty.
+- Support multi-voltage domain cells:
+    - Level-shifters
+    - Power-switches,
+    - etc...
+    - Need to study how this works in Liberty.
 - Support CCS model.
 - Support other simulators (Xyce, VACAKS, Commercial tools) ?
 

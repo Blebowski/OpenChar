@@ -30,10 +30,8 @@ static void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 
     c1.SetDelayTemplate(&t);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareFFClockDelaySims(c1));
-    assert(algs.MeasureFFClockDelay(c1));
-    assert(algs.MeasureFFClockTransition(c1));
-    assert(algs.MeasureFFClockPowers(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareFFClockDelayTransitionPowerSims(c1));
+    assert(algs.MeasureFFClockDelaysTransitionsPowers(c1));
 
     Pin& pin = c1.GetPin("Q");
     Arc& arc = pin.GetArcs()[0];

@@ -40,10 +40,8 @@ class Algorithms {
         void PrepareFFClockPolaritySims(Cell &cell);
         bool MeasureFFClockPolarity(Cell &cell);
 
-        void PrepareFFClockDelaySims(Cell &cell);
-        bool MeasureFFClockDelay(Cell &cell);
-        bool MeasureFFClockTransition(Cell &cell);
-        bool MeasureFFClockPowers(Cell &cell);
+        void PrepareFFClockDelayTransitionPowerSims(Cell &cell);
+        bool MeasureFFClockDelaysTransitionsPowers(Cell &cell);
 
         void PrepareFFSetupOrHoldSims(Cell &cell, ArcKind a_kind);
         std::pair<bool,bool> MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind);
@@ -67,6 +65,13 @@ class Algorithms {
                                        size_t i_tran_index, size_t o_cap_index);
         void MeasureOneComboPower(Simulation *sim, Waves &w, Pin &o_pin, Arc &arc,
                                   size_t i_tran_index, size_t o_cap_index);
+
+        void MeasureOneFFClockDelay(Cell &cell, Simulation *sim, Waves &w, Arc &arc,
+                                    Pin &o_pin, size_t i_tran_index, size_t o_cap_index);
+        void MeasureOneFFClockTransition(Simulation *sim, Waves &w, Arc &arc,
+                                         Pin &o_pin, size_t i_tran_index, size_t o_cap_index);
+        void MeasureOneFFClockPower(Cell &cell, Simulation *sim, Waves &w, Arc &arc,
+                                    Pin &o_pin, size_t i_tran_index, size_t o_cap_index);
 
         void PrepareOneFFSetupOrHoldSim(Cell &cell, ArcKind a_kind, size_t arc_index,
                                         size_t d_tran_index, NanoSecond d_tran,
