@@ -17,7 +17,7 @@ CREATE_TCL_VAR_CB(max_threads)
 
 CREATE_TCL_VAR_CB(run_directory)
 
-CREATE_TCL_VAR_CB(simulation_timestep)
+CREATE_TCL_VAR_CB(sim_timestep)
 
 CREATE_TCL_VAR_CB(slew_lower_rise)
 CREATE_TCL_VAR_CB(slew_lower_fall)
@@ -37,7 +37,7 @@ void CreateTclVariables(Context *ctx)
     REGISTER_TCL_VAR_CB(max_threads);
     REGISTER_TCL_VAR_CB(run_directory);
 
-    REGISTER_TCL_VAR_CB(simulation_timestep);
+    REGISTER_TCL_VAR_CB(sim_timestep);
 
     REGISTER_TCL_VAR_CB(slew_lower_rise);
     REGISTER_TCL_VAR_CB(slew_lower_fall);

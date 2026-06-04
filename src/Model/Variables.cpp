@@ -68,7 +68,7 @@ Variables::Variables() :
                 .d_val = 0.2
             }
         },
-        {"simulation_timestep",
+        {"sim_timestep",
             {
                 .kind = VarKind::DOUBLE,
                 .s_val = "",
