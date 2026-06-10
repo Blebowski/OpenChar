@@ -264,7 +264,9 @@ void Arc::WriteTable(FILE *f, size_t tab, std::vector<std::vector<double>>& data
     TAB_FPRINTF(tab, f, "%s() {\n", title);
     tab++;
 
-    template_->WriteLiberty(tab, f);
+    if (template_ != nullptr) {
+        template_->WriteLiberty(tab, f);
+    }
 
     TAB_FPRINTF(tab, f, "values ( \\\n");
     tab++;
@@ -291,8 +293,9 @@ void Arc::WriteLiberty(FILE *f, size_t tab)
     TAB_FPRINTF(tab, f, "timing () {\n");
     tab++;
 
-    Pin* rel_pin = GetRelatedPin();
-    TAB_FPRINTF(tab, f, "related_pin : \"%s\" ;\n", rel_pin->name_);
+    if (kind_ != ArcKind::SEQ_MPW) {
+        TAB_FPRINTF(tab, f, "related_pin : \"%s\" ;\n", GetRelatedPin()->name_);
+    }
 
     TAB_FPRINTF(tab, f, "timing_type : ");
     switch (kind_) {
@@ -327,6 +330,14 @@ void Arc::WriteLiberty(FILE *f, size_t tab)
         fprintf(f, "hold_%s ;\n", (kind == EdgeKind::RISING) ? "rising" : "falling");
         break;
     }
+    case ArcKind::SEQ_MPW:
+    {
+        fprintf(f, "min_pulse_width ;\n");
+        break;
+    }
+    default:
+        fatal("Unhandled ArcKind in Arc::WriteLiberty");
+        break;
     }
 
     if (kind_ == ArcKind::COMBO) {
@@ -375,7 +386,7 @@ void Arc::WriteLiberty(FILE *f, size_t tab)
         TAB_FPRINTF(tab, f, "internal_power () {\n");
         tab++;
 
-        TAB_FPRINTF(tab, f, "related_pin : \"%s\" ;\n", rel_pin->name_);
+        TAB_FPRINTF(tab, f, "related_pin : \"%s\" ;\n", GetRelatedPin()->name_);
 
         if (rise_powers_.size() > 0) {
             WriteTable(f, tab, rise_powers_, "rise_power");

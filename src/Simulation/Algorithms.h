@@ -46,6 +46,9 @@ class Algorithms {
         void PrepareFFSetupOrHoldSims(Cell &cell, ArcKind a_kind);
         std::pair<bool,bool> MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind);
 
+        void PrepareFFClockMPWSims(Cell &cell);
+        std::pair<bool,bool> MeasureFFClockMPW(Cell &cell);
+
         bool CharacterizeLibrary();
 
     private:
@@ -78,6 +81,9 @@ class Algorithms {
                                         size_t ck_tran_index, NanoSecond ck_tran,
                                         NanoSecond ck_q_base, NanoSecond ck_d_skew,
                                         NanoSecond step);
+        void PrepareOneFFClockMPWSim(Cell &cell, size_t arc_index, NanoSecond ck_q_base,
+                                     NanoSecond pulse_width, NanoSecond step, bool high);
+
 };
 
 }

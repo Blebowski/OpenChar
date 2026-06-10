@@ -1,10 +1,22 @@
 
 Features:
 
- - Bugs
+- Bugs
     - If a cell is specified with correct name, but incorrect pin, it is not noticed!
     - Sequential Cells do not have leakage power in the .lib
     - Gating of failed cells from write_* commands
+
+- Refactor:
+    - Introduce simulation class for filtering -> Do not lookup by simulation name
+    - Add "debug" message + log verbosity to enable / disable debug logs
+    - Attachment of metadata to Simulation objects
+        - Support arbitrary types via common API (not separate f-calls)
+        - Make each metadata entry explicitly named rather than relying on order
+        - These two
+    - Move all of the "exact times" to be passed as Simulation metadata
+        - This decouples "Prepare" and "Measure" functions.
+    - Rework enums to be printable!
+    - Rework stack-trace print
 
 - Checks
     - Limit measurements where there can be unbound number of iterations
@@ -15,13 +27,19 @@ Features:
     - Parse TCL values as TCL expression
     - Supports variables and expression in arguments
 
-- Simulation duration
+- Simulation
     - How to measure "expected simulation duration" ?
       IDEA: Estimate output resistance from time constant with highest possible load.
             Then scale simulation accordingly for other loads - Assume fixed out resistance.
     - Scale duration based on expected load + output resistance in scenarios where
       output changes and needs to settle
     - Minimize simulation durations in cases where it does not matter
+    - Compress the waveforms ?
+        IDEA: Do a post-simulation hook that reads in the raw-file, copies the header,
+              and does floating point compression of the raw file and stores back to a file.
+              Reading "Waves" by OpenChar would then read the compressed file -> More time
+              to handle waveforms, but less disk space!
+              It would be worth trying XOR-based floating point XOR compression.
 
 - Liberty
     - Add Max transition to input pins
@@ -44,9 +62,7 @@ Features:
         - Capture output.
         - Add logic table entry with all inputs an previous value of states
         - Cover the expression and simplify -> Logic function extracted.
-    - Measure "min-pulse-width" on clock
-        - How to measure this ?
-        IDEAS: check at what minimal pulse width stable D propagates to Q.
+    - Extend MPW measurement with D=0 and D=1
     - Measure asynchronous pins to output arcs
     - Measure recovery / removal arcs.
     - Support multi-bit flip-flops

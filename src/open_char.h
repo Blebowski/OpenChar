@@ -58,7 +58,8 @@ namespace open_char {
 
     enum class StimulusKind {
         PULSE,
-        CONSTANT
+        CONSTANT,
+        PWL
     };
 
     enum class SimulationKind {
@@ -107,7 +108,8 @@ namespace open_char {
         SEQ_SET,
         SEQ_CLR,
         SEQ_SETUP,
-        SEQ_HOLD
+        SEQ_HOLD,
+        SEQ_MPW,
     };
 
     enum class UnateKind {
@@ -132,6 +134,8 @@ namespace open_char {
         SEQ_FF_SETUP_FINISH,
         SEQ_FF_HOLD_START,
         SEQ_FF_HOLD_FINISH,
+        SEQ_FF_CK_MPW_START,
+        SEQ_FF_CK_MPW_FINISH,
 
         ERROR,
         DONE,

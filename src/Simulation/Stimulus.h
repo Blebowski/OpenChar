@@ -21,7 +21,6 @@ class Stimulus {
         Volt v1_;
         Volt v2_;
 
-        // All in femto-seconds
         NanoSecond t_delay_;
         NanoSecond t_rise_;
         NanoSecond t_fall_;
@@ -29,10 +28,14 @@ class Stimulus {
         NanoSecond period_;
         int num_pulses_;
 
+        // Piece-wise linear
+        std::vector<std::pair<Volt,NanoSecond>> pwl_vals_;
+
         Stimulus(Volt voltage);
         Stimulus(Volt v1, Volt v2, NanoSecond t_delay, NanoSecond t_rise,
                  NanoSecond t_fall, NanoSecond pulse_width, NanoSecond period,
                  int num_pulses);
+        Stimulus(std::vector<std::pair<Volt,NanoSecond>> pwl_vals);
 };
 
 }

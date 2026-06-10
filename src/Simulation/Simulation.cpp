@@ -94,11 +94,18 @@ void Simulation::WriteTestBench()
         fprintf(f, "V%s %s_I %s ", s.first->name_, s.first->name_, supply_->GetGndName());
 
         const Stimulus &v = s.second;
-        if (v.kind_ == StimulusKind::CONSTANT)
+        if (v.kind_ == StimulusKind::CONSTANT) {
             fprintf(f, "%f\n", v.volage_);
-        else
+        } else if (v.kind_ == StimulusKind::PULSE) {
             fprintf(f, "PULSE(%fV %fV %fNS %fNS %fNS %fNS %fNS %d)\n", v.v1_, v.v2_, v.t_delay_, v.t_rise_,
-                    v.t_fall_, v.pulse_width_, v.period_, v.num_pulses_);
+                       v.t_fall_, v.pulse_width_, v.period_, v.num_pulses_);
+        } else if (v.kind_ == StimulusKind::PWL) {
+            fprintf(f, "PWL(");
+            for (const auto & [voltage, time] : s.second.pwl_vals_) {
+                fprintf(f, "%fNS %fV ", time, voltage);
+            }
+            fprintf(f, ")\n");
+        }
 
         fprintf(f, "R%d %s_I %s %fK \n\n", r_counter, s.first->name_, s.first->name_, in_shunt);
         r_counter++;

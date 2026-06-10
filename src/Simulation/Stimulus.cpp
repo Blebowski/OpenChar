@@ -25,4 +25,9 @@ namespace open_char {
         num_pulses_(num_pulses)
     {};
 
+    Stimulus::Stimulus(std::vector<std::pair<Volt,NanoSecond>> pwl_vals) :
+        kind_(StimulusKind::PWL),
+        pwl_vals_(pwl_vals)
+    {};
+
 }

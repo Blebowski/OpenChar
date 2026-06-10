@@ -1693,6 +1693,235 @@ std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind
     return std::pair<bool,bool>(all_finished, all_ok);
 }
 
+void Algorithms::PrepareOneFFClockMPWSim(Cell &cell, size_t arc_index, NanoSecond ck_q_base,
+                                         NanoSecond pulse_width, NanoSecond step, bool high)
+{
+    assert(cell.GetKind() == CellKind::SEQUENTIAL);
+
+    // TODO: This assumes DFF with single D
+    auto & d_pin = cell.GetPins(PinDirection::IN, PinKind::DATA).front();
+    auto & c_pin = cell.GetPins(PinKind::CLK).front();
+
+    OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
+    Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
+    Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+
+    std::string sim_name = sprintf("MPW_%s_%s_PW_%f_STEP_%f", c_pin.name_,
+                                   (high) ? "HIGH" : "LOW", pulse_width, step);
+    Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
+
+    NanoSecond pulse_start = 15.0;
+    NanoSecond min_ck_tran = cell.GetConstraintTemplate()->GetIndex2().front();
+    NanoSecond min_d_tran = cell.GetConstraintTemplate()->GetIndex1().front();
+
+    sim->PutDoubleMetaData(ck_q_base);
+    sim->PutDoubleMetaData(pulse_start);
+    sim->PutDoubleMetaData(min_ck_tran);
+    sim->PutDoubleMetaData(pulse_width);
+    sim->PutDoubleMetaData(step);
+
+    sim->SetDuration(25);
+
+    // Tie async pins to inactive value
+    for (auto & a_pin : cell.GetPins(PinKind::ASYNC)) {
+        sim->AddStimuli(&a_pin, Stimulus(((a_pin.GetPolarity()) == 1) ? log0_v : log1_v));
+    }
+
+    Volt from = (high) ? log0_v : log1_v;
+    NanoSecond to = (high) ? log1_v : log0_v;
+
+    // Drive clock
+    // TODO: Can we scale duration of this down somewhat automatically ?
+    std::vector<std::pair<Volt,NanoSecond>> clock_pwl = {
+        {from,     0.0},
+        {from,     5.0},
+        {to,       5.0 + min_ck_tran},
+        {to,       10.0},
+        {from,     10.0 + min_ck_tran},
+        {from,     pulse_start},
+        {to,       pulse_start + min_ck_tran},
+        {to,       pulse_start + pulse_width},
+        {from,     pulse_start + pulse_width + min_ck_tran},
+        {from,     25.0}
+    };
+
+    sim->AddStimuli(&c_pin, Stimulus(clock_pwl));
+    sim->AddStimuli(&d_pin, Stimulus(log0_v, log1_v, 12.5, min_d_tran, min_d_tran, 100, 100, 1));
+
+    // TODO: This is sort-of hack storing at different index. Can we resolve it in some other way ?
+    int col = (high) ? 0 : 1;
+    c_pin.GetArcs()[arc_index].AddSimulation(0, col, sim);
+
+    ctx_->GetSimulationPool().EnqueueSimulation(sim);
+}
+
+void Algorithms::PrepareFFClockMPWSims(Cell &cell)
+{
+    NanoSecond pulse_width_init = 2.0;
+    NanoSecond step_init = 1.0;
+    NanoSecond nan = std::numeric_limits<NanoSecond>::quiet_NaN();
+
+    auto & c_pin = cell.GetPins(PinKind::CLK).front();
+
+    // TODO: This arc constructor does not really make sense
+    c_pin.AddArc(Arc(&c_pin, nullptr, ArcKind::SEQ_MPW, 0, 0, 0, 0));
+    size_t arc_index = c_pin.GetArcs().size() - 1;
+    PrepareOneFFClockMPWSim(cell, arc_index, nan, pulse_width_init, step_init, true);
+    PrepareOneFFClockMPWSim(cell, arc_index, nan, pulse_width_init, step_init, false);
+}
+
+std::pair<bool,bool> Algorithms::MeasureFFClockMPW(Cell &cell)
+{
+    auto & q_pin = cell.GetPins(PinDirection::OUT, PinKind::DATA).front();
+    auto & c_pin = cell.GetPins(PinKind::CLK).front();
+
+    bool all_finished = true;
+    bool all_ok = true;
+
+    size_t arc_index = 0;
+    for (auto & arc : c_pin.GetArcs()) {
+
+        if (arc.GetKind() != ArcKind::SEQ_MPW) {
+            arc_index++;
+            continue;
+        }
+
+        for (int i = 0; i < 2; i++) {
+
+            Simulation *sim = arc.GetSimulations()[0][i].back();
+            assert(sim->name_.starts_with("MPW"));
+
+            if (!sim->IsFinished()) {
+                all_finished = false;
+                continue;
+            }
+
+            if (!sim->CheckSucesfull()) {
+                all_ok = false;
+                continue;
+            }
+
+            bool high              = (i == 0) ? true : false;
+            NanoSecond ck_q_base   = sim->GetDoubleMetaDataAt(0);
+            NanoSecond pulse_start = sim->GetDoubleMetaDataAt(1);
+            NanoSecond pulse_tran  = sim->GetDoubleMetaDataAt(2);
+            NanoSecond pulse_width = sim->GetDoubleMetaDataAt(3);
+            NanoSecond step        = sim->GetDoubleMetaDataAt(4);
+
+            OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
+            Volt th_rising = op_cond.GetSupply()->GetVddVoltage();
+            Volt th_falling = th_rising;
+
+            Variables &vars = ctx_->GetVariables();
+
+            th_rising *= vars.GetDoubleVariable("delay_in_rise");
+            th_falling *= vars.GetDoubleVariable("delay_in_fall");
+
+            Volt ck_th;
+            NanoSecond ck_start;
+            NanoSecond ck_end;
+
+            if (cell.GetSequential().GetClockPolarity() == EdgeKind::RISING) {
+                ck_th = th_rising;
+                ck_start = (high) ? pulse_start : pulse_start + pulse_width;
+                ck_end = (high) ? pulse_start + pulse_tran :
+                                  pulse_start + pulse_width + pulse_tran;
+            } else {
+                ck_th = th_falling;
+                ck_start = (high) ? pulse_start + pulse_width : pulse_start;
+                ck_end = (high) ? pulse_start + pulse_width + pulse_tran :
+                                  pulse_start + pulse_tran;
+            }
+
+            Waves w = sim->ReadWaves();
+            int q_end = ToLogic(w.GetVoltage(q_pin.name_).back());
+            assert(q_end == 1 || q_end == 0);
+
+            info("MeasureFFClockMPW:");
+            info("      high            %d", high);
+            info("      ck_q_base:      %f", ck_q_base);
+            info("      pulse_start:    %f", pulse_start);
+            info("      pulse_tran:     %f", pulse_tran);
+            info("      pulse_width:    %f", pulse_width);
+            info("      step:           %f", step);
+            info("      Q:              %d", q_end);
+
+            bool first = std::isnan(ck_q_base);
+
+            // TODO: Limit number of iterations to avoid dead-lock.
+            // TODO: Add support for D=1 and D=0 latching instead of hard-coded D=1!
+
+            // First measurement, just measure base CK -> Q delay and repeat first simulation.
+            if (first) {
+
+                NanoSecond ck_edge = w.FindTransitionTime(c_pin.name_, ck_th, ck_start, ck_end);
+                NanoSecond q_edge = w.FindTransitionTime(q_pin.name_, th_rising, ck_start, 25.0);
+
+                NanoSecond measured_ck_q_base = q_edge - ck_edge;
+                assert(measured_ck_q_base > 0.0);
+                PrepareOneFFClockMPWSim(cell, arc_index, measured_ck_q_base, pulse_width, step,
+                                        high);
+                all_finished = false;
+
+                info("      first measurement");
+
+            // D propagated to Q -> Measure CK -> Q
+            } else if (q_end == 1) {
+
+                NanoSecond ck_edge = w.FindTransitionTime(c_pin.name_, ck_th, ck_start, ck_end);
+                NanoSecond q_edge = w.FindTransitionTime(q_pin.name_, th_rising, ck_start, 25.0);
+
+                NanoSecond measured_ck_q = q_edge - ck_edge;
+                assert(measured_ck_q > 0.0);
+
+                double rel_delay_inc = (measured_ck_q - ck_q_base) / (ck_q_base);
+                assert(rel_delay_inc >= 0.0); // TODO: Precision issues ?
+
+                info("      ck_edge:        %f", ck_edge);
+                info("      q_edge:         %f", q_edge);
+                info("      measured_ck_q:  %f", measured_ck_q);
+                info("      delay_inc:      %f", rel_delay_inc);
+
+                // Finish MPW search when:
+                //   1. CK -> Q has increased by 2.5 to 5 %
+                //   2. The step is smaller than 1 % of the pulse width. Covers cases where D does
+                //      not get latched, but CK -> Q does not increment (sharp loss of latch without
+                //      continous delay increment).
+                if (step < pulse_width * 0.01 || (rel_delay_inc > 0.025 && rel_delay_inc < 0.05)) {
+                    info("DONE!");
+
+                    if (high) {
+                        c_pin.GetArcs()[arc_index].SetRiseConstraint(0, 0, pulse_width);
+                    } else {
+                        c_pin.GetArcs()[arc_index].SetFallConstraint(0, 0, pulse_width);
+                    }
+
+                // Delay incremented, but less than 2.5 % -> Decrease the pulse width
+                } else if (rel_delay_inc < 0.025) {
+                    PrepareOneFFClockMPWSim(cell, arc_index, ck_q_base, pulse_width - step,
+                                            step * 0.5, high);
+                    all_finished = false;
+
+                // Delay incremented, but more than 5 % -> Increase the pulse width
+                } else {
+                    assert (rel_delay_inc > 0.05);
+                    PrepareOneFFClockMPWSim(cell, arc_index, ck_q_base, pulse_width + step,
+                                            step * 0.5, high);
+                    all_finished = false;
+                }
+
+            // If the pulse is too narow, the D is not latched and Q stays at 0 -> Increase pulse width
+            } else {
+                PrepareOneFFClockMPWSim(cell, arc_index, ck_q_base, pulse_width + step,
+                                        step * 0.5, high);
+                all_finished = false;
+            }
+        }
+    }
+
+    return std::pair<bool,bool>(all_finished, all_ok);
+}
+
 #define PROCESS_RESULTS(cell, func)                                             \
     {                                                                           \
         bool ok = func(cell);                                                   \
@@ -1846,7 +2075,7 @@ bool Algorithms::CharacterizeLibrary()
                 info("%s - Measuring clock to output delay, transition and power", cell.GetName());
                 PROCESS_RESULTS(cell, MeasureFFClockDelaysTransitionsPowers);
 
-                cell.SetCharactState(CharactState::SEQ_FF_SETUP_START);
+                cell.SetCharactState(CharactState::SEQ_FF_CK_MPW_START);
                 break;
 
             case CharactState::SEQ_FF_SETUP_START:
@@ -1896,6 +2125,35 @@ bool Algorithms::CharacterizeLibrary()
                 }
 
                 if (!all_holds_found) {
+                    continue;
+                }
+
+                cell.SetCharactState(CharactState::DONE);
+                break;
+            }
+
+            case CharactState::SEQ_FF_CK_MPW_START:
+            {
+                info("%s - Preparing flip-flop clock min pulse width", cell.GetName());
+                PrepareFFClockMPWSims(cell);
+                cell.SetCharactState(CharactState::SEQ_FF_CK_MPW_FINISH);
+                break;
+            }
+
+            case CharactState::SEQ_FF_CK_MPW_FINISH:
+            {
+                if (!cell.IsSimulationFinished()) {
+                    continue;
+                }
+
+                auto [both_mpws_found, sim_ok] = MeasureFFClockMPW(cell);
+                if (!sim_ok) {
+                    error("%s - Aborting characterization !", cell.GetName());
+                    cell.SetCharactState(CharactState::ERROR);
+                    break;
+                }
+
+                if (!both_mpws_found) {
                     continue;
                 }
 
