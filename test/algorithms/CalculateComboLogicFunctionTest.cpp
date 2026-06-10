@@ -13,7 +13,7 @@ static void test_and2(Context &ctx, Algorithms &algs)
 {
     CREATE_AND2_CELL(ctx, c1)
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
     algs.MeasureComboLogicTables(c1);
     algs.CalculateComboLogicFunctions(c1);
 
@@ -37,7 +37,7 @@ static void test_half_adder(Context &ctx, Algorithms &algs)
 {
     CREATE_HALF_ADDER_CELL(ctx, c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
     algs.MeasureComboLogicTables(c1);
     algs.CalculateComboLogicFunctions(c1);
 

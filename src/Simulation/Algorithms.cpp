@@ -213,111 +213,141 @@ bool Algorithms::MeasureInputCap(Cell &cell)
     return true;
 }
 
-void Algorithms::PrepareComboLogicTableLeakageSims(Cell &cell)
+void Algorithms::PrepareLeakageSims(Cell &cell)
 {
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
     Supply *supply = op_cond.GetSupply();
     Volt log0_v = supply->GetGndVoltage();
     Volt log1_v = supply->GetVddVoltage();
 
-    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+    size_t n_sims = 1;
+    for (size_t i = 0; i < cell.GetPinsCount(PinDirection::IN); i++)
+        n_sims *= 2;
 
-        size_t n_sims = 1;
-        for (size_t i = 0; i < cell.GetPinsCount(PinDirection::IN); i++)
-            n_sims *= 2;
+    for (int64_t i_pin_vect = 0; i_pin_vect < static_cast<int64_t>(n_sims); i_pin_vect++) {
 
-        for (int64_t i_pin_vect = 0; i_pin_vect < static_cast<int64_t>(n_sims); i_pin_vect++) {
+        std::string sim_name = "LKG";
 
-            std::string sim_name = "COMBO_LOGTBLLKG";
-            size_t tmp = i_pin_vect;
-            for (const auto & i_pin : cell.GetPins(PinDirection::IN)) {
-                sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, tmp & 0x1);
-                tmp >>= 1;
-            }
-
-            Simulation *sim = NewSimulation(sim_name, SimulationKind::DC, &cell);
-
-            int i_pin_index = 0;
-            for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
-                size_t i_pin_val = ((i_pin_vect >> i_pin_index) & 0x1);
-                sim->AddStimuli((Pin*)&i_pin, Stimulus((i_pin_val == 1) ? log1_v : log0_v));
-
-                i_pin_index++;
-            }
-
-            sim->PutMetaData(static_cast<int>(i_pin_vect));
-
-            o_pin.AddSimulation(sim);
-            ctx_->GetSimulationPool().EnqueueSimulation(sim);
+        size_t tmp = i_pin_vect;
+        for (const auto & i_pin : cell.GetPins(PinDirection::IN)) {
+            sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, tmp & 0x1);
+            tmp >>= 1;
         }
+
+        Simulation *sim = NewSimulation(sim_name, SimulationKind::DC, &cell);
+
+        int i_pin_index = 0;
+        for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+            size_t i_pin_val = ((i_pin_vect >> i_pin_index) & 0x1);
+            sim->AddStimuli((Pin*)&i_pin, Stimulus((i_pin_val == 1) ? log1_v : log0_v));
+
+            i_pin_index++;
+        }
+
+        sim->PutMetaData(static_cast<int>(i_pin_vect));
+
+        cell.AddSimulation(sim);
+        ctx_->GetSimulationPool().EnqueueSimulation(sim);
     }
 }
 
-bool Algorithms::MeasureComboLogicTables(Cell &cell)
+bool Algorithms::MeasureLeakage(Cell &cell)
 {
-    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
-        for (Simulation *sim : o_pin.GetSimulations()) {
+    for (Simulation *sim : cell.GetSimulations()) {
 
-            // TODO: Find better way of filtering sims
-            if (!sim->name_.starts_with("COMBO_LOGTBLLKG")) {
-                continue;
-            }
-            assert(sim->IsFinished());
-
-            if (!sim->CheckSucesfull()) {
-                return false;
-            }
-
-            Waves w = sim->ReadWaves();
-
-            int64_t i_pin_vect = sim->GetMetaDataAt(0);
-            o_pin.AddLogicTableEntry(i_pin_vect, ToLogic(w.GetVoltage(o_pin.name_)[0]));
+        // TODO: Find better way of filtering sims
+        if (!sim->name_.starts_with("LKG")) {
+            continue;
         }
+
+        assert(sim->IsFinished());
+
+        if (!sim->CheckSucesfull()) {
+            return false;
+        }
+
+        Waves w = sim->ReadWaves();
+
+        Supply *s = cell.GetLibrary()->GetOpCond().GetSupply();
+        NanoWatt lkg = w.GetCurrent(s->GetVddName())[0] * s->GetVddVoltage() * 1E3;
+
+        Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
+        int64_t i_pin_vect = sim->GetMetaDataAt(0);
+
+        for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+            Expression *tmp = new Expression(ExpressionKind::TERM, &(i_pin));
+            if ((i_pin_vect & 0x1) == 0) {
+                tmp = new Expression(ExpressionKind::NOT, tmp);
+            }
+            e = new Expression(ExpressionKind::AND, e, tmp);
+            i_pin_vect >>= 1;
+        }
+
+        e->Simplify();
+        cell.AddLeakageTableEntry(e, lkg);
     }
 
     return true;
 }
 
-bool Algorithms::MeasureComboLeakage(Cell &cell)
+void Algorithms::PrepareComboLogicTablesSims(Cell &cell)
 {
-    // Logic Table simulations contain all combinations of input pin states so
-    // they are used to extract leakage upon each input combination.
+    OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
+    Supply *supply = op_cond.GetSupply();
+    Volt log0_v = supply->GetGndVoltage();
+    Volt log1_v = supply->GetVddVoltage();
 
-    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
-        for (Simulation *sim : o_pin.GetSimulations()) {
+    size_t n_sims = 1;
+    for (size_t i = 0; i < cell.GetPinsCount(PinDirection::IN); i++)
+        n_sims *= 2;
 
-            // TODO: Find better way of filtering sims
-            if (!sim->name_.starts_with("COMBO_LOGTBLLKG")) {
-                continue;
-            }
+    for (int64_t i_pin_vect = 0; i_pin_vect < static_cast<int64_t>(n_sims); i_pin_vect++) {
 
-            assert(sim->IsFinished());
+        std::string sim_name = "COMBO_LOGTBL";
 
-            if (!sim->CheckSucesfull()) {
-                return false;
-            }
-
-            Waves w = sim->ReadWaves();
-
-            Supply *s = cell.GetLibrary()->GetOpCond().GetSupply();
-            NanoWatt lkg = w.GetCurrent(s->GetVddName())[0] * s->GetVddVoltage() * 1E3;
-
-            Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
-            int64_t i_pin_vect = sim->GetMetaDataAt(0);
-
-            for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
-                Expression *tmp = new Expression(ExpressionKind::TERM, &(i_pin));
-                if ((i_pin_vect & 0x1) == 0) {
-                    tmp = new Expression(ExpressionKind::NOT, tmp);
-                }
-                e = new Expression(ExpressionKind::AND, e, tmp);
-                i_pin_vect >>= 1;
-            }
-
-            e->Simplify();
-            cell.AddLeakageTableEntry(e, lkg);
+        size_t tmp = i_pin_vect;
+        for (const auto & i_pin : cell.GetPins(PinDirection::IN)) {
+            sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, tmp & 0x1);
+            tmp >>= 1;
         }
-        break;
+
+        Simulation *sim = NewSimulation(sim_name, SimulationKind::DC, &cell);
+
+        int i_pin_index = 0;
+        for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+            size_t i_pin_val = ((i_pin_vect >> i_pin_index) & 0x1);
+            sim->AddStimuli((Pin*)&i_pin, Stimulus((i_pin_val == 1) ? log1_v : log0_v));
+
+            i_pin_index++;
+        }
+
+        sim->PutMetaData(static_cast<int>(i_pin_vect));
+
+        cell.AddSimulation(sim);
+        ctx_->GetSimulationPool().EnqueueSimulation(sim);
+    }
+}
+
+bool Algorithms::MeasureComboLogicTables(Cell &cell)
+{
+    for (Simulation *sim : cell.GetSimulations()) {
+
+        // TODO: Find better way of filtering sims
+        if (!sim->name_.starts_with("COMBO_LOGTBL")) {
+            continue;
+        }
+        assert(sim->IsFinished());
+
+        if (!sim->CheckSucesfull()) {
+            return false;
+        }
+
+        Waves w = sim->ReadWaves();
+
+        int64_t i_pin_vect = sim->GetMetaDataAt(0);
+        for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+            o_pin.AddLogicTableEntry(i_pin_vect, ToLogic(w.GetVoltage(o_pin.name_)[0]));
+        }
     }
 
     return true;
@@ -1976,10 +2006,25 @@ bool Algorithms::CharacterizeLibrary()
                 info("%s - Measuring input capacitance", cell.GetName());
                 PROCESS_RESULTS(cell, MeasureInputCap);
 
+                info("%s - Launching leakage simulations", cell.GetName());
+                PrepareLeakageSims(cell);
+                cell.SetCharactState(CharactState::LEAKAGE);
+                break;
+            }
+
+            case CharactState::LEAKAGE:
+            {
+                if (!cell.IsSimulationFinished()) {
+                    continue;
+                }
+
+                info("%s - Measuring leakage", cell.GetName());
+                MeasureLeakage(cell);
+
                 if (cell.GetKind() == CellKind::COMBINATIONAL) {
                     info("%s - Launching combinatorial logic table simulations", cell.GetName());
-                    PrepareComboLogicTableLeakageSims(cell);
-                    cell.SetCharactState(CharactState::COM_LOG_TBL_LKG);
+                    PrepareComboLogicTablesSims(cell);
+                    cell.SetCharactState(CharactState::COM_LOG_TBL);
                 } else {
                     info("%s - Launching asynchronous pins simulations", cell.GetName());
                     PrepareSeqAsyncFunctionSims(cell);
@@ -1988,7 +2033,7 @@ bool Algorithms::CharacterizeLibrary()
                 break;
             }
 
-            case CharactState::COM_LOG_TBL_LKG:
+            case CharactState::COM_LOG_TBL:
             {
                 if (!cell.IsSimulationFinished()) {
                     continue;
@@ -1996,9 +2041,6 @@ bool Algorithms::CharacterizeLibrary()
 
                 info("%s - Measuring logic table", cell.GetName());
                 PROCESS_RESULTS(cell, MeasureComboLogicTables);
-
-                info("%s - Measuring leakage", cell.GetName());
-                PROCESS_RESULTS(cell, MeasureComboLeakage);
 
                 info("%s - Calculating logic function", cell.GetName());
                 CalculateComboLogicFunctions(cell);

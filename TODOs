@@ -3,7 +3,6 @@ Features:
 
 - Bugs
     - If a cell is specified with correct name, but incorrect pin, it is not noticed!
-    - Sequential Cells do not have leakage power in the .lib
     - Gating of failed cells from write_* commands
 
 - Refactor:

@@ -122,8 +122,9 @@ namespace open_char {
         START,
         SANITY,
         INPUT_CAP,
+        LEAKAGE,
 
-        COM_LOG_TBL_LKG,
+        COM_LOG_TBL,
         COM_DLY_PWR,
 
         SEQ_ASYNC_FUNCS,

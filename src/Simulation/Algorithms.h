@@ -20,23 +20,37 @@ class Algorithms {
         void PrepareSanitySim(Cell &cell);
         bool CheckSanitySim(Cell &cell);
 
+        ///////////////////////////////////////////////////////////////////////////////////////////
+        // Algorithms for all cells
+        ///////////////////////////////////////////////////////////////////////////////////////////
         void PrepareInputCapSims(Cell &cell);
         bool MeasureInputCap(Cell &cell);
 
-        void PrepareComboLogicTableLeakageSims(Cell &cell);
+        void PrepareLeakageSims(Cell &cell);
+        bool MeasureLeakage(Cell &cell);
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
+        // Algorithms for combinatorial cells
+        ///////////////////////////////////////////////////////////////////////////////////////////
+        void PrepareComboLogicTablesSims(Cell &cell);
         bool MeasureComboLogicTables(Cell &cell);
-        bool MeasureComboLeakage(Cell &cell);
         void CalculateComboLogicFunctions(Cell &cell);
 
         void PrepareComboDelayTransitionPowerSims(Cell &cell);
         bool MeasureComboDelaysTransitionsPowers(Cell &cell);
 
+        ///////////////////////////////////////////////////////////////////////////////////////////
+        // Algorithms for arbitrary sequential cells
+        ///////////////////////////////////////////////////////////////////////////////////////////
         void PrepareSeqAsyncFunctionSims(Cell &cell);
         bool MeasureSeqAsyncFunctions(Cell &cell);
 
         void PrepareSeqCellKindSims(Cell &cell);
         bool MeasureSeqCellKind(Cell &cell);
 
+        ///////////////////////////////////////////////////////////////////////////////////////////
+        // Algorithms for Flip-flops
+        ///////////////////////////////////////////////////////////////////////////////////////////
         void PrepareFFClockPolaritySims(Cell &cell);
         bool MeasureFFClockPolarity(Cell &cell);
 

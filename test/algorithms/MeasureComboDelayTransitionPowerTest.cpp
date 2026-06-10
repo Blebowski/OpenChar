@@ -26,7 +26,7 @@ static void test_inv(Context &ctx, Algorithms &algs)
     c1.SetDelayTemplate(&t);
 
     // Logic table and logic function are precondition for combo delays
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
     assert(algs.MeasureComboLogicTables(c1));
     algs.CalculateComboLogicFunctions(c1);
 
@@ -138,7 +138,7 @@ static void test_half_adder(Context &ctx, Algorithms &algs)
     c1.SetDelayTemplate(&t);
 
     // Logic table and logic function are precondition for combo delays
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTableLeakageSims(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
     assert(algs.MeasureComboLogicTables(c1));
     algs.CalculateComboLogicFunctions(c1);
 
