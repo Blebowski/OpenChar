@@ -269,7 +269,9 @@ bool Algorithms::MeasureLeakage(Cell &cell)
         Waves w = sim->ReadWaves();
 
         Supply *s = cell.GetLibrary()->GetOpCond().GetSupply();
-        NanoWatt lkg = w.GetCurrent(s->GetVddName())[0] * s->GetVddVoltage() * 1E3;
+
+        // The power is drained by the cell when pin current is negative -> Need absolute value
+        NanoWatt lkg = std::abs(w.GetCurrent(s->GetVddName())[0]) * s->GetVddVoltage() * 1E3;
 
         Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
         int64_t i_pin_vect = sim->GetMetaDataAt(0);

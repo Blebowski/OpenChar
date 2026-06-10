@@ -29,6 +29,7 @@ class Cell {
         Pin& GetPin(std::string name);
 
         void AddLeakageTableEntry(Expression *e, NanoWatt pwr);
+        std::vector<std::pair<Expression*, NanoWatt>>& GetLeakageTable();
 
         auto GetPins() {
             return std::views::values(pins_);

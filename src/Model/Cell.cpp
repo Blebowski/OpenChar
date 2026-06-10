@@ -115,6 +115,11 @@ void Cell::AddLeakageTableEntry(Expression *e, NanoWatt pwr)
     leakage_table_.push_back(std::make_pair(e, pwr));
 }
 
+std::vector<std::pair<Expression*, NanoWatt>>& Cell::GetLeakageTable()
+{
+    return leakage_table_;
+}
+
 void Cell::AddSimulation(Simulation *simulation)
 {
     simulations_.push_back(simulation);
