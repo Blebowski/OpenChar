@@ -45,8 +45,8 @@ class Algorithms {
         void PrepareSeqAsyncFunctionSims(Cell &cell);
         bool MeasureSeqAsyncFunctions(Cell &cell);
 
-        void PrepareSeqCellKindSims(Cell &cell);
-        bool MeasureSeqCellKind(Cell &cell);
+        void PrepareSeqEdgeOrLvlSims(Cell &cell);
+        bool MeasureSeqEdgeOrLvl(Cell &cell);
 
         ///////////////////////////////////////////////////////////////////////////////////////////
         // Algorithms for Flip-flops

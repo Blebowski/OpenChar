@@ -14,8 +14,8 @@ static void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 {
     CREATE_DFF_CKB_SB_RB_CELL(ctx, c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareSeqCellKindSims(c1));
-    assert (algs.MeasureSeqCellKind(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareSeqEdgeOrLvlSims(c1));
+    assert (algs.MeasureSeqEdgeOrLvl(c1));
 
     assert(c1.GetSequential().GetKind() == SequentialKind::FLIP_FLOP);
 }
@@ -23,8 +23,8 @@ static void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 static void test_lat_ckb_r_s(Context &ctx, Algorithms &algs)
 {
     CREATE_LAT_CKB_R_S_CELL(ctx, c1);
-    RUN_SIMULATIONS(ctx, algs.PrepareSeqCellKindSims(c1));
-    assert (algs.MeasureSeqCellKind(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareSeqEdgeOrLvlSims(c1));
+    assert (algs.MeasureSeqEdgeOrLvl(c1));
 
     assert(c1.GetSequential().GetKind() == SequentialKind::LATCH);
     assert(c1.GetSequential().GetEnablePolarity() == 0);

@@ -1041,7 +1041,7 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
     return true;
 }
 
-void Algorithms::PrepareSeqCellKindSims(Cell &cell)
+void Algorithms::PrepareSeqEdgeOrLvlSims(Cell &cell)
 {
     for (int clock_val = 0; clock_val < 2; clock_val++) {
 
@@ -1081,7 +1081,7 @@ void Algorithms::PrepareSeqCellKindSims(Cell &cell)
     }
 }
 
-bool Algorithms::MeasureSeqCellKind(Cell &cell)
+bool Algorithms::MeasureSeqEdgeOrLvl(Cell &cell)
 {
     SequentialKind seq_kind = SequentialKind::FLIP_FLOP;
     int active_clocks = 0;
@@ -2073,8 +2073,8 @@ bool Algorithms::CharacterizeLibrary()
                 info("%s - Measuring async pin functions", cell.GetName());
                 PROCESS_RESULTS(cell, MeasureSeqAsyncFunctions);
 
-                info("%s - Launching sequential cell kind detection simulations", cell.GetName());
-                PrepareSeqCellKindSims(cell);
+                info("%s - Launching simulations to recognize cell is edge or level", cell.GetName());
+                PrepareSeqEdgeOrLvlSims(cell);
 
                 cell.SetCharactState(CharactState::SEQ_CELL_KIND);
                 break;
@@ -2085,7 +2085,7 @@ bool Algorithms::CharacterizeLibrary()
                 }
 
                 info("%s - Measuring if cell is edge or level sensitive", cell.GetName());
-                PROCESS_RESULTS(cell, MeasureSeqCellKind);
+                PROCESS_RESULTS(cell, MeasureSeqEdgeOrLvl);
 
                 if (cell.GetSequential().GetKind() == SequentialKind::FLIP_FLOP) {
                     info("%s - Preparing flip-flop clock polarity detection simulations",
