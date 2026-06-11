@@ -2091,7 +2091,7 @@ bool Algorithms::CharacterizeLibrary()
                 info("%s - Measuring clock to output delay, transition and power", cell.GetName());
                 PROCESS_RESULTS(cell, MeasureFFClockDelaysTransitionsPowers);
 
-                cell.SetCharactState(CharactState::SEQ_FF_CK_MPW_START);
+                cell.SetCharactState(CharactState::SEQ_FF_SETUP_START);
                 break;
 
             case CharactState::SEQ_FF_SETUP_START:
