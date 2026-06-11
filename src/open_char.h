@@ -39,127 +39,115 @@ namespace open_char {
     OPENCHAR_ENUM(PinDirection, PIN_DIRECTION)
     #undef PIN_DIRECTION
 
-    enum class PinKind {
-        PWR,
-        GND,
-        DATA,
-        CLK,
-        ASYNC
-    };
+    #define PIN_KIND(x)         \
+        x(PWR)                  \
+        x(GND)                  \
+        x(DATA)                 \
+        x(CLK)                  \
+        x(ASYNC)
+    OPENCHAR_ENUM(PinKind, PIN_KIND)
+    #undef PIN_KIND
 
-    enum class CellKind {
-        COMBINATIONAL,
-        SEQUENTIAL
-    };
+    #define CELL_KIND(x)        \
+        x(COMBINATIONAL)        \
+        x(SEQUENTIAL)
+    OPENCHAR_ENUM(CellKind, CELL_KIND)
+    #undef CELL_KIND
 
-    enum class SequentialKind {
-        FLIP_FLOP,
-        LATCH
-    };
+    #define SEQUENTIAL_KIND(x)  \
+        x(FLIP_FLOP)            \
+        x(LATCH)
+    OPENCHAR_ENUM(SequentialKind, SEQUENTIAL_KIND)
+    #undef SEQUENTIAL_KIND
 
-    enum class StimulusKind {
-        PULSE,
-        CONSTANT,
-        PWL
-    };
+    #define STIMULUS_KIND(x)    \
+        x(PULSE)                \
+        x(CONSTANT)             \
+        x(PWL)
+    OPENCHAR_ENUM(StimulusKind, STIMULUS_KIND)
+    #undef STIMULUS_KIND
 
-    enum class SimulationKind {
-        TRAN,
-        DC
-    };
+    #define SIMULATION_KIND(x)  \
+        x(TRAN)                 \
+        x(DC)
+    OPENCHAR_ENUM(SimulationKind, SIMULATION_KIND)
+    #undef SIMULATION_KIND
 
-    enum class SimulationClass {
-        SANITY,
-        ICAP,
-        LEAKAGE,
+    #define SIMULATION_CLASS(x) \
+        x(SANITY)               \
+        x(ICAP)                 \
+        x(LEAKAGE)              \
+        x(COM_LOGTBL)           \
+        x(COM_DLYTRANPWR)       \
+        x(SEQ_ASYNCFUNC)        \
+        x(SEQ_EDGEORLVL)        \
+        x(FF_CKPOL)             \
+        x(FF_DLYTRANPWR)        \
+        x(FF_SETUP)             \
+        x(FF_HOLD)              \
+        x(FF_CK_MPW)
+    OPENCHAR_ENUM(SimulationClass, SIMULATION_CLASS)
+    #undef SIMULATION_CLASS
 
-        COM_LOGTBL,
-        COM_DLYTRANPWR,
+    #define WAVE_KIND(x)        \
+        x(TIME)                 \
+        x(VSWEEP)
+    OPENCHAR_ENUM(WaveKind, WAVE_KIND)
+    #undef WAVE_KIND
 
-        SEQ_ASYNCFUNC,
-        SEQ_EDGEORLVL,
+    #define TEMPLATE_KIND(x)    \
+        x(DELAY)                \
+        x(POWER)                \
+        x(CONSTRAINT)
+    OPENCHAR_ENUM(TemplateKind, TEMPLATE_KIND)
+    #undef TEMPLATE_KIND
 
-        FF_CKPOL,
-        FF_DLYTRANPWR,
-        FF_SETUP,
-        FF_HOLD,
-        FF_CK_MPW
-    };
+    #define EDGE_KIND(x)        \
+        x(RISING)               \
+        x(FALLING)
+    OPENCHAR_ENUM(EdgeKind, EDGE_KIND)
+    #undef EDGE_KIND
 
-    enum class WaveKind {
-        TIME,
-        VSWEEP
-    };
+    #define EXPRESSION_KIND(x)  \
+        x(AND)                  \
+        x(OR)                   \
+        x(XOR)                  \
+        x(NOT)                  \
+        x(TERM)                 \
+        x(CONSTANT)
+    OPENCHAR_ENUM(ExpressionKind, EXPRESSION_KIND)
+    #undef EXPRESSION_KIND
 
-    enum class TemplateKind {
-        DELAY,
-        POWER,
-        CONSTRAINT
-    };
+    #define EXPRESSION_EQUALITY_KIND(x) \
+        x(EQUAL)                        \
+        x(INVERT)
+    OPENCHAR_ENUM(ExpressionEqualityKind, EXPRESSION_EQUALITY_KIND)
+    #undef EXPRESSION_EQUALITY_KIND
 
-    enum class EdgeKind {
-        RISING,
-        FALLING
-    };
+    #define ASYNC_PRIORITY(x)   \
+        x(PRESET)               \
+        x(CLEAR)
+    OPENCHAR_ENUM(AsyncPriority, ASYNC_PRIORITY)
+    #undef ASYNC_PRIORITY
 
-    enum class ExpressionKind {
-        AND,
-        OR,
-        XOR,
-        NOT,
-        TERM,
-        CONSTANT
-    };
+    #define ARC_KIND(x)         \
+        x(COMBO)                \
+        x(SEQ_CK)               \
+        x(SEQ_SET)              \
+        x(SEQ_CLR)              \
+        x(SEQ_SETUP)            \
+        x(SEQ_HOLD)             \
+        x(SEQ_MPW)
+    OPENCHAR_ENUM(ArcKind, ARC_KIND)
+    #undef ARC_KIND
 
-    enum class ExpressionEqualityKind {
-        EQUAL,
-        INVERT
-    };
+    #define UNATE_KIND(x)       \
+        x(POSITIVE_UNATE)       \
+        x(NEGATIVE_UNATE)       \
+        x(NON_UNATE)
+    OPENCHAR_ENUM(UnateKind, UNATE_KIND)
+    #undef UNATE_KIND
 
-    enum class AsyncPriority {
-        PRESET,
-        CLEAR
-    };
-
-    enum class ArcKind {
-        COMBO,
-        SEQ_CK,
-        SEQ_SET,
-        SEQ_CLR,
-        SEQ_SETUP,
-        SEQ_HOLD,
-        SEQ_MPW,
-    };
-
-    enum class UnateKind {
-        POSITIVE_UNATE,
-        NEGATIVE_UNATE,
-        NON_UNATE
-    };
-
-    enum class CharactState {
-        START,
-        SANITY,
-        INPUT_CAP,
-        LEAKAGE,
-
-        COM_LOG_TBL,
-        COM_DLY_PWR,
-
-        SEQ_ASYNC_FUNCS,
-        SEQ_CELL_KIND,
-        SEQ_FF_CK_POL,
-        SEQ_FF_DLY_PWR,
-        SEQ_FF_SETUP_START,
-        SEQ_FF_SETUP_FINISH,
-        SEQ_FF_HOLD_START,
-        SEQ_FF_HOLD_FINISH,
-        SEQ_FF_CK_MPW_START,
-        SEQ_FF_CK_MPW_FINISH,
-
-        ERROR,
-        DONE,
-    };
 
     typedef double Celsius;
     typedef double Volt;
