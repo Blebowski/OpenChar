@@ -148,6 +148,28 @@ namespace open_char {
     OPENCHAR_ENUM(UnateKind, UNATE_KIND)
     #undef UNATE_KIND
 
+    #define CHARACT_STATE(x)        \
+        x(START)                    \
+        x(SANITY)                   \
+        x(INPUT_CAP)                \
+        x(LEAKAGE)                  \
+        x(COM_LOG_TBL)              \
+        x(COM_DLY_PWR)              \
+        x(SEQ_ASYNC_FUNCS)          \
+        x(SEQ_CELL_KIND)            \
+        x(SEQ_FF_CK_POL)            \
+        x(SEQ_FF_DLY_PWR)           \
+        x(SEQ_FF_SETUP_START)       \
+        x(SEQ_FF_SETUP_FINISH)      \
+        x(SEQ_FF_HOLD_START)        \
+        x(SEQ_FF_HOLD_FINISH)       \
+        x(SEQ_FF_CK_MPW_START)      \
+        x(SEQ_FF_CK_MPW_FINISH)     \
+        x(ERROR)                    \
+        x(DONE)
+    OPENCHAR_ENUM(CharactState, CHARACT_STATE)
+    #undef CHARACT_STATE
+
 
     typedef double Celsius;
     typedef double Volt;
