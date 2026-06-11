@@ -32,12 +32,12 @@ class Algorithms {
         ///////////////////////////////////////////////////////////////////////////////////////////
         // Algorithms for combinatorial cells
         ///////////////////////////////////////////////////////////////////////////////////////////
-        void PrepareComboLogicTablesSims(Cell &cell);
-        bool MeasureComboLogicTables(Cell &cell);
-        void CalculateComboLogicFunctions(Cell &cell);
+        void PrepareComLogicTablesSims(Cell &cell);
+        bool MeasureComLogicTables(Cell &cell);
+        void CalculateComLogicFunctions(Cell &cell);
 
-        void PrepareComboDelayTransitionPowerSims(Cell &cell);
-        bool MeasureComboDelaysTransitionsPowers(Cell &cell);
+        void PrepareComDelayTransitionPowerSims(Cell &cell);
+        bool MeasureComDelaysTransitionsPowers(Cell &cell);
 
         ///////////////////////////////////////////////////////////////////////////////////////////
         // Algorithms for arbitrary sequential cells

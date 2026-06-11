@@ -2,12 +2,12 @@
 OPEN_CHAR_TEST(MeasureInputCapTest)
 OPEN_CHAR_TEST(MeasureLeakageTest)
 
-OPEN_CHAR_TEST(MeasureComboLogicTableLeakageTest)
-OPEN_CHAR_TEST(MeasureComboDelayTransitionPowerTest)
+OPEN_CHAR_TEST(MeasureComLogicTableLeakageTest)
+OPEN_CHAR_TEST(MeasureComDelayTransitionPowerTest)
 
-OPEN_CHAR_TEST(CalculateComboLogicFunctionTest)
+OPEN_CHAR_TEST(CalculateComLogicFunctionTest)
 
-OPEN_CHAR_TEST(MeasureSequentialCellKindTest)
+OPEN_CHAR_TEST(MeasureSeqCellKindTest)
 
 OPEN_CHAR_TEST(MeasureFFClockPolarityTest)
 OPEN_CHAR_TEST(MeasureFFClockDelayPowerTransitionTest)

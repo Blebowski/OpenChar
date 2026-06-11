@@ -12,8 +12,8 @@ static void test_inv(Context &ctx, Algorithms &algs)
 {
     CREATE_INV_CELL(ctx, c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
-    algs.MeasureComboLogicTables(c1);
+    RUN_SIMULATIONS(ctx, algs.PrepareComLogicTablesSims(c1));
+    algs.MeasureComLogicTables(c1);
 
     assert (c1.GetPin("Y").GetLogicTableEntry(0).first == 0);
     assert (c1.GetPin("Y").GetLogicTableEntry(0).second == 1);
@@ -26,8 +26,8 @@ static void test_nand2(Context &ctx, Algorithms &algs)
 {
     CREATE_NAND2_CELL(ctx, c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
-    algs.MeasureComboLogicTables(c1);
+    RUN_SIMULATIONS(ctx, algs.PrepareComLogicTablesSims(c1));
+    algs.MeasureComLogicTables(c1);
 
     assert (c1.GetPin("Y").GetLogicTableEntry(0).first == 0b00);
     assert (c1.GetPin("Y").GetLogicTableEntry(0).second == 1);
@@ -46,8 +46,8 @@ static void test_half_adder(Context &ctx, Algorithms &algs)
 {
     CREATE_HALF_ADDER_CELL(ctx, c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
-    assert(algs.MeasureComboLogicTables(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComLogicTablesSims(c1));
+    assert(algs.MeasureComLogicTables(c1));
 
     assert (c1.GetPin("CO").GetLogicTableEntry(0).first == 0b00);
     assert (c1.GetPin("CO").GetLogicTableEntry(0).second == 0);

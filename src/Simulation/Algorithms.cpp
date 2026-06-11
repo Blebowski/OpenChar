@@ -292,7 +292,7 @@ bool Algorithms::MeasureLeakage(Cell &cell)
     return true;
 }
 
-void Algorithms::PrepareComboLogicTablesSims(Cell &cell)
+void Algorithms::PrepareComLogicTablesSims(Cell &cell)
 {
     OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
     Supply *supply = op_cond.GetSupply();
@@ -330,7 +330,7 @@ void Algorithms::PrepareComboLogicTablesSims(Cell &cell)
     }
 }
 
-bool Algorithms::MeasureComboLogicTables(Cell &cell)
+bool Algorithms::MeasureComLogicTables(Cell &cell)
 {
     for (Simulation *sim : cell.GetSimulations()) {
 
@@ -450,7 +450,7 @@ Expression* Algorithms::ComboRecognizeXor(Cell& cell, Pin& o_pin)
     return e;
 }
 
-void Algorithms::CalculateComboLogicFunctions(Cell &cell)
+void Algorithms::CalculateComLogicFunctions(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
         auto &log_table = o_pin.GetLogicTable();
@@ -482,7 +482,7 @@ void Algorithms::CalculateComboLogicFunctions(Cell &cell)
     }
 }
 
-void Algorithms::PrepareComboDelayTransitionPowerSims(Cell &cell)
+void Algorithms::PrepareComDelayTransitionPowerSims(Cell &cell)
 {
     for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
 
@@ -762,7 +762,7 @@ void Algorithms::MeasureOneComboPower(Simulation *sim, Waves &w, Pin &o_pin, Arc
     }
 }
 
-bool Algorithms::MeasureComboDelaysTransitionsPowers(Cell &cell)
+bool Algorithms::MeasureComDelaysTransitionsPowers(Cell &cell)
 {
     assert (cell.GetKind() == CellKind::COMBINATIONAL);
 
@@ -2025,7 +2025,7 @@ bool Algorithms::CharacterizeLibrary()
 
                 if (cell.GetKind() == CellKind::COMBINATIONAL) {
                     info("%s - Launching combinatorial logic table simulations", cell.GetName());
-                    PrepareComboLogicTablesSims(cell);
+                    PrepareComLogicTablesSims(cell);
                     cell.SetCharactState(CharactState::COM_LOG_TBL);
                 } else {
                     info("%s - Launching asynchronous pins simulations", cell.GetName());
@@ -2042,13 +2042,13 @@ bool Algorithms::CharacterizeLibrary()
                 }
 
                 info("%s - Measuring logic table", cell.GetName());
-                PROCESS_RESULTS(cell, MeasureComboLogicTables);
+                PROCESS_RESULTS(cell, MeasureComLogicTables);
 
                 info("%s - Calculating logic function", cell.GetName());
-                CalculateComboLogicFunctions(cell);
+                CalculateComLogicFunctions(cell);
 
                 info("%s - Launching delay and power simulations", cell.GetName());
-                PrepareComboDelayTransitionPowerSims(cell);
+                PrepareComDelayTransitionPowerSims(cell);
 
                 cell.SetCharactState(CharactState::COM_DLY_PWR);
                 break;
@@ -2060,7 +2060,7 @@ bool Algorithms::CharacterizeLibrary()
                 }
 
                 info("%s - Measuring output delay, transition and power", cell.GetName());
-                PROCESS_RESULTS(cell, MeasureComboDelaysTransitionsPowers);
+                PROCESS_RESULTS(cell, MeasureComDelaysTransitionsPowers);
 
                 cell.SetCharactState(CharactState::DONE);
                 break;

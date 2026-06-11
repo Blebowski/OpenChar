@@ -13,9 +13,9 @@ static void test_and2(Context &ctx, Algorithms &algs)
 {
     CREATE_AND2_CELL(ctx, c1)
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
-    algs.MeasureComboLogicTables(c1);
-    algs.CalculateComboLogicFunctions(c1);
+    RUN_SIMULATIONS(ctx, algs.PrepareComLogicTablesSims(c1));
+    algs.MeasureComLogicTables(c1);
+    algs.CalculateComLogicFunctions(c1);
 
     Expression *e = c1.GetPin("Z").GetLogicFunction();
     assert (e != nullptr);
@@ -37,9 +37,9 @@ static void test_half_adder(Context &ctx, Algorithms &algs)
 {
     CREATE_HALF_ADDER_CELL(ctx, c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
-    algs.MeasureComboLogicTables(c1);
-    algs.CalculateComboLogicFunctions(c1);
+    RUN_SIMULATIONS(ctx, algs.PrepareComLogicTablesSims(c1));
+    algs.MeasureComLogicTables(c1);
+    algs.CalculateComLogicFunctions(c1);
 
     // S: A ^ B
     Expression *e = c1.GetPin("S").GetLogicFunction();

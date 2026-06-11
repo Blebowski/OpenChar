@@ -26,12 +26,12 @@ static void test_inv(Context &ctx, Algorithms &algs)
     c1.SetDelayTemplate(&t);
 
     // Logic table and logic function are precondition for combo delays
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
-    assert(algs.MeasureComboLogicTables(c1));
-    algs.CalculateComboLogicFunctions(c1);
+    RUN_SIMULATIONS(ctx, algs.PrepareComLogicTablesSims(c1));
+    assert(algs.MeasureComLogicTables(c1));
+    algs.CalculateComLogicFunctions(c1);
 
-    RUN_SIMULATIONS(ctx, algs.PrepareComboDelayTransitionPowerSims(c1));
-    assert(algs.MeasureComboDelaysTransitionsPowers(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComDelayTransitionPowerSims(c1));
+    assert(algs.MeasureComDelaysTransitionsPowers(c1));
 
     Pin& pin = c1.GetPin("Y");
 
@@ -138,13 +138,13 @@ static void test_half_adder(Context &ctx, Algorithms &algs)
     c1.SetDelayTemplate(&t);
 
     // Logic table and logic function are precondition for combo delays
-    RUN_SIMULATIONS(ctx, algs.PrepareComboLogicTablesSims(c1));
-    assert(algs.MeasureComboLogicTables(c1));
-    algs.CalculateComboLogicFunctions(c1);
+    RUN_SIMULATIONS(ctx, algs.PrepareComLogicTablesSims(c1));
+    assert(algs.MeasureComLogicTables(c1));
+    algs.CalculateComLogicFunctions(c1);
 
     // Measure Dealys
-    RUN_SIMULATIONS(ctx, algs.PrepareComboDelayTransitionPowerSims(c1));
-    assert(algs.MeasureComboDelaysTransitionsPowers(c1));
+    RUN_SIMULATIONS(ctx, algs.PrepareComDelayTransitionPowerSims(c1));
+    assert(algs.MeasureComDelaysTransitionsPowers(c1));
 
     Pin& co_pin = c1.GetPin("CO");
     Arc& co_b_arc = co_pin.GetArcs()[0];
