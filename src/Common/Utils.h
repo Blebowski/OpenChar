@@ -14,6 +14,8 @@
 
 namespace open_char {
 
+#define DEBUG_MSG_ENABLED
+
 inline const char*              format_arg(const std::string& s)         { return s.c_str(); }
 inline const char*              format_arg(const char* s)                { return s; }
 inline char*                    format_arg(char* s)                      { return s; }
@@ -85,6 +87,14 @@ void error(const std::string &fmt, const Args&... args)
 }
 
 template<typename... Args>
+void warning(const std::string &fmt, const Args&... args)
+{
+    std::printf("Warning: ");
+    std::printf(fmt.c_str(), format_arg(args)...);
+    std::printf("\n");
+}
+
+template<typename... Args>
 void info(const std::string &fmt, const Args&... args)
 {
     std::printf("Info: ");
@@ -93,11 +103,13 @@ void info(const std::string &fmt, const Args&... args)
 }
 
 template<typename... Args>
-void warning(const std::string &fmt, const Args&... args)
+void debug(const std::string &fmt, const Args&... args)
 {
-    std::printf("Warning: ");
+#ifdef DEBUG_MSG_ENABLED
+    std::printf("Debug: ");
     std::printf(fmt.c_str(), format_arg(args)...);
     std::printf("\n");
+#endif
 }
 
 #define PRINT_LINE(len) printf("%s\n", std::string(len, '-'));
