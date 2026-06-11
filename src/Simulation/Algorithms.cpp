@@ -22,7 +22,7 @@ Algorithms::Algorithms(Context *ctx) :
 int Algorithms::ToLogic(Volt val)
 {
     OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
-    if (abs(val - op_cond.GetSupply()->GetVddVoltage()) < 0.01)
+    if (std::fabs(val - op_cond.GetSupply()->GetVddVoltage()) < 0.01)
         return 1;
     return 0;
 }
