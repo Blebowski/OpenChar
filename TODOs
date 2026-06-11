@@ -6,7 +6,6 @@ Features:
     - Gating of failed cells from write_* commands
 
 - Refactor:
-    - Introduce simulation class for filtering -> Do not lookup by simulation name
     - Add "debug" message + log verbosity to enable / disable debug logs
     - Attachment of metadata to Simulation objects
         - Support arbitrary types via common API (not separate f-calls)
@@ -14,7 +13,6 @@ Features:
         - These two
     - Move all of the "exact times" to be passed as Simulation metadata
         - This decouples "Prepare" and "Measure" functions.
-    - Rework enums to be printable!
     - Rework stack-trace print
 
 - Checks

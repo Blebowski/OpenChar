@@ -82,6 +82,14 @@ class Cell {
         std::vector<Simulation*>& GetSimulations();
         bool IsSimulationFinished();
 
+        auto GetSimulations(SimClass sim_class) {
+            return std::views::filter(simulations_,
+                [sim_class](const Simulation *sim) {
+                    return sim->class_ == sim_class;
+                }
+            );
+        };
+
         void SetCharactState(CharactState charact_state);
         CharactState GetCharactState();
 

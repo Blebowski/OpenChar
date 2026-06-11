@@ -7,13 +7,16 @@
 #include "open_char.h"
 
 #include "Context.h"
+#include "Pin.h"
+#include "Cell.h"
 #include "Utils.h"
 #include "Simulation.h"
 
 namespace open_char {
 
-Simulation::Simulation(Context *ctx, std::string name, Cell *dut, SimKind kind) :
+Simulation::Simulation(Context *ctx, SimClass sim_class, std::string name, Cell *dut, SimKind kind) :
     name_(name),
+    class_(sim_class),
     kind_(kind),
     dut_(dut),
     duration_(10),
@@ -26,7 +29,7 @@ Simulation::Simulation(Context *ctx, std::string name, Cell *dut, SimKind kind) 
     std::filesystem::path cell_dir = run_dir / dut->GetName();
     std::filesystem::create_directory(cell_dir);
 
-    sim_dir_ = cell_dir / name;
+    sim_dir_ = cell_dir / (toString(class_) + "_" + name);
     std::filesystem::create_directory(sim_dir_);
 }
 

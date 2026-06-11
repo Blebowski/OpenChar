@@ -4,10 +4,13 @@
 
 #include <string>
 #include <vector>
+#include <ranges>
 
 #include "open_char.h"
+
 #include "Arc.h"
 #include "Expression.h"
+#include "Simulation.h"
 
 namespace open_char {
 
@@ -54,6 +57,14 @@ class Pin {
 
         void AddSimulation(Simulation *simulation);
         std::vector<Simulation*>& GetSimulations();
+
+        auto GetSimulations(SimClass sim_class) {
+            return std::views::filter(simulations_,
+                [sim_class](const Simulation *sim) {
+                    return sim->class_ == sim_class;
+                }
+            );
+        };
 
         void WriteLiberty(FILE *f, size_t tab);
 

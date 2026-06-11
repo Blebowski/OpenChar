@@ -32,9 +32,9 @@ int Algorithms::GetBit(int64_t v, size_t index)
     return (v >> index) & 0x1;
 }
 
-Simulation *Algorithms::NewSimulation(std::string name, SimKind kind, Cell *cell)
+Simulation *Algorithms::NewSimulation(SimClass sim_class, std::string name, SimKind kind, Cell *cell)
 {
-    Simulation *sim = new Simulation(ctx_, name, cell, kind);
+    Simulation *sim = new Simulation(ctx_, sim_class, name, cell, kind);
 
     sim->SetTimeStep(ctx_->GetVariables().GetDoubleVariable("sim_timestep"));
 
@@ -56,8 +56,7 @@ void Algorithms::PrepareSanitySim(Cell &cell)
     Template *templ = cell.GetDelayTemplate();
     assert(templ != nullptr);
 
-    std::string sim_name = "SANITY";
-    Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
+    Simulation *sim = NewSimulation(SimClass::SANITY, "", SimKind::TRAN, &cell);
 
     Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
     Volt log0_v = supply->GetGndVoltage();
@@ -82,13 +81,15 @@ void Algorithms::PrepareSanitySim(Cell &cell)
 
 bool Algorithms::CheckSanitySim(Cell &cell)
 {
-    for (Simulation *sim : cell.GetSimulations()) {
-        if (!sim->name_.starts_with("SANITY")) {
-            continue;
+    auto sims = cell.GetSimulations(SimClass::SANITY);
+    assert (!sims.empty());
+
+    for (Simulation *sim : sims) {
+        if (!sim->CheckSucesfull()) {
+            return false;
         }
-        return sim->CheckSucesfull();
     }
-    return false;
+    return true;
 }
 
 void Algorithms::PrepareInputCapSims(Cell &cell)
@@ -96,8 +97,7 @@ void Algorithms::PrepareInputCapSims(Cell &cell)
     size_t i_pin_index = 0;
     for (auto & i_pin : cell.GetPins(PinDir::IN)) {
 
-        std::string sim_name = sprintf("ICAP_%s", i_pin.name_);
-        Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
+        Simulation *sim = NewSimulation(SimClass::ICAP, i_pin.name_, SimKind::TRAN, &cell);
 
         Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
         Volt log0_v = supply->GetGndVoltage();
@@ -124,12 +124,11 @@ void Algorithms::PrepareInputCapSims(Cell &cell)
 bool Algorithms::MeasureInputCap(Cell &cell)
 {
     for (auto & i_pin : cell.GetPins(PinDir::IN)) {
-        for (Simulation *sim : i_pin.GetSimulations()) {
 
-            // TODO: Better approach for filtering!
-            if (!sim->name_.starts_with("ICAP_")) {
-                continue;
-            }
+        auto sims = i_pin.GetSimulations(SimClass::ICAP);
+        assert (!sims.empty());
+
+        for (Simulation *sim : sims) {
 
             if (!sim->CheckSucesfull()) {
                 return false;
@@ -226,7 +225,7 @@ void Algorithms::PrepareLeakageSims(Cell &cell)
 
     for (int64_t i_pin_vect = 0; i_pin_vect < static_cast<int64_t>(n_sims); i_pin_vect++) {
 
-        std::string sim_name = "LKG";
+        std::string sim_name = "";
 
         size_t tmp = i_pin_vect;
         for (const auto & i_pin : cell.GetPins(PinDir::IN)) {
@@ -234,7 +233,7 @@ void Algorithms::PrepareLeakageSims(Cell &cell)
             tmp >>= 1;
         }
 
-        Simulation *sim = NewSimulation(sim_name, SimKind::DC, &cell);
+        Simulation *sim = NewSimulation(SimClass::LEAKAGE, sim_name, SimKind::DC, &cell);
 
         int i_pin_index = 0;
         for (auto & i_pin : cell.GetPins(PinDir::IN)) {
@@ -253,13 +252,10 @@ void Algorithms::PrepareLeakageSims(Cell &cell)
 
 bool Algorithms::MeasureLeakage(Cell &cell)
 {
-    for (Simulation *sim : cell.GetSimulations()) {
+    auto sims = cell.GetSimulations(SimClass::LEAKAGE);
+    assert (!sims.empty());
 
-        // TODO: Find better way of filtering sims
-        if (!sim->name_.starts_with("LKG")) {
-            continue;
-        }
-
+    for (Simulation *sim : sims) {
         assert(sim->IsFinished());
 
         if (!sim->CheckSucesfull()) {
@@ -305,7 +301,7 @@ void Algorithms::PrepareComLogicTablesSims(Cell &cell)
 
     for (int64_t i_pin_vect = 0; i_pin_vect < static_cast<int64_t>(n_sims); i_pin_vect++) {
 
-        std::string sim_name = "COMBO_LOGTBL";
+        std::string sim_name = "";
 
         size_t tmp = i_pin_vect;
         for (const auto & i_pin : cell.GetPins(PinDir::IN)) {
@@ -313,7 +309,7 @@ void Algorithms::PrepareComLogicTablesSims(Cell &cell)
             tmp >>= 1;
         }
 
-        Simulation *sim = NewSimulation(sim_name, SimKind::DC, &cell);
+        Simulation *sim = NewSimulation(SimClass::COM_LOGTBL, sim_name, SimKind::DC, &cell);
 
         int i_pin_index = 0;
         for (auto & i_pin : cell.GetPins(PinDir::IN)) {
@@ -332,12 +328,10 @@ void Algorithms::PrepareComLogicTablesSims(Cell &cell)
 
 bool Algorithms::MeasureComLogicTables(Cell &cell)
 {
-    for (Simulation *sim : cell.GetSimulations()) {
+    auto sims = cell.GetSimulations(SimClass::COM_LOGTBL);
+    assert (!sims.empty());
 
-        // TODO: Find better way of filtering sims
-        if (!sim->name_.starts_with("COMBO_LOGTBL")) {
-            continue;
-        }
+    for (Simulation *sim : sims) {
         assert(sim->IsFinished());
 
         if (!sim->CheckSucesfull()) {
@@ -556,7 +550,7 @@ int Algorithms::PrepareOneComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, i
         int64_t i_to_vect   = (i == 0) ? in_b  : in_a;
         int     o_from      = (i == 0) ? out_a : out_b;
 
-        std::string prefix = "COMBO_DLYTRANPWR";
+        std::string prefix = "";
         size_t j = 0;
 
         for (const auto & i_pin : cell->GetPins(PinDir::IN)) {
@@ -571,8 +565,8 @@ int Algorithms::PrepareOneComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, i
             int o_cap_index = 0;
             for (const PicoFarad o_cap : templ->GetIndex2()) {
 
-                std::string sim_name = sprintf("%s_TRAN_%f_%s_CAP_%f", prefix, i_tran, o_pin.name_, o_cap);
-                Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, cell);
+                std::string sim_name = sprintf("%sTRAN%f%sCAP%f", prefix, i_tran, o_pin.name_, o_cap);
+                Simulation *sim = NewSimulation(SimClass::COM_DLYTRANPWR, sim_name, SimKind::TRAN, cell);
 
                 Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
                 Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
@@ -777,11 +771,7 @@ bool Algorithms::MeasureComDelaysTransitionsPowers(Cell &cell)
                     assert(sims_row_coll.size() == 2);
 
                     for (Simulation *sim : sims_row_coll) {
-
-                        // TODO: Find better way of filtering sims
-                        if (!sim->name_.starts_with("COMBO_DLYTRANPWR")) {
-                            continue;
-                        }
+                        assert(sim->class_ == SimClass::COM_DLYTRANPWR);
 
                         if (!sim->CheckSucesfull()) {
                             return false;
@@ -830,7 +820,7 @@ void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
         auto d_pin = cell.GetPins(PinDir::IN, PinKind::DATA).front();
 
         for (int d = 0; d < 2; d++) {
-            std::string sim_name = "SEQ_ASYNCFUNC";
+            std::string sim_name = "";
 
             int64_t tmp = a_pin_vect;
             for (const auto & a_pin : cell.GetPins(PinKind::ASYNC)) {
@@ -839,7 +829,7 @@ void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
             }
 
             sim_name = sprintf("%s_%s%d", sim_name, d_pin.name_, d);
-            Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
+            Simulation *sim = NewSimulation(SimClass::SEQ_ASYNCFUNC, sim_name, SimKind::TRAN, &cell);
 
             OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
             Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -891,13 +881,10 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
     size_t n_set_candidates = 0;
     size_t n_clr_candidates = 0;
 
-    for (Simulation *sim : cell.GetSimulations()) {
+    auto sims = cell.GetSimulations(SimClass::SEQ_ASYNCFUNC);
+    assert (!sims.empty());
 
-        // TODO: Find better way of filtering sims
-        if (!sim->name_.starts_with("SEQ_ASYNCFUNC")) {
-            continue;
-        }
-
+    for (Simulation *sim : sims) {
         if (!sim->CheckSucesfull()) {
             return false;
         }
@@ -1047,8 +1034,8 @@ void Algorithms::PrepareSeqEdgeOrLvlSims(Cell &cell)
 
         Pin &c_pin = cell.GetPins(PinKind::CLK).front();
 
-        std::string sim_name = sprintf("SEQ_EDGEVSLVL_%s%d", c_pin.name_, clock_val);
-        Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
+        std::string sim_name = sprintf("%s%d", c_pin.name_, clock_val);
+        Simulation *sim = NewSimulation(SimClass::SEQ_EDGEORLVL, sim_name, SimKind::TRAN, &cell);
 
         OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
         Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -1086,12 +1073,10 @@ bool Algorithms::MeasureSeqEdgeOrLvl(Cell &cell)
     SeqKind seq_kind = SeqKind::FLIP_FLOP;
     int active_clocks = 0;
 
-    for (Simulation *sim : cell.GetSimulations()) {
+    auto sims = cell.GetSimulations(SimClass::SEQ_EDGEORLVL);
+    assert (!sims.empty());
 
-        // TODO: Find better way of filtering sims from previous ones ?
-        if (!sim->name_.starts_with("SEQ_EDGEVSLVL")) {
-            continue;
-        }
+    for (Simulation *sim : sims) {
 
         if (!sim->CheckSucesfull()) {
             return false;
@@ -1145,14 +1130,14 @@ void Algorithms::PrepareFFClockPolaritySims(Cell &cell)
         size_t test_vect_cnt = 1 << i_pin_cnt;
         for (size_t i_pin_vect = 0 ; i_pin_vect < test_vect_cnt; i_pin_vect++) {
 
-            std::string sim_name = sprintf("FF_CKPOL_%s%d%d", cell.GetPins(PinKind::CLK).front().name_,
+            std::string sim_name = sprintf("%s%d%d", cell.GetPins(PinKind::CLK).front().name_,
                                             clock_polarity, 1 - clock_polarity);
             size_t i = 0;
             for (auto & i_pin : cell.GetPins(PinDir::IN, PinKind::DATA)) {
                 sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, (i_pin_vect >> i) & 0x1);
                 i++;
             }
-            Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
+            Simulation *sim = NewSimulation(SimClass::FF_CKPOL, sim_name, SimKind::TRAN, &cell);
 
             OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
             Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -1195,12 +1180,10 @@ bool Algorithms::MeasureFFClockPolarity(Cell &cell)
     bool out_change_posedge = false;
     bool out_change_negedge = false;
 
-    for (Simulation *sim : cell.GetSimulations()) {
+    auto sims = cell.GetSimulations(SimClass::FF_CKPOL);
+    assert (!sims.empty());
 
-        // TODO: Find better way of filtering sims from previous ones ?
-        if (!sim->name_.starts_with("FF_CKPOL")) {
-            continue;
-        }
+    for (Simulation *sim : sims) {
 
         if (!sim->CheckSucesfull()) {
             return false;
@@ -1272,9 +1255,9 @@ void Algorithms::PrepareFFClockDelayTransitionPowerSims(Cell &cell)
 
                     auto & c_pin = cell.GetPins(PinKind::CLK).front();
                     auto & d_pin = cell.GetPins(PinDir::IN, PinKind::DATA).front();
-                    std::string sim_name = sprintf("SEQ_DLY_%s_%s%d_TRAN_%f_CAP_%f",
+                    std::string sim_name = sprintf("%s%s%d_TRAN_%f_CAP_%f",
                                                     c_pin.name_, d_pin.name_, d_val, i_tran, o_cap);
-                    Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
+                    Simulation *sim = NewSimulation(SimClass::FF_DLYTRANPWR, sim_name, SimKind::TRAN, &cell);
 
                     OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
                     Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -1435,11 +1418,7 @@ bool Algorithms::MeasureFFClockDelaysTransitionsPowers(Cell &cell)
 
                     assert(sims_row_coll.size() == 2);
                     for (Simulation *sim : sims_row_coll) {
-
-                        // TODO: Find better way of filtering sims
-                        if (!sim->name_.starts_with("SEQ_DLY")) {
-                            continue;
-                        }
+                        assert(sim->class_ == SimClass::FF_DLYTRANPWR);
 
                         if (!sim->CheckSucesfull()) {
                             return false;
@@ -1505,10 +1484,10 @@ void Algorithms::PrepareOneFFSetupOrHoldSim(Cell &cell, ArcKind a_kind, size_t a
     auto & c_pin = cell.GetPins(PinKind::CLK).front();
     auto & d_pin = cell.GetPins(PinDir::IN, PinKind::DATA).front();
 
-    std::string sim_name = sprintf("SEQ_%s_%s_TRAN_%f_%s_TRAN_%f_CK_D_SKEW_%f",
-                                    (a_kind == ArcKind::SEQ_SETUP) ? "SETUP" : "HOLD",
+    SimClass sim_class = (a_kind == ArcKind::SEQ_SETUP) ? SimClass::FF_SETUP : SimClass::FF_HOLD;
+    std::string sim_name = sprintf("%s_TRAN_%f_%s_TRAN_%f_SKEW_%f",
                                     d_pin.name_, d_tran, c_pin.name_, ck_tran, ck_d_skew);
-    Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
+    Simulation *sim = NewSimulation(sim_class, sim_name, SimKind::TRAN, &cell);
 
     OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
     Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -1596,8 +1575,8 @@ std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind
         for (PicoFarad ck_tran : templ->GetIndex2()) {
 
             auto & arc = d_pin.GetArcs()[arc_index];
-            auto & sims = arc.GetSimulations()[d_tran_index][ck_tran_index];
-            Simulation *sim = sims.back();
+            Simulation *sim = arc.GetSimulations()[d_tran_index][ck_tran_index].back();
+            assert(sim->class_ == SimClass::FF_HOLD || sim->class_ == SimClass::FF_SETUP);
 
             if (!sim->IsFinished()) {
                 all_finished = false;
@@ -1738,9 +1717,9 @@ void Algorithms::PrepareOneFFClockMPWSim(Cell &cell, size_t arc_index, NanoSecon
     Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
     Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
 
-    std::string sim_name = sprintf("MPW_%s_%s_PW_%f_STEP_%f", c_pin.name_,
-                                   (high) ? "HIGH" : "LOW", pulse_width, step);
-    Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
+    std::string sim_name = sprintf("%s%s_PW_%f_STEP_%f", c_pin.name_, (high) ? "HIGH" : "LOW",
+                                   pulse_width, step);
+    Simulation *sim = NewSimulation(SimClass::FF_CK_MPW, sim_name, SimKind::TRAN, &cell);
 
     NanoSecond pulse_start = 15.0;
     NanoSecond min_ck_tran = cell.GetConstraintTemplate()->GetIndex2().front();
@@ -1821,7 +1800,7 @@ std::pair<bool,bool> Algorithms::MeasureFFClockMPW(Cell &cell)
         for (int i = 0; i < 2; i++) {
 
             Simulation *sim = arc.GetSimulations()[0][i].back();
-            assert(sim->name_.starts_with("MPW"));
+            assert(sim->class_ == SimClass::FF_CK_MPW);
 
             if (!sim->IsFinished()) {
                 all_finished = false;

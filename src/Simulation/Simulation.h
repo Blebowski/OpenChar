@@ -10,8 +10,6 @@
 #include <mutex>
 
 #include "open_char.h"
-#include "Pin.h"
-#include "Cell.h"
 #include "Stimulus.h"
 #include "Waves.h"
 #include "Supply.h"
@@ -21,7 +19,7 @@ namespace open_char {
 class Simulation {
 
     public:
-        Simulation(Context *ctx, std::string name, Cell *dut, SimKind kind);
+        Simulation(Context *ctx, SimClass sim_class, std::string name, Cell *dut, SimKind kind);
 
         void SetSupply(Supply *supply);
         void SetTemp(Celsius temp);
@@ -50,6 +48,7 @@ class Simulation {
         bool CheckSucesfull();
 
         const std::string name_;
+        const SimClass class_;
 
     private:
 
