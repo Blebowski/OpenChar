@@ -1,7 +1,7 @@
 #ifndef OPEN_CHAR
 #define OPEN_CHAR
 
-#include "tcl.h"
+#include "Utils.h"
 
 namespace open_char {
 
@@ -32,11 +32,12 @@ namespace open_char {
     void RegisterTclCommands(Context *ctx);
     void CreateTclVariables(Context *ctx);
 
-    enum class PinDirection {
-        IN,
-        OUT,
-        INOUT
-    };
+    #define PIN_DIRECTION(x)    \
+        x(IN)                   \
+        x(OUT)                  \
+        x(INOUT)
+    OPENCHAR_ENUM(PinDirection, PIN_DIRECTION)
+    #undef PIN_DIRECTION
 
     enum class PinKind {
         PWR,
@@ -65,6 +66,24 @@ namespace open_char {
     enum class SimulationKind {
         TRAN,
         DC
+    };
+
+    enum class SimulationClass {
+        SANITY,
+        ICAP,
+        LEAKAGE,
+
+        COM_LOGTBL,
+        COM_DLYTRANPWR,
+
+        SEQ_ASYNCFUNC,
+        SEQ_EDGEORLVL,
+
+        FF_CKPOL,
+        FF_DLYTRANPWR,
+        FF_SETUP,
+        FF_HOLD,
+        FF_CK_MPW
     };
 
     enum class WaveKind {

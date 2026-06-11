@@ -2,15 +2,18 @@
 #define UTILS_H
 
 #include <cstdio>
-#include <string>
-#include <string_view>
-#include <filesystem>
 #include <cassert>
 #include <cstring>
 #include <cmath>
-#include <signal.h>
 
+#include <string>
+#include <string_view>
+#include <filesystem>
+#include <unordered_map>
+
+#include <signal.h>
 #include <tcl.h>
+
 
 namespace open_char {
 
@@ -111,6 +114,17 @@ void debug(const std::string &fmt, const Args&... args)
     std::printf("\n");
 #endif
 }
+
+#define OPENCHAR_ENUM_ELEM(x) x,
+#define OPENCHAR_ENUM_MAP(x) {x, #x},
+
+#define OPENCHAR_ENUM(name, elements)                                                               \
+    enum class name { elements(OPENCHAR_ENUM_ELEM) };                                               \
+    inline std::string toString(name v) {                                                           \
+        using enum name;                                                                            \
+        std::unordered_map<name, std::string> map = {elements(OPENCHAR_ENUM_MAP)};                  \
+        return map[v];                                                                              \
+    }                                                                                               \
 
 #define PRINT_LINE(len) printf("%s\n", std::string(len, '-'));
 
