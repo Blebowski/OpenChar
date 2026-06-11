@@ -13,14 +13,14 @@ using namespace open_char;
 static void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 {
     CREATE_DFF_CKB_SB_RB_CELL(ctx, c1);
-    c1.GetSequential().SetKind(SequentialKind::FLIP_FLOP);
+    c1.GetSequential().SetKind(SeqKind::FLIP_FLOP);
     c1.GetPin("RB").SetPolarity(0);
     c1.GetPin("SB").SetPolarity(0);
     c1.GetSequential().SetClockPin(&(c1.GetPin("CKB")));
     c1.GetSequential().SetClockPolarity(EdgeKind::FALLING);
 
     Template t("MY_TEMP");
-    t.SetKind(TemplateKind::DELAY);
+    t.SetKind(TemplKind::DELAY);
 
     t.AddIndex1(0.01);
     t.AddIndex1(0.1);

@@ -25,7 +25,7 @@ class Cell {
         CellKind GetKind();
         void SetKind(CellKind kind);
 
-        std::pair<Pin&, bool> AddPin(std::string name, PinDirection direction, PinKind kind);
+        std::pair<Pin&, bool> AddPin(std::string name, PinDir direction, PinKind kind);
         Pin& GetPin(std::string name);
 
         void AddLeakageTableEntry(Expression *e, NanoWatt pwr);
@@ -35,7 +35,7 @@ class Cell {
             return std::views::values(pins_);
         };
 
-        auto GetPins(PinDirection direction) {
+        auto GetPins(PinDir direction) {
             auto filtered = std::views::filter(pins_,
                 [direction](const auto& pair) {
                     return pair.second.direction_ == direction;
@@ -53,7 +53,7 @@ class Cell {
             return std::views::values(filtered);
         };
 
-        auto GetPins(PinDirection direction, PinKind kind) {
+        auto GetPins(PinDir direction, PinKind kind) {
             auto filtered = std::views::filter(pins_,
                 [kind, direction](const auto& pair) {
                     return (pair.second.kind_ == kind) && (pair.second.direction_ == direction);
@@ -62,7 +62,7 @@ class Cell {
             return std::views::values(filtered);
         };
 
-        size_t GetPinsCount(PinDirection direction);
+        size_t GetPinsCount(PinDir direction);
 
         Sequential& GetSequential();
 

@@ -19,7 +19,7 @@ static void test_and2(Context &ctx, Algorithms &algs)
 
     Expression *e = c1.GetPin("Z").GetLogicFunction();
     assert (e != nullptr);
-    assert (e->GetKind() == ExpressionKind::AND);
+    assert (e->GetKind() == ExprKind::AND);
 
     Expression *lhs = e->GetLhs();
     Expression *rhs = e->GetRhs();
@@ -27,8 +27,8 @@ static void test_and2(Context &ctx, Algorithms &algs)
     assert (lhs != nullptr);
     assert (rhs != nullptr);
 
-    assert (lhs->GetKind() == ExpressionKind::TERM);
-    assert (rhs->GetKind() == ExpressionKind::TERM);
+    assert (lhs->GetKind() == ExprKind::TERM);
+    assert (rhs->GetKind() == ExprKind::TERM);
     assert (lhs->GetPin() == &(c1.GetPin("A")));
     assert (rhs->GetPin() == &(c1.GetPin("B")));
 }
@@ -44,15 +44,15 @@ static void test_half_adder(Context &ctx, Algorithms &algs)
     // S: A ^ B
     Expression *e = c1.GetPin("S").GetLogicFunction();
 
-    assert (e->GetKind() == ExpressionKind::XOR);
+    assert (e->GetKind() == ExprKind::XOR);
     Expression *l1 = e->GetLhs();
     Expression *r1 = e->GetRhs();
 
     assert (l1 != nullptr);
     assert (r1 != nullptr);
 
-    assert (l1->GetKind() == ExpressionKind::TERM);
-    assert (r1->GetKind() == ExpressionKind::TERM);
+    assert (l1->GetKind() == ExprKind::TERM);
+    assert (r1->GetKind() == ExprKind::TERM);
 
     assert (l1->GetPin() == &c1.GetPin("A"));
     assert (r1->GetPin() == &c1.GetPin("B"));

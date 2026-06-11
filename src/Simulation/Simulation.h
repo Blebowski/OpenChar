@@ -21,7 +21,7 @@ namespace open_char {
 class Simulation {
 
     public:
-        Simulation(Context *ctx, std::string name, Cell *dut, SimulationKind kind);
+        Simulation(Context *ctx, std::string name, Cell *dut, SimKind kind);
 
         void SetSupply(Supply *supply);
         void SetTemp(Celsius temp);
@@ -53,7 +53,7 @@ class Simulation {
 
     private:
 
-        const SimulationKind kind_;
+        const SimKind kind_;
         Cell * const dut_;
 
         Celsius temp_;

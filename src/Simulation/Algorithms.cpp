@@ -32,7 +32,7 @@ int Algorithms::GetBit(int64_t v, size_t index)
     return (v >> index) & 0x1;
 }
 
-Simulation *Algorithms::NewSimulation(std::string name, SimulationKind kind, Cell *cell)
+Simulation *Algorithms::NewSimulation(std::string name, SimKind kind, Cell *cell)
 {
     Simulation *sim = new Simulation(ctx_, name, cell, kind);
 
@@ -57,7 +57,7 @@ void Algorithms::PrepareSanitySim(Cell &cell)
     assert(templ != nullptr);
 
     std::string sim_name = "SANITY";
-    Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
+    Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
 
     Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
     Volt log0_v = supply->GetGndVoltage();
@@ -69,7 +69,7 @@ void Algorithms::PrepareSanitySim(Cell &cell)
     // Toggle all device pins at once with fastest possible input transition.
     // This generates total rubbish and potentially conflicting Set/Reset drivers,
     // Hopefully this is reasonable way to try if we invoke som convergence issues!
-    for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+    for (auto & i_pin : cell.GetPins(PinDir::IN)) {
         sim->AddStimuli(&i_pin, Stimulus(log0_v, log1_v, t_offset, t_rise, t_rise,
                                          2 * t_rise, 10, 1));
     }
@@ -94,16 +94,16 @@ bool Algorithms::CheckSanitySim(Cell &cell)
 void Algorithms::PrepareInputCapSims(Cell &cell)
 {
     size_t i_pin_index = 0;
-    for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+    for (auto & i_pin : cell.GetPins(PinDir::IN)) {
 
         std::string sim_name = sprintf("ICAP_%s", i_pin.name_);
-        Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
+        Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
 
         Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
         Volt log0_v = supply->GetGndVoltage();
         Volt log1_v = supply->GetVddVoltage();
 
-        for (auto & i_pin_2 : cell.GetPins(PinDirection::IN)) {
+        for (auto & i_pin_2 : cell.GetPins(PinDir::IN)) {
             if (i_pin_2.name_ == i_pin.name_) {
                 sim->AddStimuli(&i_pin_2, Stimulus(log0_v, log1_v, 1, 1, 1, 2, 10, 1));
             } else {
@@ -123,7 +123,7 @@ void Algorithms::PrepareInputCapSims(Cell &cell)
 
 bool Algorithms::MeasureInputCap(Cell &cell)
 {
-    for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+    for (auto & i_pin : cell.GetPins(PinDir::IN)) {
         for (Simulation *sim : i_pin.GetSimulations()) {
 
             // TODO: Better approach for filtering!
@@ -221,7 +221,7 @@ void Algorithms::PrepareLeakageSims(Cell &cell)
     Volt log1_v = supply->GetVddVoltage();
 
     size_t n_sims = 1;
-    for (size_t i = 0; i < cell.GetPinsCount(PinDirection::IN); i++)
+    for (size_t i = 0; i < cell.GetPinsCount(PinDir::IN); i++)
         n_sims *= 2;
 
     for (int64_t i_pin_vect = 0; i_pin_vect < static_cast<int64_t>(n_sims); i_pin_vect++) {
@@ -229,15 +229,15 @@ void Algorithms::PrepareLeakageSims(Cell &cell)
         std::string sim_name = "LKG";
 
         size_t tmp = i_pin_vect;
-        for (const auto & i_pin : cell.GetPins(PinDirection::IN)) {
+        for (const auto & i_pin : cell.GetPins(PinDir::IN)) {
             sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, tmp & 0x1);
             tmp >>= 1;
         }
 
-        Simulation *sim = NewSimulation(sim_name, SimulationKind::DC, &cell);
+        Simulation *sim = NewSimulation(sim_name, SimKind::DC, &cell);
 
         int i_pin_index = 0;
-        for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+        for (auto & i_pin : cell.GetPins(PinDir::IN)) {
             size_t i_pin_val = ((i_pin_vect >> i_pin_index) & 0x1);
             sim->AddStimuli((Pin*)&i_pin, Stimulus((i_pin_val == 1) ? log1_v : log0_v));
 
@@ -273,15 +273,15 @@ bool Algorithms::MeasureLeakage(Cell &cell)
         // The power is drained by the cell when pin current is negative -> Need absolute value
         NanoWatt lkg = std::abs(w.GetCurrent(s->GetVddName())[0]) * s->GetVddVoltage() * 1E3;
 
-        Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
+        Expression *e = new Expression(ExprKind::CONSTANT, 1);
         int64_t i_pin_vect = sim->GetMetaDataAt(0);
 
-        for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
-            Expression *tmp = new Expression(ExpressionKind::TERM, &(i_pin));
+        for (auto & i_pin : cell.GetPins(PinDir::IN)) {
+            Expression *tmp = new Expression(ExprKind::TERM, &(i_pin));
             if ((i_pin_vect & 0x1) == 0) {
-                tmp = new Expression(ExpressionKind::NOT, tmp);
+                tmp = new Expression(ExprKind::NOT, tmp);
             }
-            e = new Expression(ExpressionKind::AND, e, tmp);
+            e = new Expression(ExprKind::AND, e, tmp);
             i_pin_vect >>= 1;
         }
 
@@ -300,7 +300,7 @@ void Algorithms::PrepareComLogicTablesSims(Cell &cell)
     Volt log1_v = supply->GetVddVoltage();
 
     size_t n_sims = 1;
-    for (size_t i = 0; i < cell.GetPinsCount(PinDirection::IN); i++)
+    for (size_t i = 0; i < cell.GetPinsCount(PinDir::IN); i++)
         n_sims *= 2;
 
     for (int64_t i_pin_vect = 0; i_pin_vect < static_cast<int64_t>(n_sims); i_pin_vect++) {
@@ -308,15 +308,15 @@ void Algorithms::PrepareComLogicTablesSims(Cell &cell)
         std::string sim_name = "COMBO_LOGTBL";
 
         size_t tmp = i_pin_vect;
-        for (const auto & i_pin : cell.GetPins(PinDirection::IN)) {
+        for (const auto & i_pin : cell.GetPins(PinDir::IN)) {
             sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, tmp & 0x1);
             tmp >>= 1;
         }
 
-        Simulation *sim = NewSimulation(sim_name, SimulationKind::DC, &cell);
+        Simulation *sim = NewSimulation(sim_name, SimKind::DC, &cell);
 
         int i_pin_index = 0;
-        for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
+        for (auto & i_pin : cell.GetPins(PinDir::IN)) {
             size_t i_pin_val = ((i_pin_vect >> i_pin_index) & 0x1);
             sim->AddStimuli((Pin*)&i_pin, Stimulus((i_pin_val == 1) ? log1_v : log0_v));
 
@@ -347,7 +347,7 @@ bool Algorithms::MeasureComLogicTables(Cell &cell)
         Waves w = sim->ReadWaves();
 
         int64_t i_pin_vect = sim->GetMetaDataAt(0);
-        for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+        for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
             o_pin.AddLogicTableEntry(i_pin_vect, ToLogic(w.GetVoltage(o_pin.name_)[0]));
         }
     }
@@ -357,12 +357,12 @@ bool Algorithms::MeasureComLogicTables(Cell &cell)
 
 Expression* Algorithms::ComboSumOfProducts(Cell& cell, Pin& o_pin)
 {
-    Expression *e = new Expression(ExpressionKind::CONSTANT, 0);
+    Expression *e = new Expression(ExprKind::CONSTANT, 0);
 
     for (auto &lt_entry : o_pin.GetLogicTable()) {
         int output = lt_entry.second;
 
-        Expression* row_e = new Expression(ExpressionKind::CONSTANT, 1);
+        Expression* row_e = new Expression(ExprKind::CONSTANT, 1);
 
         if (output == 0)
             continue;
@@ -370,18 +370,18 @@ Expression* Algorithms::ComboSumOfProducts(Cell& cell, Pin& o_pin)
         int64_t inputs = lt_entry.first;
 
         int i = 0;
-        for (auto &i_pin : cell.GetPins(PinDirection::IN)) {
+        for (auto &i_pin : cell.GetPins(PinDir::IN)) {
             int val = (inputs >> i) & 0x1;
 
-            Expression *e_rhs = new Expression(ExpressionKind::TERM, &i_pin);
+            Expression *e_rhs = new Expression(ExprKind::TERM, &i_pin);
             if (val == 0) {
-                e_rhs = new Expression(ExpressionKind::NOT, e_rhs);
+                e_rhs = new Expression(ExprKind::NOT, e_rhs);
             }
-            row_e = new Expression(ExpressionKind::AND, row_e, e_rhs);
+            row_e = new Expression(ExprKind::AND, row_e, e_rhs);
             i++;
         }
 
-        e = new Expression(ExpressionKind::OR, e, row_e);
+        e = new Expression(ExprKind::OR, e, row_e);
     }
 
     return e;
@@ -390,12 +390,12 @@ Expression* Algorithms::ComboSumOfProducts(Cell& cell, Pin& o_pin)
 Expression* Algorithms::ComboProductOfSums(Cell& cell, Pin& o_pin)
 {
     // TODO: Cross-check this is correct!
-    Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
+    Expression *e = new Expression(ExprKind::CONSTANT, 1);
 
     for (const auto &lt_entry : o_pin.GetLogicTable()) {
         int output = lt_entry.second;
 
-        Expression* row_e = new Expression(ExpressionKind::CONSTANT, 0);
+        Expression* row_e = new Expression(ExprKind::CONSTANT, 0);
 
         if (output == 1)
             continue;
@@ -403,18 +403,18 @@ Expression* Algorithms::ComboProductOfSums(Cell& cell, Pin& o_pin)
         int64_t inputs = lt_entry.first;
 
         int i = 0;
-        for (auto &i_pin : cell.GetPins(PinDirection::IN)) {
+        for (auto &i_pin : cell.GetPins(PinDir::IN)) {
             int val = (inputs >> i) & 0x1;
 
-            Expression *e_rhs = new Expression(ExpressionKind::TERM, &i_pin);
+            Expression *e_rhs = new Expression(ExprKind::TERM, &i_pin);
             if (val == 1) {
-                e_rhs = new Expression(ExpressionKind::NOT, e_rhs);
+                e_rhs = new Expression(ExprKind::NOT, e_rhs);
             }
-            row_e = new Expression(ExpressionKind::OR, row_e, e_rhs);
+            row_e = new Expression(ExprKind::OR, row_e, e_rhs);
             i++;
         }
 
-        e = new Expression(ExpressionKind::AND, e, row_e);
+        e = new Expression(ExprKind::AND, e, row_e);
     }
 
     return e;
@@ -422,7 +422,7 @@ Expression* Algorithms::ComboProductOfSums(Cell& cell, Pin& o_pin)
 
 Expression* Algorithms::ComboRecognizeXor(Cell& cell, Pin& o_pin)
 {
-    size_t n_inputs = cell.GetPinsCount(PinDirection::IN);
+    size_t n_inputs = cell.GetPinsCount(PinDir::IN);
 
     // Checks all rows are XOR of inputs
     for (const auto & row : o_pin.GetLogicTable()) {
@@ -440,11 +440,11 @@ Expression* Algorithms::ComboRecognizeXor(Cell& cell, Pin& o_pin)
         }
     }
 
-    Expression *e = new Expression(ExpressionKind::CONSTANT, 0);
+    Expression *e = new Expression(ExprKind::CONSTANT, 0);
 
-    for (auto & i_pin : cell.GetPins(PinDirection::IN)) {
-        Expression *term = new Expression(ExpressionKind::TERM, &i_pin);
-        e = new Expression(ExpressionKind::XOR, e, term);
+    for (auto & i_pin : cell.GetPins(PinDir::IN)) {
+        Expression *term = new Expression(ExprKind::TERM, &i_pin);
+        e = new Expression(ExprKind::XOR, e, term);
     }
 
     return e;
@@ -452,7 +452,7 @@ Expression* Algorithms::ComboRecognizeXor(Cell& cell, Pin& o_pin)
 
 void Algorithms::CalculateComLogicFunctions(Cell &cell)
 {
-    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+    for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
         auto &log_table = o_pin.GetLogicTable();
         assert (log_table.size() > 0);
 
@@ -484,7 +484,7 @@ void Algorithms::CalculateComLogicFunctions(Cell &cell)
 
 void Algorithms::PrepareComDelayTransitionPowerSims(Cell &cell)
 {
-    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+    for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
 
         struct test_vect {
             int64_t     in_i;
@@ -559,7 +559,7 @@ int Algorithms::PrepareOneComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, i
         std::string prefix = "COMBO_DLYTRANPWR";
         size_t j = 0;
 
-        for (const auto & i_pin : cell->GetPins(PinDirection::IN)) {
+        for (const auto & i_pin : cell->GetPins(PinDir::IN)) {
             prefix = sprintf("%s_%s%d%d", prefix, i_pin.name_,
                              GetBit(i_from_vect, j), GetBit(i_to_vect, j));
             j++;
@@ -572,13 +572,13 @@ int Algorithms::PrepareOneComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, i
             for (const PicoFarad o_cap : templ->GetIndex2()) {
 
                 std::string sim_name = sprintf("%s_TRAN_%f_%s_CAP_%f", prefix, i_tran, o_pin.name_, o_cap);
-                Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, cell);
+                Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, cell);
 
                 Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
                 Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
 
                 int i = 0;
-                for (auto & i_pin : cell->GetPins(PinDirection::IN)) {
+                for (auto & i_pin : cell->GetPins(PinDir::IN)) {
 
                     int i_from = GetBit(i_from_vect, i);
                     int i_to = GetBit(i_to_vect, i);
@@ -766,7 +766,7 @@ bool Algorithms::MeasureComDelaysTransitionsPowers(Cell &cell)
 {
     assert (cell.GetKind() == CellKind::COMBINATIONAL);
 
-    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+    for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
 
             size_t i_tran_index = 0;
@@ -818,7 +818,7 @@ void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
     assert(a_pin_cnt == 1 || a_pin_cnt == 2);
 
     size_t d_pin_cnt = 0;
-    for ([[maybe_unused]] auto & i_pin : cell.GetPins(PinDirection::IN, PinKind::DATA)) {
+    for ([[maybe_unused]] auto & i_pin : cell.GetPins(PinDir::IN, PinKind::DATA)) {
         d_pin_cnt++;
     }
 
@@ -827,7 +827,7 @@ void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
 
     for (int64_t a_pin_vect = 0; a_pin_vect < (1 << a_pin_cnt); a_pin_vect++) {
 
-        auto d_pin = cell.GetPins(PinDirection::IN, PinKind::DATA).front();
+        auto d_pin = cell.GetPins(PinDir::IN, PinKind::DATA).front();
 
         for (int d = 0; d < 2; d++) {
             std::string sim_name = "SEQ_ASYNCFUNC";
@@ -839,7 +839,7 @@ void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
             }
 
             sim_name = sprintf("%s_%s%d", sim_name, d_pin.name_, d);
-            Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
+            Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
 
             OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
             Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -857,7 +857,7 @@ void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
             // For arbitrary one, we would need all combinations of inputs in
             // single simulation and recognize "clear candidate" and "set candidate"
             // when "no edge happened" based on output value!
-            for (auto & i_pin : cell.GetPins(PinDirection::IN, PinKind::DATA)) {
+            for (auto & i_pin : cell.GetPins(PinDir::IN, PinKind::DATA)) {
                 Volt v = (d == 1) ? log1_v : log0_v;
                 sim->AddStimuli((Pin*)&i_pin, Stimulus(v));
             }
@@ -907,7 +907,7 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
         row.d = sim->GetMetaDataAt(1);
 
         Waves w = sim->ReadWaves();
-        auto q_pin = cell.GetPins(PinDirection::OUT, PinKind::DATA).front();
+        auto q_pin = cell.GetPins(PinDir::OUT, PinKind::DATA).front();
         Volt q_val = w.GetVoltage(q_pin.name_).back();
 
         if (row.d == 0 && ToLogic(q_val) == 1) {
@@ -926,8 +926,8 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
             (n_set_candidates == 1 && n_clr_candidates == 2) ||
             (n_set_candidates == 2 && n_clr_candidates == 1));
 
-    Expression *set_e = new Expression(ExpressionKind::CONSTANT, 0);
-    Expression *clr_e = new Expression(ExpressionKind::CONSTANT, 0);
+    Expression *set_e = new Expression(ExprKind::CONSTANT, 0);
+    Expression *clr_e = new Expression(ExprKind::CONSTANT, 0);
 
     for (auto & row : tbl) {
         if (!row.set_candidate && !row.clr_candidate) {
@@ -937,24 +937,24 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
         assert (!(row.set_candidate && row.clr_candidate));
 
         size_t a_pin_vect = row.a_pin_vect;
-        Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
+        Expression *e = new Expression(ExprKind::CONSTANT, 1);
 
         for (auto & a_pin : cell.GetPins(PinKind::ASYNC)) {
-            Expression *e2 = new Expression(ExpressionKind::TERM, &a_pin);
+            Expression *e2 = new Expression(ExprKind::TERM, &a_pin);
 
             if ((a_pin_vect & 0x1) == 0) {
-                e2 = new Expression(ExpressionKind::NOT, e2);
+                e2 = new Expression(ExprKind::NOT, e2);
             }
-            e = new Expression(ExpressionKind::AND, e, e2);
+            e = new Expression(ExprKind::AND, e, e2);
             a_pin_vect >>= 1;
         }
 
         if (row.set_candidate) {
-            set_e = new Expression(ExpressionKind::OR, set_e, e);
+            set_e = new Expression(ExprKind::OR, set_e, e);
         }
 
         if (row.clr_candidate) {
-            clr_e = new Expression(ExpressionKind::OR, clr_e, e);
+            clr_e = new Expression(ExprKind::OR, clr_e, e);
         }
     }
 
@@ -962,17 +962,17 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
     set_e->Simplify();
 
     // Recognize case when we have only one async pin
-    if (set_e->GetKind() == ExpressionKind::CONSTANT) {
+    if (set_e->GetKind() == ExprKind::CONSTANT) {
         delete set_e;
-        assert(clr_e->GetKind() == ExpressionKind::NOT ||
-               clr_e->GetKind() == ExpressionKind::TERM);
+        assert(clr_e->GetKind() == ExprKind::NOT ||
+               clr_e->GetKind() == ExprKind::TERM);
         cell.GetSequential().SetClear(clr_e);
     }
 
-    if (clr_e->GetKind() == ExpressionKind::CONSTANT) {
+    if (clr_e->GetKind() == ExprKind::CONSTANT) {
         delete clr_e;
-        assert(set_e->GetKind() == ExpressionKind::NOT ||
-               set_e->GetKind() == ExpressionKind::TERM);
+        assert(set_e->GetKind() == ExprKind::NOT ||
+               set_e->GetKind() == ExprKind::TERM);
         cell.GetSequential().SetPreset(set_e);
     }
 
@@ -981,14 +981,14 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
     // TODO: This assumes that always one async pin will have priority
     // which might not be the case since liberty allows for other
     // kinds of behavior!
-    assert ((set_e->GetKind() == ExpressionKind::TERM) ||
-            (set_e->GetKind() == ExpressionKind::NOT)  ||
-            (clr_e->GetKind() == ExpressionKind::TERM) ||
-            (clr_e->GetKind() == ExpressionKind::NOT));
+    assert ((set_e->GetKind() == ExprKind::TERM) ||
+            (set_e->GetKind() == ExprKind::NOT)  ||
+            (clr_e->GetKind() == ExprKind::TERM) ||
+            (clr_e->GetKind() == ExprKind::NOT));
 
     Expression *dom_e;
 
-    if (set_e->GetKind() == ExpressionKind::TERM || set_e->GetKind() == ExpressionKind::NOT) {
+    if (set_e->GetKind() == ExprKind::TERM || set_e->GetKind() == ExprKind::NOT) {
         dom_e = set_e;
     } else {
         dom_e = clr_e;
@@ -998,8 +998,8 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
     // dominant pin, otherwise it would not be recognized! We substitute
     // this out with inactive value!
     if (dom_e == set_e) {
-        cell.GetSequential().SetAsyncPriority(AsyncPriority::PRESET);
-        if (set_e->GetKind() == ExpressionKind::NOT) {
+        cell.GetSequential().SetAsyncPriority(AsyncPrio::PRESET);
+        if (set_e->GetKind() == ExprKind::NOT) {
             Pin *set_pin = set_e->GetLhs()->GetPin();
             assert(set_pin != nullptr);
             clr_e->Substitute(set_pin, 1);
@@ -1010,8 +1010,8 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
         }
         clr_e->Simplify();
     } else {
-        cell.GetSequential().SetAsyncPriority(AsyncPriority::CLEAR);
-        if (clr_e->GetKind() == ExpressionKind::NOT) {
+        cell.GetSequential().SetAsyncPriority(AsyncPrio::CLEAR);
+        if (clr_e->GetKind() == ExprKind::NOT) {
             Pin *clr_pin = clr_e->GetLhs()->GetPin();
             assert (clr_pin != nullptr);
             set_e->Substitute(clr_pin, 1);
@@ -1023,13 +1023,13 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
         set_e->Simplify();
     }
 
-    if (clr_e->GetKind() == ExpressionKind::NOT) {
+    if (clr_e->GetKind() == ExprKind::NOT) {
         clr_e->GetLhs()->GetPin()->SetPolarity(0);
     } else {
         clr_e->GetPin()->SetPolarity(1);
     }
 
-    if (set_e->GetKind() == ExpressionKind::NOT) {
+    if (set_e->GetKind() == ExprKind::NOT) {
         set_e->GetLhs()->GetPin()->SetPolarity(0);
     } else {
         set_e->GetPin()->SetPolarity(1);
@@ -1048,7 +1048,7 @@ void Algorithms::PrepareSeqEdgeOrLvlSims(Cell &cell)
         Pin &c_pin = cell.GetPins(PinKind::CLK).front();
 
         std::string sim_name = sprintf("SEQ_EDGEVSLVL_%s%d", c_pin.name_, clock_val);
-        Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
+        Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
 
         OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
         Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -1061,7 +1061,7 @@ void Algorithms::PrepareSeqEdgeOrLvlSims(Cell &cell)
 
         // Drive data pins to all combinations of inputs
         NanoSecond pw = 1.0;
-        for (auto & i_pin : cell.GetPins(PinDirection::IN, PinKind::DATA)) {
+        for (auto & i_pin : cell.GetPins(PinDir::IN, PinKind::DATA)) {
             sim->AddStimuli(&i_pin, Stimulus(log0_v, log1_v, pw, 0.01, 0.01, pw, pw * 2, 32));
             pw *= 2;
         }
@@ -1083,7 +1083,7 @@ void Algorithms::PrepareSeqEdgeOrLvlSims(Cell &cell)
 
 bool Algorithms::MeasureSeqEdgeOrLvl(Cell &cell)
 {
-    SequentialKind seq_kind = SequentialKind::FLIP_FLOP;
+    SeqKind seq_kind = SeqKind::FLIP_FLOP;
     int active_clocks = 0;
 
     for (Simulation *sim : cell.GetSimulations()) {
@@ -1102,7 +1102,7 @@ bool Algorithms::MeasureSeqEdgeOrLvl(Cell &cell)
         bool has_logic_0 = false;
         bool has_logic_1 = false;
 
-        for (auto & pin : cell.GetPins(PinDirection::OUT)) {
+        for (auto & pin : cell.GetPins(PinDir::OUT)) {
             for (Volt v : w.GetVoltage(pin.name_)) {
                 if (ToLogic(v) == 1) {
                     has_logic_1 = true;
@@ -1114,7 +1114,7 @@ bool Algorithms::MeasureSeqEdgeOrLvl(Cell &cell)
 
         if (has_logic_0 && has_logic_1) {
             active_clocks++;
-            seq_kind = SequentialKind::LATCH;
+            seq_kind = SeqKind::LATCH;
             int active_clock = sim->GetMetaDataAt(0);
             cell.GetSequential().SetEnablePolarity(active_clock);
         }
@@ -1136,7 +1136,7 @@ void Algorithms::PrepareFFClockPolaritySims(Cell &cell)
     size_t i_pin_cnt = 0;
 
     // TODO: Wrap calculation of number of pins!
-    for ([[maybe_unused]] auto & i_pin : cell.GetPins(PinDirection::IN, PinKind::DATA)) {
+    for ([[maybe_unused]] auto & i_pin : cell.GetPins(PinDir::IN, PinKind::DATA)) {
         i_pin_cnt++;
     }
 
@@ -1148,11 +1148,11 @@ void Algorithms::PrepareFFClockPolaritySims(Cell &cell)
             std::string sim_name = sprintf("FF_CKPOL_%s%d%d", cell.GetPins(PinKind::CLK).front().name_,
                                             clock_polarity, 1 - clock_polarity);
             size_t i = 0;
-            for (auto & i_pin : cell.GetPins(PinDirection::IN, PinKind::DATA)) {
+            for (auto & i_pin : cell.GetPins(PinDir::IN, PinKind::DATA)) {
                 sim_name = sprintf("%s_%s%d", sim_name, i_pin.name_, (i_pin_vect >> i) & 0x1);
                 i++;
             }
-            Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
+            Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
 
             OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
             Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -1167,7 +1167,7 @@ void Algorithms::PrepareFFClockPolaritySims(Cell &cell)
 
             // Drive input data pins
             i = 0;
-            for (auto & i_pin : cell.GetPins(PinDirection::IN, PinKind::DATA)) {
+            for (auto & i_pin : cell.GetPins(PinDir::IN, PinKind::DATA)) {
                 int i_pin_val = (i_pin_vect >> i) & 0x1;
                 sim->AddStimuli(&i_pin, (i_pin_val == 1) ? log1_v : log0_v);
                 i++;
@@ -1190,7 +1190,7 @@ void Algorithms::PrepareFFClockPolaritySims(Cell &cell)
 
 bool Algorithms::MeasureFFClockPolarity(Cell &cell)
 {
-    assert(cell.GetSequential().GetKind() == SequentialKind::FLIP_FLOP);
+    assert(cell.GetSequential().GetKind() == SeqKind::FLIP_FLOP);
 
     bool out_change_posedge = false;
     bool out_change_negedge = false;
@@ -1208,7 +1208,7 @@ bool Algorithms::MeasureFFClockPolarity(Cell &cell)
 
         Waves w = sim->ReadWaves();
 
-        for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+        for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
             auto &out_v = w.GetVoltage(o_pin.name_);
 
             int out_start = ToLogic(out_v.front());
@@ -1250,7 +1250,7 @@ bool Algorithms::MeasureFFClockPolarity(Cell &cell)
 
 void Algorithms::PrepareFFClockDelayTransitionPowerSims(Cell &cell)
 {
-    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+    for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
 
         auto *templ = cell.GetDelayTemplate();
         assert(templ != nullptr);
@@ -1271,10 +1271,10 @@ void Algorithms::PrepareFFClockDelayTransitionPowerSims(Cell &cell)
                 for (int d_val = 0; d_val < 2; d_val++) {
 
                     auto & c_pin = cell.GetPins(PinKind::CLK).front();
-                    auto & d_pin = cell.GetPins(PinDirection::IN, PinKind::DATA).front();
+                    auto & d_pin = cell.GetPins(PinDir::IN, PinKind::DATA).front();
                     std::string sim_name = sprintf("SEQ_DLY_%s_%s%d_TRAN_%f_CAP_%f",
                                                     c_pin.name_, d_pin.name_, d_val, i_tran, o_cap);
-                    Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
+                    Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
 
                     OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
                     Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -1424,7 +1424,7 @@ void Algorithms::MeasureOneFFClockPower(Cell &cell, Simulation *sim, Waves &w, A
 
 bool Algorithms::MeasureFFClockDelaysTransitionsPowers(Cell &cell)
 {
-    for (auto & o_pin : cell.GetPins(PinDirection::OUT)) {
+    for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
         for (auto & arc : o_pin.GetArcs()) {
 
             size_t i_tran_index = 0;
@@ -1472,7 +1472,7 @@ void Algorithms::PrepareFFSetupOrHoldSims(Cell &cell, ArcKind a_kind)
     assert(cell.GetKind() == CellKind::SEQUENTIAL);
 
     // TODO: This assumes DFF with single output
-    auto & d_pin = cell.GetPins(PinDirection::IN, PinKind::DATA).front();
+    auto & d_pin = cell.GetPins(PinDir::IN, PinKind::DATA).front();
     d_pin.AddArc(Arc(&d_pin, templ, a_kind, 0, 1, 0, 1));
     size_t arc_index = d_pin.GetArcs().size() - 1;
 
@@ -1503,12 +1503,12 @@ void Algorithms::PrepareOneFFSetupOrHoldSim(Cell &cell, ArcKind a_kind, size_t a
 
     // TODO: This assumes DFF with single output
     auto & c_pin = cell.GetPins(PinKind::CLK).front();
-    auto & d_pin = cell.GetPins(PinDirection::IN, PinKind::DATA).front();
+    auto & d_pin = cell.GetPins(PinDir::IN, PinKind::DATA).front();
 
     std::string sim_name = sprintf("SEQ_%s_%s_TRAN_%f_%s_TRAN_%f_CK_D_SKEW_%f",
                                     (a_kind == ArcKind::SEQ_SETUP) ? "SETUP" : "HOLD",
                                     d_pin.name_, d_tran, c_pin.name_, ck_tran, ck_d_skew);
-    Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
+    Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
 
     OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
     Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
@@ -1566,8 +1566,8 @@ std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind
     assert(cell.GetKind() == CellKind::SEQUENTIAL);
 
     // TODO: This assumes DFF with single D and Q
-    auto & q_pin = cell.GetPins(PinDirection::OUT, PinKind::DATA).front();
-    auto & d_pin = cell.GetPins(PinDirection::IN, PinKind::DATA).front();
+    auto & q_pin = cell.GetPins(PinDir::OUT, PinKind::DATA).front();
+    auto & d_pin = cell.GetPins(PinDir::IN, PinKind::DATA).front();
     auto & c_pin = cell.GetPins(PinKind::CLK).front();
 
     // Search for arc of this kind
@@ -1731,7 +1731,7 @@ void Algorithms::PrepareOneFFClockMPWSim(Cell &cell, size_t arc_index, NanoSecon
     assert(cell.GetKind() == CellKind::SEQUENTIAL);
 
     // TODO: This assumes DFF with single D
-    auto & d_pin = cell.GetPins(PinDirection::IN, PinKind::DATA).front();
+    auto & d_pin = cell.GetPins(PinDir::IN, PinKind::DATA).front();
     auto & c_pin = cell.GetPins(PinKind::CLK).front();
 
     OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
@@ -1740,7 +1740,7 @@ void Algorithms::PrepareOneFFClockMPWSim(Cell &cell, size_t arc_index, NanoSecon
 
     std::string sim_name = sprintf("MPW_%s_%s_PW_%f_STEP_%f", c_pin.name_,
                                    (high) ? "HIGH" : "LOW", pulse_width, step);
-    Simulation *sim = NewSimulation(sim_name, SimulationKind::TRAN, &cell);
+    Simulation *sim = NewSimulation(sim_name, SimKind::TRAN, &cell);
 
     NanoSecond pulse_start = 15.0;
     NanoSecond min_ck_tran = cell.GetConstraintTemplate()->GetIndex2().front();
@@ -1804,7 +1804,7 @@ void Algorithms::PrepareFFClockMPWSims(Cell &cell)
 
 std::pair<bool,bool> Algorithms::MeasureFFClockMPW(Cell &cell)
 {
-    auto & q_pin = cell.GetPins(PinDirection::OUT, PinKind::DATA).front();
+    auto & q_pin = cell.GetPins(PinDir::OUT, PinKind::DATA).front();
     auto & c_pin = cell.GetPins(PinKind::CLK).front();
 
     bool all_finished = true;
@@ -2087,7 +2087,7 @@ bool Algorithms::CharacterizeLibrary()
                 info("%s - Measuring if cell is edge or level sensitive", cell.GetName());
                 PROCESS_RESULTS(cell, MeasureSeqEdgeOrLvl);
 
-                if (cell.GetSequential().GetKind() == SequentialKind::FLIP_FLOP) {
+                if (cell.GetSequential().GetKind() == SeqKind::FLIP_FLOP) {
                     info("%s - Preparing flip-flop clock polarity detection simulations",
                          cell.GetName());
                     PrepareFFClockPolaritySims(cell);

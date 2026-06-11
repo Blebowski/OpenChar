@@ -8,20 +8,20 @@ using namespace open_char;
 
 static Pin *make_pin(const char *name)
 {
-    return new Pin(nullptr, name, PinDirection::IN, PinKind::DATA);
+    return new Pin(nullptr, name, PinDir::IN, PinKind::DATA);
 }
 
 void test_construction_and_getters()
 {
     // CONSTANT
     {
-        Expression *e = new Expression(ExpressionKind::CONSTANT, 1);
-        assert(e->GetKind() == ExpressionKind::CONSTANT);
+        Expression *e = new Expression(ExprKind::CONSTANT, 1);
+        assert(e->GetKind() == ExprKind::CONSTANT);
         assert(e->GetConstValue() == 1);
         delete e;
     }
     {
-        Expression *e = new Expression(ExpressionKind::CONSTANT, 0);
+        Expression *e = new Expression(ExprKind::CONSTANT, 0);
         assert(e->GetConstValue() == 0);
         delete e;
     }
@@ -29,8 +29,8 @@ void test_construction_and_getters()
     // TERM
     {
         Pin *pa = make_pin("A");
-        Expression *e = new Expression(ExpressionKind::TERM, pa);
-        assert(e->GetKind() == ExpressionKind::TERM);
+        Expression *e = new Expression(ExprKind::TERM, pa);
+        assert(e->GetKind() == ExprKind::TERM);
         assert(e->GetPin() == pa);
         delete e;
         delete pa;
@@ -39,9 +39,9 @@ void test_construction_and_getters()
     // NOT
     {
         Pin *pa = make_pin("A");
-        Expression *inner = new Expression(ExpressionKind::TERM, pa);
-        Expression *e = new Expression(ExpressionKind::NOT, inner);
-        assert(e->GetKind() == ExpressionKind::NOT);
+        Expression *inner = new Expression(ExprKind::TERM, pa);
+        Expression *e = new Expression(ExprKind::NOT, inner);
+        assert(e->GetKind() == ExprKind::NOT);
         assert(e->GetLhs() == inner);
         delete e;
         delete pa;
@@ -52,22 +52,22 @@ void test_construction_and_getters()
         Pin *pa = make_pin("A");
         Pin *pb = make_pin("B");
 
-        Expression *e_and = new Expression(ExpressionKind::AND,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::TERM, pb));
-        assert(e_and->GetKind() == ExpressionKind::AND);
+        Expression *e_and = new Expression(ExprKind::AND,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::TERM, pb));
+        assert(e_and->GetKind() == ExprKind::AND);
         delete e_and;
 
-        Expression *e_or = new Expression(ExpressionKind::OR,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::TERM, pb));
-        assert(e_or->GetKind() == ExpressionKind::OR);
+        Expression *e_or = new Expression(ExprKind::OR,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::TERM, pb));
+        assert(e_or->GetKind() == ExprKind::OR);
         delete e_or;
 
-        Expression *e_xor = new Expression(ExpressionKind::XOR,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::TERM, pb));
-        assert(e_xor->GetKind() == ExpressionKind::XOR);
+        Expression *e_xor = new Expression(ExprKind::XOR,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::TERM, pb));
+        assert(e_xor->GetKind() == ExprKind::XOR);
         delete e_xor;
 
         delete pa;
@@ -82,15 +82,15 @@ void test_equals()
         Pin *pa = make_pin("A");
         Pin *pb = make_pin("B");
 
-        Expression *e1 = new Expression(ExpressionKind::AND,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::TERM, pb));
-        Expression *e2 = new Expression(ExpressionKind::AND,
-            new Expression(ExpressionKind::TERM, pb),
-            new Expression(ExpressionKind::TERM, pa));
+        Expression *e1 = new Expression(ExprKind::AND,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::TERM, pb));
+        Expression *e2 = new Expression(ExprKind::AND,
+            new Expression(ExprKind::TERM, pb),
+            new Expression(ExprKind::TERM, pa));
 
-        assert(e1->Equals(e2, ExpressionEqualityKind::EQUAL));
-        assert(!e1->Equals(e2, ExpressionEqualityKind::INVERT));
+        assert(e1->Equals(e2, ExprEqualKind::EQUAL));
+        assert(!e1->Equals(e2, ExprEqualKind::INVERT));
 
         delete e1;
         delete e2;
@@ -102,12 +102,12 @@ void test_equals()
     {
         Pin *pa = make_pin("A");
 
-        Expression *e1 = new Expression(ExpressionKind::TERM, pa);
-        Expression *e2 = new Expression(ExpressionKind::NOT,
-            new Expression(ExpressionKind::TERM, pa));
+        Expression *e1 = new Expression(ExprKind::TERM, pa);
+        Expression *e2 = new Expression(ExprKind::NOT,
+            new Expression(ExprKind::TERM, pa));
 
-        assert(e1->Equals(e2, ExpressionEqualityKind::INVERT));
-        assert(!e1->Equals(e2, ExpressionEqualityKind::EQUAL));
+        assert(e1->Equals(e2, ExprEqualKind::INVERT));
+        assert(!e1->Equals(e2, ExprEqualKind::EQUAL));
 
         delete e1;
         delete e2;
@@ -119,14 +119,14 @@ void test_equals()
         Pin *pa = make_pin("A");
         Pin *pb = make_pin("B");
 
-        Expression *e1 = new Expression(ExpressionKind::OR,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::TERM, pb));
-        Expression *e2 = new Expression(ExpressionKind::OR,
-            new Expression(ExpressionKind::TERM, pb),
-            new Expression(ExpressionKind::TERM, pa));
+        Expression *e1 = new Expression(ExprKind::OR,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::TERM, pb));
+        Expression *e2 = new Expression(ExprKind::OR,
+            new Expression(ExprKind::TERM, pb),
+            new Expression(ExprKind::TERM, pa));
 
-        assert(e1->Equals(e2, ExpressionEqualityKind::EQUAL));
+        assert(e1->Equals(e2, ExprEqualKind::EQUAL));
 
         delete e1;
         delete e2;
@@ -139,15 +139,15 @@ void test_equals()
         Pin *pa = make_pin("A");
         Pin *pb = make_pin("B");
 
-        Expression *e1 = new Expression(ExpressionKind::AND,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::TERM, pb));
-        Expression *e2 = new Expression(ExpressionKind::OR,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::TERM, pb));
+        Expression *e1 = new Expression(ExprKind::AND,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::TERM, pb));
+        Expression *e2 = new Expression(ExprKind::OR,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::TERM, pb));
 
-        assert(!e1->Equals(e2, ExpressionEqualityKind::EQUAL));
-        assert(!e1->Equals(e2, ExpressionEqualityKind::INVERT));
+        assert(!e1->Equals(e2, ExprEqualKind::EQUAL));
+        assert(!e1->Equals(e2, ExprEqualKind::INVERT));
 
         delete e1;
         delete e2;
@@ -163,14 +163,14 @@ void test_substitute()
         Pin *pa = make_pin("A");
         Pin *pb = make_pin("B");
 
-        Expression *e = new Expression(ExpressionKind::AND,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::TERM, pb));
+        Expression *e = new Expression(ExprKind::AND,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::TERM, pb));
 
         e->Substitute(pa, 1);
         e->Simplify();
 
-        assert(e->GetKind() == ExpressionKind::TERM);
+        assert(e->GetKind() == ExprKind::TERM);
         assert(e->GetPin() == pb);
 
         delete e;
@@ -183,14 +183,14 @@ void test_substitute()
         Pin *pa = make_pin("A");
         Pin *pb = make_pin("B");
 
-        Expression *e = new Expression(ExpressionKind::OR,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::TERM, pb));
+        Expression *e = new Expression(ExprKind::OR,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::TERM, pb));
 
         e->Substitute(pa, 0);
         e->Simplify();
 
-        assert(e->GetKind() == ExpressionKind::TERM);
+        assert(e->GetKind() == ExprKind::TERM);
         assert(e->GetPin() == pb);
 
         delete e;
@@ -204,11 +204,11 @@ void test_simplify_const_fold()
     // 1 & A → A
     {
         Pin *pa = make_pin("A");
-        Expression *e = new Expression(ExpressionKind::AND,
-            new Expression(ExpressionKind::CONSTANT, 1),
-            new Expression(ExpressionKind::TERM, pa));
+        Expression *e = new Expression(ExprKind::AND,
+            new Expression(ExprKind::CONSTANT, 1),
+            new Expression(ExprKind::TERM, pa));
         e->Simplify();
-        assert(e->GetKind() == ExpressionKind::TERM);
+        assert(e->GetKind() == ExprKind::TERM);
         assert(e->GetPin() == pa);
         delete e;
         delete pa;
@@ -217,11 +217,11 @@ void test_simplify_const_fold()
     // A & 1 → A
     {
         Pin *pa = make_pin("A");
-        Expression *e = new Expression(ExpressionKind::AND,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::CONSTANT, 1));
+        Expression *e = new Expression(ExprKind::AND,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::CONSTANT, 1));
         e->Simplify();
-        assert(e->GetKind() == ExpressionKind::TERM);
+        assert(e->GetKind() == ExprKind::TERM);
         assert(e->GetPin() == pa);
         delete e;
         delete pa;
@@ -230,11 +230,11 @@ void test_simplify_const_fold()
     // 0 | A → A
     {
         Pin *pa = make_pin("A");
-        Expression *e = new Expression(ExpressionKind::OR,
-            new Expression(ExpressionKind::CONSTANT, 0),
-            new Expression(ExpressionKind::TERM, pa));
+        Expression *e = new Expression(ExprKind::OR,
+            new Expression(ExprKind::CONSTANT, 0),
+            new Expression(ExprKind::TERM, pa));
         e->Simplify();
-        assert(e->GetKind() == ExpressionKind::TERM);
+        assert(e->GetKind() == ExprKind::TERM);
         assert(e->GetPin() == pa);
         delete e;
         delete pa;
@@ -243,11 +243,11 @@ void test_simplify_const_fold()
     // A | 0 → A
     {
         Pin *pa = make_pin("A");
-        Expression *e = new Expression(ExpressionKind::OR,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::CONSTANT, 0));
+        Expression *e = new Expression(ExprKind::OR,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::CONSTANT, 0));
         e->Simplify();
-        assert(e->GetKind() == ExpressionKind::TERM);
+        assert(e->GetKind() == ExprKind::TERM);
         assert(e->GetPin() == pa);
         delete e;
         delete pa;
@@ -256,11 +256,11 @@ void test_simplify_const_fold()
     // 0 ^ A → A
     {
         Pin *pa = make_pin("A");
-        Expression *e = new Expression(ExpressionKind::XOR,
-            new Expression(ExpressionKind::CONSTANT, 0),
-            new Expression(ExpressionKind::TERM, pa));
+        Expression *e = new Expression(ExprKind::XOR,
+            new Expression(ExprKind::CONSTANT, 0),
+            new Expression(ExprKind::TERM, pa));
         e->Simplify();
-        assert(e->GetKind() == ExpressionKind::TERM);
+        assert(e->GetKind() == ExprKind::TERM);
         assert(e->GetPin() == pa);
         delete e;
         delete pa;
@@ -272,12 +272,12 @@ void test_simplify_tautology_contradiction()
     // A | !A → 1 (tautology)
     {
         Pin *pa = make_pin("A");
-        Expression *e = new Expression(ExpressionKind::OR,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::NOT,
-                new Expression(ExpressionKind::TERM, pa)));
+        Expression *e = new Expression(ExprKind::OR,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::NOT,
+                new Expression(ExprKind::TERM, pa)));
         e->Simplify();
-        assert(e->GetKind() == ExpressionKind::CONSTANT);
+        assert(e->GetKind() == ExprKind::CONSTANT);
         assert(e->GetConstValue() == 1);
         delete e;
         delete pa;
@@ -286,12 +286,12 @@ void test_simplify_tautology_contradiction()
     // A & !A → 0 (contradiction)
     {
         Pin *pa = make_pin("A");
-        Expression *e = new Expression(ExpressionKind::AND,
-            new Expression(ExpressionKind::TERM, pa),
-            new Expression(ExpressionKind::NOT,
-                new Expression(ExpressionKind::TERM, pa)));
+        Expression *e = new Expression(ExprKind::AND,
+            new Expression(ExprKind::TERM, pa),
+            new Expression(ExprKind::NOT,
+                new Expression(ExprKind::TERM, pa)));
         e->Simplify();
-        assert(e->GetKind() == ExpressionKind::CONSTANT);
+        assert(e->GetKind() == ExprKind::CONSTANT);
         assert(e->GetConstValue() == 0);
         delete e;
         delete pa;
@@ -305,15 +305,15 @@ void test_simplify_demorgan()
         Pin *pa = make_pin("A");
         Pin *pb = make_pin("B");
 
-        Expression *e = new Expression(ExpressionKind::NOT,
-            new Expression(ExpressionKind::AND,
-                new Expression(ExpressionKind::NOT, new Expression(ExpressionKind::TERM, pa)),
-                new Expression(ExpressionKind::NOT, new Expression(ExpressionKind::TERM, pb))));
+        Expression *e = new Expression(ExprKind::NOT,
+            new Expression(ExprKind::AND,
+                new Expression(ExprKind::NOT, new Expression(ExprKind::TERM, pa)),
+                new Expression(ExprKind::NOT, new Expression(ExprKind::TERM, pb))));
         e->Simplify();
 
-        assert(e->GetKind() == ExpressionKind::OR);
-        assert(e->GetLhs()->GetKind() == ExpressionKind::TERM);
-        assert(e->GetRhs()->GetKind() == ExpressionKind::TERM);
+        assert(e->GetKind() == ExprKind::OR);
+        assert(e->GetLhs()->GetKind() == ExprKind::TERM);
+        assert(e->GetRhs()->GetKind() == ExprKind::TERM);
 
         delete e;
         delete pa;
@@ -325,15 +325,15 @@ void test_simplify_demorgan()
         Pin *pa = make_pin("A");
         Pin *pb = make_pin("B");
 
-        Expression *e = new Expression(ExpressionKind::NOT,
-            new Expression(ExpressionKind::OR,
-                new Expression(ExpressionKind::NOT, new Expression(ExpressionKind::TERM, pa)),
-                new Expression(ExpressionKind::NOT, new Expression(ExpressionKind::TERM, pb))));
+        Expression *e = new Expression(ExprKind::NOT,
+            new Expression(ExprKind::OR,
+                new Expression(ExprKind::NOT, new Expression(ExprKind::TERM, pa)),
+                new Expression(ExprKind::NOT, new Expression(ExprKind::TERM, pb))));
         e->Simplify();
 
-        assert(e->GetKind() == ExpressionKind::AND);
-        assert(e->GetLhs()->GetKind() == ExpressionKind::TERM);
-        assert(e->GetRhs()->GetKind() == ExpressionKind::TERM);
+        assert(e->GetKind() == ExprKind::AND);
+        assert(e->GetLhs()->GetKind() == ExprKind::TERM);
+        assert(e->GetRhs()->GetKind() == ExprKind::TERM);
 
         delete e;
         delete pa;
@@ -349,18 +349,18 @@ void test_simplify_associate()
         Pin *pb = make_pin("B");
         Pin *pc = make_pin("C");
 
-        Expression *e = new Expression(ExpressionKind::OR,
-            new Expression(ExpressionKind::AND,
-                new Expression(ExpressionKind::TERM, pa),
-                new Expression(ExpressionKind::TERM, pb)),
-            new Expression(ExpressionKind::AND,
-                new Expression(ExpressionKind::TERM, pa),
-                new Expression(ExpressionKind::TERM, pc)));
+        Expression *e = new Expression(ExprKind::OR,
+            new Expression(ExprKind::AND,
+                new Expression(ExprKind::TERM, pa),
+                new Expression(ExprKind::TERM, pb)),
+            new Expression(ExprKind::AND,
+                new Expression(ExprKind::TERM, pa),
+                new Expression(ExprKind::TERM, pc)));
         e->Simplify();
 
-        assert(e->GetKind() == ExpressionKind::AND);
-        assert(e->GetLhs()->GetKind() == ExpressionKind::TERM);
-        assert(e->GetRhs()->GetKind() == ExpressionKind::OR);
+        assert(e->GetKind() == ExprKind::AND);
+        assert(e->GetLhs()->GetKind() == ExprKind::TERM);
+        assert(e->GetRhs()->GetKind() == ExprKind::OR);
 
         delete e;
         delete pa;

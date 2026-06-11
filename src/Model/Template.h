@@ -16,8 +16,8 @@ class Template {
 
         void WriteLiberty(size_t tab, FILE* f);
 
-        void SetKind(TemplateKind kind);
-        TemplateKind GetKind();
+        void SetKind(TemplKind kind);
+        TemplKind GetKind();
 
         std::string GetName();
 
@@ -29,7 +29,7 @@ class Template {
 
     private:
         const std::string name_;
-        TemplateKind kind_;
+        TemplKind kind_;
         std::vector<double> index_1_;
         std::vector<double> index_2_;
 

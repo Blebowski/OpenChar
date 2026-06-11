@@ -12,7 +12,7 @@
 
 namespace open_char {
 
-Simulation::Simulation(Context *ctx, std::string name, Cell *dut, SimulationKind kind) :
+Simulation::Simulation(Context *ctx, std::string name, Cell *dut, SimKind kind) :
     name_(name),
     kind_(kind),
     dut_(dut),
@@ -94,12 +94,12 @@ void Simulation::WriteTestBench()
         fprintf(f, "V%s %s_I %s ", s.first->name_, s.first->name_, supply_->GetGndName());
 
         const Stimulus &v = s.second;
-        if (v.kind_ == StimulusKind::CONSTANT) {
+        if (v.kind_ == StimKind::CONSTANT) {
             fprintf(f, "%f\n", v.volage_);
-        } else if (v.kind_ == StimulusKind::PULSE) {
+        } else if (v.kind_ == StimKind::PULSE) {
             fprintf(f, "PULSE(%fV %fV %fNS %fNS %fNS %fNS %fNS %d)\n", v.v1_, v.v2_, v.t_delay_, v.t_rise_,
                        v.t_fall_, v.pulse_width_, v.period_, v.num_pulses_);
-        } else if (v.kind_ == StimulusKind::PWL) {
+        } else if (v.kind_ == StimKind::PWL) {
             fprintf(f, "PWL(");
             for (const auto & [voltage, time] : s.second.pwl_vals_) {
                 fprintf(f, "%fNS %fV ", time, voltage);
@@ -123,9 +123,9 @@ void Simulation::WriteTestBench()
     fprintf(f, "* DUT\n", dut_title_);
     fprintf(f, "%s ", dut_title_);
 
-    for (const auto &pin : dut_->GetPins(PinDirection::OUT))
+    for (const auto &pin : dut_->GetPins(PinDir::OUT))
         fprintf(f, "%s ", pin.name_);
-    for (const auto &pin : dut_->GetPins(PinDirection::IN))
+    for (const auto &pin : dut_->GetPins(PinDir::IN))
         fprintf(f, "%s ", pin.name_);
     for (const auto &pin : dut_->GetPins(PinKind::PWR))
         fprintf(f, "%s ", pin.name_);
@@ -148,12 +148,12 @@ void Simulation::WriteTestBench()
 
     fprintf(f, "\n");
 
-    if (kind_ == SimulationKind::TRAN) {
+    if (kind_ == SimKind::TRAN) {
         fprintf(f, ".TRAN %dFS %dNS \n",
                     static_cast<int>(std::round(time_step_ * 1E6)),
                     static_cast<int>(std::round(duration_)));
 
-    } else if (kind_ == SimulationKind::DC) {
+    } else if (kind_ == SimKind::DC) {
         fprintf(f, ".DC V%s 0 0 0.1\n", supply_->GetGndName());
     }
 

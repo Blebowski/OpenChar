@@ -193,7 +193,7 @@ Pin* Arc::GetRelatedPin()
         Pin *rel_pin = nullptr;
 
         int i = 0;
-        for (auto &p : pin_->cell_->GetPins(PinDirection::IN)) {
+        for (auto &p : pin_->cell_->GetPins(PinDir::IN)) {
             if (i == pos) {
                 rel_pin = &(p);
             }

@@ -17,12 +17,12 @@ class Pin {
         Cell *cell_;
 
         const std::string name_;
-        const PinDirection direction_;
+        const PinDir direction_;
         const PinKind kind_;
 
         Pin();
         ~Pin();
-        Pin(Cell *cell, std::string name, PinDirection direction, PinKind kind);
+        Pin(Cell *cell, std::string name, PinDir direction, PinKind kind);
 
         void AddLogicTableEntry(int64_t inputs, int output);
         std::pair<int64_t, int> GetLogicTableEntry(int index);

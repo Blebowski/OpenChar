@@ -38,12 +38,12 @@ std::vector<double>& Template::GetIndex2()
     return index_2_;
 }
 
-void Template::SetKind(TemplateKind kind)
+void Template::SetKind(TemplKind kind)
 {
     kind_ = kind;
 }
 
-TemplateKind Template::GetKind()
+TemplKind Template::GetKind()
 {
     return kind_;
 }

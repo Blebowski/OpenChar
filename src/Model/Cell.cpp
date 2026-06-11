@@ -66,7 +66,7 @@ std::string& Cell::GetFootPrint()
     return footprint_;
 }
 
-std::pair<Pin&, bool> Cell::AddPin(std::string name, PinDirection direction, PinKind kind)
+std::pair<Pin&, bool> Cell::AddPin(std::string name, PinDir direction, PinKind kind)
 {
     auto [it, inserted] = pins_.emplace(name, Pin(this, name, direction, kind));
     return {it->second, inserted};
@@ -77,7 +77,7 @@ Pin& Cell::GetPin(std::string name)
     return pins_[name];
 }
 
-size_t Cell::GetPinsCount(PinDirection direction)
+size_t Cell::GetPinsCount(PinDir direction)
 {
     return std::count_if(pins_.cbegin(), pins_.cend(),
                         [direction](const auto & pin){
@@ -229,7 +229,7 @@ void Cell::WriteVerilog(FILE *f)
     {
         TAB_FPRINTF(0, f, "module %s\n", name_);
 
-        for (auto & o_pin : GetPins(PinDirection::OUT)) {
+        for (auto & o_pin : GetPins(PinDir::OUT)) {
             TAB_FPRINTF(2, f, "assign %s = ", o_pin.name_);
             o_pin.GetLogicFunction()->Print(f);
             TAB_FPRINTF(0, f, ";\n");

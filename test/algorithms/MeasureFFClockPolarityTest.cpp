@@ -13,7 +13,7 @@ using namespace open_char;
 static void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 {
     CREATE_DFF_CKB_SB_RB_CELL(ctx, c1);
-    c1.GetSequential().SetKind(SequentialKind::FLIP_FLOP);
+    c1.GetSequential().SetKind(SeqKind::FLIP_FLOP);
     c1.GetPin("RB").SetPolarity(0);
     c1.GetPin("SB").SetPolarity(0);
 
@@ -26,7 +26,7 @@ static void test_dff_ckb_rb_sb(Context &ctx, Algorithms &algs)
 static void test_dff_ck_rb_sb(Context &ctx, Algorithms &algs)
 {
     CREATE_DFF_CK_SB_RB_CELL(ctx, c1);
-    c1.GetSequential().SetKind(SequentialKind::FLIP_FLOP);
+    c1.GetSequential().SetKind(SeqKind::FLIP_FLOP);
     c1.GetPin("RB").SetPolarity(0);
     c1.GetPin("SB").SetPolarity(0);
 

@@ -55,17 +55,17 @@ Pin* Sequential::GetClockPin()
     return clock_pin_;
 }
 
-void Sequential::SetAsyncPriority(AsyncPriority async_priority)
+void Sequential::SetAsyncPriority(AsyncPrio async_priority)
 {
     async_priority_ = async_priority;
 }
 
-void Sequential::SetKind(SequentialKind kind)
+void Sequential::SetKind(SeqKind kind)
 {
     kind_ = kind;
 }
 
-SequentialKind Sequential::GetKind()
+SeqKind Sequential::GetKind()
 {
     return kind_;
 }
@@ -92,7 +92,7 @@ int Sequential::GetEnablePolarity()
 
 void Sequential::WriteLiberty(FILE *f, size_t tab)
 {
-    if (kind_ == SequentialKind::FLIP_FLOP) {
+    if (kind_ == SeqKind::FLIP_FLOP) {
         TAB_FPRINTF(tab, f, "ff(IQ, IQN) {\n");
     } else {
         TAB_FPRINTF(tab, f, "latch(IQ, IQN) {\n");

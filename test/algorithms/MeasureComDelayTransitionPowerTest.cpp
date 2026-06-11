@@ -15,7 +15,7 @@ static void test_inv(Context &ctx, Algorithms &algs)
     CREATE_INV_CELL(ctx, c1)
 
     Template t("MY_TEMP");
-    t.SetKind(TemplateKind::DELAY);
+    t.SetKind(TemplKind::DELAY);
 
     t.AddIndex1(0.01);
     t.AddIndex1(0.1);
@@ -127,7 +127,7 @@ static void test_half_adder(Context &ctx, Algorithms &algs)
     CREATE_HALF_ADDER_CELL(ctx, c1);
 
     Template t("MY_TEMP");
-    t.SetKind(TemplateKind::DELAY);
+    t.SetKind(TemplKind::DELAY);
 
     t.AddIndex1(0.01);
     t.AddIndex1(0.1);

@@ -8,7 +8,7 @@
 
 namespace open_char {
 
-Pin::Pin(Cell *cell, std::string name, PinDirection direction, PinKind kind) :
+Pin::Pin(Cell *cell, std::string name, PinDir direction, PinKind kind) :
     cell_(cell),
     name_(name),
     direction_(direction),
@@ -19,7 +19,7 @@ Pin::Pin(Cell *cell, std::string name, PinDirection direction, PinKind kind) :
 Pin::Pin() :
     cell_(nullptr),
     name_(""),
-    direction_(PinDirection::IN),
+    direction_(PinDir::IN),
     kind_(PinKind::DATA),
     func_(nullptr)
 {}
@@ -57,13 +57,13 @@ std::vector<Arc>& Pin::GetArcs()
 
 void Pin::PrintLogicTable()
 {
-    size_t i_pins_cnt = cell_->GetPinsCount(PinDirection::IN);
+    size_t i_pins_cnt = cell_->GetPinsCount(PinDir::IN);
     size_t line_len = (i_pins_cnt + 1) * 10 + 1;
 
     PRINT_LINE(line_len)
 
     printf("|");
-    for (const auto &i_pin : cell_->GetPins(PinDirection::IN)) {
+    for (const auto &i_pin : cell_->GetPins(PinDir::IN)) {
         printf(" %7s |", i_pin.name_);
     }
     printf(" %7s |\n", name_);
@@ -197,10 +197,10 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
         tab++;
 
         switch (direction_) {
-        case PinDirection::IN:
+        case PinDir::IN:
             TAB_FPRINTF(tab, f, "direction : input ;\n");
             break;
-        case PinDirection::OUT:
+        case PinDir::OUT:
             TAB_FPRINTF(tab, f, "direction : output ;\n");
             if (func_ != nullptr) {
                 TAB_FPRINTF(tab, f, "function : \"");
@@ -214,11 +214,11 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
         }
 
         if (kind_ == PinKind::CLK) {
-            assert(direction_ == PinDirection::IN);
+            assert(direction_ == PinDir::IN);
             TAB_FPRINTF(tab, f, "clock : true ;\n");
         }
 
-        if (direction_ == PinDirection::IN) {
+        if (direction_ == PinDir::IN) {
             TAB_FPRINTF(tab, f, "rise_capacitance : %.9f ;\n", cap_rise_avg_);
             TAB_FPRINTF(tab, f, "rise_capacitance_range(%.9f, %.9f) ;\n", cap_rise_min_, cap_rise_max_);
             TAB_FPRINTF(tab, f, "fall_capacitance : %.9f ;\n", cap_fall_avg_);

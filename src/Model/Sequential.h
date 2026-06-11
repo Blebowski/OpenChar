@@ -14,7 +14,7 @@ class Sequential {
 
         void SetClear(Expression *e);
         void SetPreset(Expression *e);
-        void SetAsyncPriority(AsyncPriority async_priority);
+        void SetAsyncPriority(AsyncPrio async_priority);
         void SetNextState(Expression *e);
 
         void SetClockPolarity(EdgeKind clock_polarity);
@@ -23,8 +23,8 @@ class Sequential {
         void SetEnablePolarity(int polarity);
         int GetEnablePolarity();
 
-        void SetKind(SequentialKind kind);
-        SequentialKind GetKind();
+        void SetKind(SeqKind kind);
+        SeqKind GetKind();
 
         void SetClockPin(Pin *pin);
         Pin* GetClockPin();
@@ -34,7 +34,7 @@ class Sequential {
     private:
         Cell *cell_;
         Pin *clock_pin_;
-        SequentialKind kind_;
+        SeqKind kind_;
         EdgeKind clock_polarity_;
         int enable_polarity_;
 
@@ -42,7 +42,7 @@ class Sequential {
         Expression *clr_;
         Expression *next_state_;
 
-        AsyncPriority async_priority_;
+        AsyncPrio async_priority_;
 };
 
 }

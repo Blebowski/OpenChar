@@ -32,12 +32,12 @@ namespace open_char {
     void RegisterTclCommands(Context *ctx);
     void CreateTclVariables(Context *ctx);
 
-    #define PIN_DIRECTION(x)    \
+    #define PIN_DIR(x)          \
         x(IN)                   \
         x(OUT)                  \
         x(INOUT)
-    OPENCHAR_ENUM(PinDirection, PIN_DIRECTION)
-    #undef PIN_DIRECTION
+    OPENCHAR_ENUM(PinDir, PIN_DIR)
+    #undef PIN_DIR
 
     #define PIN_KIND(x)         \
         x(PWR)                  \
@@ -54,26 +54,26 @@ namespace open_char {
     OPENCHAR_ENUM(CellKind, CELL_KIND)
     #undef CELL_KIND
 
-    #define SEQUENTIAL_KIND(x)  \
+    #define SEQ_KIND(x)         \
         x(FLIP_FLOP)            \
         x(LATCH)
-    OPENCHAR_ENUM(SequentialKind, SEQUENTIAL_KIND)
-    #undef SEQUENTIAL_KIND
+    OPENCHAR_ENUM(SeqKind, SEQ_KIND)
+    #undef SEQ_KIND
 
-    #define STIMULUS_KIND(x)    \
+    #define STIM_KIND(x)        \
         x(PULSE)                \
         x(CONSTANT)             \
         x(PWL)
-    OPENCHAR_ENUM(StimulusKind, STIMULUS_KIND)
-    #undef STIMULUS_KIND
+    OPENCHAR_ENUM(StimKind, STIM_KIND)
+    #undef STIM_KIND
 
-    #define SIMULATION_KIND(x)  \
+    #define SIM_KIND(x)         \
         x(TRAN)                 \
         x(DC)
-    OPENCHAR_ENUM(SimulationKind, SIMULATION_KIND)
-    #undef SIMULATION_KIND
+    OPENCHAR_ENUM(SimKind, SIM_KIND)
+    #undef SIM_KIND
 
-    #define SIMULATION_CLASS(x) \
+    #define SIM_CLASS(x)        \
         x(SANITY)               \
         x(ICAP)                 \
         x(LEAKAGE)              \
@@ -86,8 +86,8 @@ namespace open_char {
         x(FF_SETUP)             \
         x(FF_HOLD)              \
         x(FF_CK_MPW)
-    OPENCHAR_ENUM(SimulationClass, SIMULATION_CLASS)
-    #undef SIMULATION_CLASS
+    OPENCHAR_ENUM(SimClass, SIM_CLASS)
+    #undef SIM_CLASS
 
     #define WAVE_KIND(x)        \
         x(TIME)                 \
@@ -95,12 +95,12 @@ namespace open_char {
     OPENCHAR_ENUM(WaveKind, WAVE_KIND)
     #undef WAVE_KIND
 
-    #define TEMPLATE_KIND(x)    \
+    #define TEMPL_KIND(x)       \
         x(DELAY)                \
         x(POWER)                \
         x(CONSTRAINT)
-    OPENCHAR_ENUM(TemplateKind, TEMPLATE_KIND)
-    #undef TEMPLATE_KIND
+    OPENCHAR_ENUM(TemplKind, TEMPL_KIND)
+    #undef TEMPL_KIND
 
     #define EDGE_KIND(x)        \
         x(RISING)               \
@@ -108,27 +108,27 @@ namespace open_char {
     OPENCHAR_ENUM(EdgeKind, EDGE_KIND)
     #undef EDGE_KIND
 
-    #define EXPRESSION_KIND(x)  \
+    #define EXPR_KIND(x)  \
         x(AND)                  \
         x(OR)                   \
         x(XOR)                  \
         x(NOT)                  \
         x(TERM)                 \
         x(CONSTANT)
-    OPENCHAR_ENUM(ExpressionKind, EXPRESSION_KIND)
-    #undef EXPRESSION_KIND
+    OPENCHAR_ENUM(ExprKind, EXPR_KIND)
+    #undef EXPR_KIND
 
-    #define EXPRESSION_EQUALITY_KIND(x) \
-        x(EQUAL)                        \
+    #define EXPR_EQUAL_KIND(x)  \
+        x(EQUAL)                \
         x(INVERT)
-    OPENCHAR_ENUM(ExpressionEqualityKind, EXPRESSION_EQUALITY_KIND)
-    #undef EXPRESSION_EQUALITY_KIND
+    OPENCHAR_ENUM(ExprEqualKind, EXPR_EQUAL_KIND)
+    #undef EXPR_EQUAL_KIND
 
-    #define ASYNC_PRIORITY(x)   \
+    #define ASYNC_PRIO(x)       \
         x(PRESET)               \
         x(CLEAR)
-    OPENCHAR_ENUM(AsyncPriority, ASYNC_PRIORITY)
-    #undef ASYNC_PRIORITY
+    OPENCHAR_ENUM(AsyncPrio, ASYNC_PRIO)
+    #undef ASYNC_PRIO
 
     #define ARC_KIND(x)         \
         x(COMBO)                \

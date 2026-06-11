@@ -7,14 +7,14 @@
 namespace open_char {
 
     Stimulus::Stimulus(Volt voltage) :
-        kind_(StimulusKind::CONSTANT),
+        kind_(StimKind::CONSTANT),
         volage_(voltage)
     {};
 
     Stimulus::Stimulus(Volt v1, Volt v2, NanoSecond t_delay, NanoSecond t_rise,
                        NanoSecond t_fall, NanoSecond pulse_width, NanoSecond period,
                        int num_pulses):
-        kind_(StimulusKind::PULSE),
+        kind_(StimKind::PULSE),
         v1_(v1),
         v2_(v2),
         t_delay_(t_delay),
@@ -26,7 +26,7 @@ namespace open_char {
     {};
 
     Stimulus::Stimulus(std::vector<std::pair<Volt,NanoSecond>> pwl_vals) :
-        kind_(StimulusKind::PWL),
+        kind_(StimKind::PWL),
         pwl_vals_(pwl_vals)
     {};
 

@@ -62,7 +62,7 @@ CREATE_TCL_COMMAND(
         }
 
         Template& t = ctx_->GetLibrary().GetTemplate(d_templ_name);
-        if (t.GetKind() != TemplateKind::DELAY) {
+        if (t.GetKind() != TemplKind::DELAY) {
             error("Template '%s' is not a delay template.", d_templ_name);
             return TCL_ERROR;
         }
@@ -88,7 +88,7 @@ CREATE_TCL_COMMAND(
 
             Template& t = ctx_->GetLibrary().GetTemplate(c_templ_name);
 
-            if (t.GetKind() != TemplateKind::CONSTRAINT) {
+            if (t.GetKind() != TemplKind::CONSTRAINT) {
                 error("Template '%s' is not a constraint template.", c_templ_name);
                 return TCL_ERROR;
             }
@@ -134,7 +134,7 @@ CREATE_TCL_COMMAND(
             const std::string s = Tcl_GetString(opts_["-output"].objv_);
             // TODO: Handle duplicit pins here!
             ForEachInGroup(s, [&](const std::string &val){
-                cell.AddPin(val, PinDirection::OUT, PinKind::DATA);
+                cell.AddPin(val, PinDir::OUT, PinKind::DATA);
                 return TCL_OK;
             });
         }
@@ -143,7 +143,7 @@ CREATE_TCL_COMMAND(
             const std::string s = Tcl_GetString(opts_["-input"].objv_);
             // TODO: Handle duplicit pins here!
             ForEachInGroup(s, [&](const std::string &val){
-                cell.AddPin(val, PinDirection::IN, PinKind::DATA);
+                cell.AddPin(val, PinDir::IN, PinKind::DATA);
                 return TCL_OK;
             });
         }
@@ -152,14 +152,14 @@ CREATE_TCL_COMMAND(
             const std::string s = Tcl_GetString(opts_["-async"].objv_);
             // TODO: Handle duplicit pins here!
             ForEachInGroup(s, [&](const std::string &val){
-                cell.AddPin(val, PinDirection::IN, PinKind::ASYNC);
+                cell.AddPin(val, PinDir::IN, PinKind::ASYNC);
                 return TCL_OK;
             });
         }
 
         if (opts_["-clock"].isSet()) {
             const std::string s = Tcl_GetString(opts_["-clock"].objv_);
-            cell.AddPin(s, PinDirection::IN, PinKind::CLK);
+            cell.AddPin(s, PinDir::IN, PinKind::CLK);
             cell.SetKind(CellKind::SEQUENTIAL);
 
             auto & c_pin = cell.GetPins(PinKind::CLK).front();
@@ -174,8 +174,8 @@ CREATE_TCL_COMMAND(
         }
 
         Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-        cell.AddPin(supply->GetVddName(), PinDirection::INOUT, PinKind::PWR);
-        cell.AddPin(supply->GetGndName(), PinDirection::INOUT, PinKind::GND);
+        cell.AddPin(supply->GetVddName(), PinDir::INOUT, PinKind::PWR);
+        cell.AddPin(supply->GetGndName(), PinDir::INOUT, PinKind::GND);
 
         return TCL_OK;
     })
@@ -231,11 +231,11 @@ CREATE_TCL_COMMAND(
         }
 
         if (type == "delay") {
-            template_p.first.SetKind(TemplateKind::DELAY);
+            template_p.first.SetKind(TemplKind::DELAY);
         } else if (type == "power") {
-            template_p.first.SetKind(TemplateKind::POWER);
+            template_p.first.SetKind(TemplKind::POWER);
         } else {
-            template_p.first.SetKind(TemplateKind::CONSTRAINT);
+            template_p.first.SetKind(TemplKind::CONSTRAINT);
         }
 
         if (opts_["-index_1"].isSet()) {

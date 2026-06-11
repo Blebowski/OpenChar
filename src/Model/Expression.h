@@ -11,18 +11,18 @@ namespace open_char {
 class Expression {
 
     public:
-        Expression(ExpressionKind kind, Expression *lhs, Expression *rhs);
-        Expression(ExpressionKind kind, Expression *lhs);
-        Expression(ExpressionKind kind, Pin *pin);
-        Expression(ExpressionKind kind, int const_val);
+        Expression(ExprKind kind, Expression *lhs, Expression *rhs);
+        Expression(ExprKind kind, Expression *lhs);
+        Expression(ExprKind kind, Pin *pin);
+        Expression(ExprKind kind, int const_val);
         ~Expression();
 
         void Simplify();
-        bool Equals(Expression *e, ExpressionEqualityKind eq_kind);
+        bool Equals(Expression *e, ExprEqualKind eq_kind);
         void Substitute(Pin *pin, int val);
         void Print(FILE *fd);
 
-        ExpressionKind GetKind();
+        ExprKind GetKind();
         Expression *GetLhs();
         Expression *GetRhs();
         Pin *GetPin();
@@ -44,7 +44,7 @@ class Expression {
         const char or_op = '|';
         const char xor_op = '^';
 
-        ExpressionKind kind_;
+        ExprKind kind_;
         Expression *lhs_;
         Expression *rhs_;
         int const_val_;

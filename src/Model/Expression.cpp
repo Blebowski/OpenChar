@@ -11,46 +11,46 @@
 
 namespace open_char {
 
-Expression::Expression(ExpressionKind kind, Expression *lhs, Expression *rhs) :
+Expression::Expression(ExprKind kind, Expression *lhs, Expression *rhs) :
     kind_(kind),
     lhs_(lhs),
     rhs_(rhs),
     const_val_(0),
     pin_(nullptr)
 {
-    assert(kind == ExpressionKind::AND ||
-           kind == ExpressionKind::OR  ||
-           kind == ExpressionKind::XOR);
+    assert(kind == ExprKind::AND ||
+           kind == ExprKind::OR  ||
+           kind == ExprKind::XOR);
 }
 
-Expression::Expression(ExpressionKind kind, Expression *lhs) :
+Expression::Expression(ExprKind kind, Expression *lhs) :
     kind_(kind),
     lhs_(lhs),
     rhs_(nullptr),
     const_val_(0),
     pin_(nullptr)
 {
-    assert(kind == ExpressionKind::NOT);
+    assert(kind == ExprKind::NOT);
 }
 
-Expression::Expression(ExpressionKind kind, Pin *pin) :
+Expression::Expression(ExprKind kind, Pin *pin) :
     kind_(kind),
     lhs_(nullptr),
     rhs_(nullptr),
     const_val_(0),
     pin_(pin)
 {
-    assert(kind == ExpressionKind::TERM);
+    assert(kind == ExprKind::TERM);
 }
 
-Expression::Expression(ExpressionKind kind, int const_val) :
+Expression::Expression(ExprKind kind, int const_val) :
     kind_(kind),
     lhs_(nullptr),
     rhs_(nullptr),
     const_val_(const_val),
     pin_(nullptr)
 {
-    assert(kind == ExpressionKind::CONSTANT);
+    assert(kind == ExprKind::CONSTANT);
 }
 
 Expression::~Expression()
@@ -92,20 +92,20 @@ void Expression::DeMorgan()
     printf("\n");
 #endif
 
-    if (kind_ != ExpressionKind::NOT) {
+    if (kind_ != ExprKind::NOT) {
         return;
     }
 
     assert(lhs_ != nullptr);
 
-    if (lhs_->kind_ == ExpressionKind::AND) {
+    if (lhs_->kind_ == ExprKind::AND) {
 
         assert (lhs_->lhs_ != nullptr);
         assert (lhs_->rhs_ != nullptr);
 
-        if (lhs_->lhs_->kind_ != ExpressionKind::NOT)
+        if (lhs_->lhs_->kind_ != ExprKind::NOT)
             return;
-        if (lhs_->rhs_->kind_ != ExpressionKind::NOT)
+        if (lhs_->rhs_->kind_ != ExprKind::NOT)
             return;
 
         assert(lhs_->lhs_->lhs_ != nullptr);
@@ -121,17 +121,17 @@ void Expression::DeMorgan()
         lhs_->Invalidate();
         delete lhs_;
 
-        kind_ = ExpressionKind::OR;
+        kind_ = ExprKind::OR;
         lhs_ = lhs_buf;
         rhs_ = rhs_buf;
 
-    } else if (lhs_->kind_ == ExpressionKind::OR) {
+    } else if (lhs_->kind_ == ExprKind::OR) {
         assert (lhs_->lhs_ != nullptr);
         assert (lhs_->rhs_ != nullptr);
 
-        if (lhs_->lhs_->kind_ != ExpressionKind::NOT)
+        if (lhs_->lhs_->kind_ != ExprKind::NOT)
             return;
-        if (lhs_->rhs_->kind_ != ExpressionKind::NOT)
+        if (lhs_->rhs_->kind_ != ExprKind::NOT)
             return;
 
         assert(lhs_->lhs_->lhs_ != nullptr);
@@ -147,7 +147,7 @@ void Expression::DeMorgan()
         lhs_->Invalidate();
         delete lhs_;
 
-        kind_ = ExpressionKind::AND;
+        kind_ = ExprKind::AND;
         lhs_ = lhs_buf;
         rhs_ = rhs_buf;
     }
@@ -169,10 +169,10 @@ void Expression::ConstFold()
 #endif
 
     switch (kind_) {
-    case ExpressionKind::AND:
+    case ExprKind::AND:
         assert(lhs_ != nullptr);
         assert(rhs_ != nullptr);
-        if (lhs_->kind_ == ExpressionKind::CONSTANT && lhs_->const_val_ == 1) {
+        if (lhs_->kind_ == ExprKind::CONSTANT && lhs_->const_val_ == 1) {
             Expression *old = rhs_;
             Copy(rhs_);
             old->Invalidate();
@@ -180,7 +180,7 @@ void Expression::ConstFold()
             printf("FOLDED AND\n");
 #endif
             delete old;
-        } else if (rhs_->kind_ == ExpressionKind::CONSTANT && rhs_->const_val_ == 1) {
+        } else if (rhs_->kind_ == ExprKind::CONSTANT && rhs_->const_val_ == 1) {
             Expression *old = lhs_;
             Copy(lhs_);
             old->Invalidate();
@@ -190,11 +190,11 @@ void Expression::ConstFold()
             delete old;
         }
         break;
-    case ExpressionKind::OR:
-    case ExpressionKind::XOR:
+    case ExprKind::OR:
+    case ExprKind::XOR:
         assert(lhs_ != nullptr);
         assert(rhs_ != nullptr);
-        if (lhs_->kind_ == ExpressionKind::CONSTANT && lhs_->const_val_ == 0) {
+        if (lhs_->kind_ == ExprKind::CONSTANT && lhs_->const_val_ == 0) {
             Expression *old = rhs_;
             Copy(rhs_);
             old->Invalidate();
@@ -202,7 +202,7 @@ void Expression::ConstFold()
             printf("FOLDED OR/XOR\n");
 #endif
             delete old;
-        } else if (rhs_->kind_ == ExpressionKind::CONSTANT && rhs_->const_val_ == 0) {
+        } else if (rhs_->kind_ == ExprKind::CONSTANT && rhs_->const_val_ == 0) {
             Expression *old = lhs_;
             Copy(lhs_);
             old->Invalidate();
@@ -232,19 +232,19 @@ void Expression::Tautology()
     printf("\n");
 #endif
 
-    if (kind_ != ExpressionKind::OR) {
+    if (kind_ != ExprKind::OR) {
         return;
     }
 
     assert(lhs_ != nullptr);
     assert(rhs_ != nullptr);
 
-    if (lhs_->Equals(rhs_, ExpressionEqualityKind::INVERT)) {
+    if (lhs_->Equals(rhs_, ExprEqualKind::INVERT)) {
         delete lhs_;
         delete rhs_;
         lhs_ = nullptr;
         rhs_ = nullptr;
-        kind_ = ExpressionKind::CONSTANT;
+        kind_ = ExprKind::CONSTANT;
         const_val_ = 1;
 #ifdef EXPR_DEBUG
         printf("Reduced to 1\n");
@@ -267,19 +267,19 @@ void Expression::Contradiction()
     printf("\n");
 #endif
 
-    if (kind_ != ExpressionKind::AND) {
+    if (kind_ != ExprKind::AND) {
         return;
     }
 
     assert(lhs_ != nullptr);
     assert(rhs_ != nullptr);
 
-    if (lhs_->Equals(rhs_, ExpressionEqualityKind::INVERT)) {
+    if (lhs_->Equals(rhs_, ExprEqualKind::INVERT)) {
         delete lhs_;
         delete rhs_;
         lhs_ = nullptr;
         rhs_ = nullptr;
-        kind_ = ExpressionKind::CONSTANT;
+        kind_ = ExprKind::CONSTANT;
         const_val_ = 0;
 #ifdef EXPR_DEBUG
         printf("Reduced to 0\n");
@@ -302,18 +302,18 @@ void Expression::Associate()
     printf("\n");
 #endif
 
-    if (kind_ != ExpressionKind::OR) {
+    if (kind_ != ExprKind::OR) {
         return;
     }
 
     assert (lhs_ != nullptr);
     assert (rhs_ != nullptr);
 
-    if (lhs_->GetKind() != ExpressionKind::AND) {
+    if (lhs_->GetKind() != ExprKind::AND) {
         return;
     }
 
-    if (rhs_->GetKind() != ExpressionKind::AND) {
+    if (rhs_->GetKind() != ExprKind::AND) {
         return;
     }
 
@@ -343,7 +343,7 @@ void Expression::Associate()
 
     for (int i = 0; i < 4; i++) {
         assoc_row r = arr[i];
-        if (r.a1->Equals(r.b1, ExpressionEqualityKind::EQUAL)) {
+        if (r.a1->Equals(r.b1, ExprEqualKind::EQUAL)) {
             lhs_->Invalidate();
             delete lhs_;
             rhs_->Invalidate();
@@ -352,8 +352,8 @@ void Expression::Associate()
             delete r.b1;
 
             lhs_ = r.a1;
-            kind_ = ExpressionKind::AND;
-            rhs_ = new Expression(ExpressionKind::OR, r.a2, r.b2);
+            kind_ = ExprKind::AND;
+            rhs_ = new Expression(ExprKind::OR, r.a2, r.b2);
 #ifdef EXPR_DEBUG
             printf("Asociated:\n");
             Print(stdout);
@@ -364,7 +364,7 @@ void Expression::Associate()
     }
 }
 
-bool Expression::Equals(Expression *e, ExpressionEqualityKind eq_kind)
+bool Expression::Equals(Expression *e, ExprEqualKind eq_kind)
 {
 
     std::vector<Pin*> a_terms;
@@ -404,11 +404,11 @@ bool Expression::Equals(Expression *e, ExpressionEqualityKind eq_kind)
         assert (a_res == 1 || a_res == 0);
         assert (b_res == 1 || b_res == 0);
 
-        if (eq_kind == ExpressionEqualityKind::EQUAL) {
+        if (eq_kind == ExprEqualKind::EQUAL) {
             if (a_res != b_res) {
                 return false;
             }
-        } else if (eq_kind == ExpressionEqualityKind::INVERT) {
+        } else if (eq_kind == ExprEqualKind::INVERT) {
             if (a_res == b_res) {
                 return false;
             }
@@ -429,14 +429,14 @@ void Expression::Substitute(Pin *pin, int val)
         rhs_->Substitute(pin, val);
     }
 
-    if (kind_ != ExpressionKind::TERM) {
+    if (kind_ != ExprKind::TERM) {
         return;
     }
 
     assert(pin_ != nullptr);
 
     if (pin_->name_ == pin->name_) {
-        kind_ = ExpressionKind::CONSTANT;
+        kind_ = ExprKind::CONSTANT;
         const_val_ = val;
     }
 }
@@ -444,21 +444,21 @@ void Expression::Substitute(Pin *pin, int val)
 void Expression::GetTerms(std::vector<Pin*> &res)
 {
     switch (kind_) {
-    case ExpressionKind::TERM:
+    case ExprKind::TERM:
         assert(pin_ != nullptr);
         res.push_back(pin_);
         break;
 
-    case ExpressionKind::AND:
-    case ExpressionKind::OR:
-    case ExpressionKind::XOR:
+    case ExprKind::AND:
+    case ExprKind::OR:
+    case ExprKind::XOR:
         assert(lhs_ != nullptr);
         assert(rhs_ != nullptr);
         lhs_->GetTerms(res);
         rhs_->GetTerms(res);
         break;
 
-    case ExpressionKind::NOT:
+    case ExprKind::NOT:
         assert(lhs_ != nullptr);
         lhs_->GetTerms(res);
         break;
@@ -471,12 +471,12 @@ void Expression::GetTerms(std::vector<Pin*> &res)
 int Expression::Evaluate(std::vector<std::pair<Pin*, int>> &terms)
 {
     switch (kind_) {
-    case ExpressionKind::CONSTANT:
+    case ExprKind::CONSTANT:
         return const_val_;
 
-    case ExpressionKind::AND:
-    case ExpressionKind::OR:
-    case ExpressionKind::XOR:
+    case ExprKind::AND:
+    case ExprKind::OR:
+    case ExprKind::XOR:
     {
         assert(lhs_ != nullptr);
         assert(rhs_ != nullptr);
@@ -484,25 +484,25 @@ int Expression::Evaluate(std::vector<std::pair<Pin*, int>> &terms)
         int lhs_v = lhs_->Evaluate(terms);
         int rhs_v = rhs_->Evaluate(terms);
 
-        if (kind_ == ExpressionKind::AND) {
+        if (kind_ == ExprKind::AND) {
             return (lhs_v == 0x1 && rhs_v == 0x1) ? 1 : 0;
-        } else if (kind_ == ExpressionKind::OR) {
+        } else if (kind_ == ExprKind::OR) {
             return (lhs_v == 0x1 || rhs_v == 0x1) ? 1 : 0;
-        } else if (kind_ == ExpressionKind::XOR) {
+        } else if (kind_ == ExprKind::XOR) {
             return ((lhs_v == 0x1 && rhs_v == 0x0) || (lhs_v == 0x0 && rhs_v == 0x1)) ? 1 : 0;
         }
         assert(false);
         break;
     }
 
-    case ExpressionKind::NOT:
+    case ExprKind::NOT:
     {
         assert(lhs_ != nullptr);
         int lhs_v = lhs_->Evaluate(terms);
         return (lhs_v == 0x1) ? 0 : 1;
     }
 
-    case ExpressionKind::TERM:
+    case ExprKind::TERM:
         for (auto & pr : terms) {
             if (pr.first->name_ == pin_->name_) {
                 return pr.second;
@@ -531,7 +531,7 @@ void Expression::Simplify()
     ConstFold();
 }
 
-ExpressionKind Expression::GetKind()
+ExprKind Expression::GetKind()
 {
     return kind_;
 }
@@ -550,71 +550,71 @@ Expression* Expression::GetRhs()
 
 Pin* Expression::GetPin()
 {
-    assert (kind_ == ExpressionKind::TERM);
+    assert (kind_ == ExprKind::TERM);
     assert (pin_ != nullptr);
     return pin_;
 }
 
 int Expression::GetConstValue()
 {
-    assert(kind_ == ExpressionKind::CONSTANT);
+    assert(kind_ == ExprKind::CONSTANT);
     return const_val_;
 }
 
 void Expression::Print(FILE *fd)
 {
     char op = ' ';
-    if (kind_ == ExpressionKind::AND) {
+    if (kind_ == ExprKind::AND) {
         op = and_op;
-    } else if (kind_ == ExpressionKind::OR) {
+    } else if (kind_ == ExprKind::OR) {
         op = or_op;
-    } else if (kind_ == ExpressionKind::XOR) {
+    } else if (kind_ == ExprKind::XOR) {
         op = xor_op;
     }
 
     switch (kind_) {
-    case ExpressionKind::TERM:
+    case ExprKind::TERM:
         assert(pin_ != nullptr);
         fprintf(fd, "%s", pin_->name_);
         break;
 
-    case ExpressionKind::AND:
-    case ExpressionKind::OR:
-    case ExpressionKind::XOR:
+    case ExprKind::AND:
+    case ExprKind::OR:
+    case ExprKind::XOR:
         assert(lhs_ != nullptr);
         assert(rhs_ != nullptr);
 
-        if (lhs_->kind_ != ExpressionKind::TERM && lhs_->kind_ != ExpressionKind::NOT) {
+        if (lhs_->kind_ != ExprKind::TERM && lhs_->kind_ != ExprKind::NOT) {
             fprintf(fd, "(");
         }
         lhs_->Print(fd);
-        if (lhs_->kind_ != ExpressionKind::TERM && lhs_->kind_ != ExpressionKind::NOT) {
+        if (lhs_->kind_ != ExprKind::TERM && lhs_->kind_ != ExprKind::NOT) {
             fprintf(fd, ")");
         }
         fprintf(fd, " %c ", op);
-        if (rhs_->kind_ != ExpressionKind::TERM && rhs_->kind_ != ExpressionKind::NOT) {
+        if (rhs_->kind_ != ExprKind::TERM && rhs_->kind_ != ExprKind::NOT) {
             fprintf(fd, "(");
         }
         rhs_->Print(fd);
-        if (rhs_->kind_ != ExpressionKind::TERM && rhs_->kind_ != ExpressionKind::NOT) {
+        if (rhs_->kind_ != ExprKind::TERM && rhs_->kind_ != ExprKind::NOT) {
             fprintf(fd, ")");
         }
         break;
 
-    case ExpressionKind::NOT:
+    case ExprKind::NOT:
         assert(lhs_ != nullptr);
 
         fprintf(fd, "!");
-        if (lhs_->kind_ != ExpressionKind::TERM) {
+        if (lhs_->kind_ != ExprKind::TERM) {
             fprintf(fd, "(");
         }
         lhs_->Print(fd);
-        if (lhs_->kind_ != ExpressionKind::TERM) {
+        if (lhs_->kind_ != ExprKind::TERM) {
             fprintf(fd, ")");
         }
         break;
 
-    case ExpressionKind::CONSTANT:
+    case ExprKind::CONSTANT:
         fprintf(fd, "%d", const_val_);
         break;
     }

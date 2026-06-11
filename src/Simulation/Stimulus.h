@@ -12,7 +12,7 @@ namespace open_char {
 class Stimulus {
 
     public:
-        StimulusKind kind_;
+        StimKind kind_;
 
         // Constant source
         Volt volage_;

@@ -24,16 +24,16 @@ static void test_nand2(Context &ctx, Algorithms &algs)
 
     auto [e0, lkg0] = c1.GetLeakageTable()[0];
 
-    assert(e0->GetKind() == ExpressionKind::AND);
+    assert(e0->GetKind() == ExprKind::AND);
     Expression *e0_lhs = e0->GetLhs();
     Expression *e0_rhs = e0->GetRhs();
-    assert(e0_lhs->GetKind() == ExpressionKind::NOT);
-    assert(e0_rhs->GetKind() == ExpressionKind::NOT);
+    assert(e0_lhs->GetKind() == ExprKind::NOT);
+    assert(e0_rhs->GetKind() == ExprKind::NOT);
     Expression *e0_lhs_lhs = e0_lhs->GetLhs();
     Expression *e0_rhs_lhs = e0_rhs->GetLhs();
-    assert(e0_lhs_lhs->GetKind() == ExpressionKind::TERM);
+    assert(e0_lhs_lhs->GetKind() == ExprKind::TERM);
     assert(e0_lhs_lhs->GetPin() == &c1.GetPin("A"));
-    assert(e0_rhs_lhs->GetKind() == ExpressionKind::TERM);
+    assert(e0_rhs_lhs->GetKind() == ExprKind::TERM);
     assert(e0_rhs_lhs->GetPin() == &c1.GetPin("B"));
 
     CHECK_FLOAT(lkg0, 0.016880);
@@ -45,14 +45,14 @@ static void test_nand2(Context &ctx, Algorithms &algs)
 
     auto [e1, lkg1] = c1.GetLeakageTable()[1];
 
-    assert(e1->GetKind() == ExpressionKind::AND);
+    assert(e1->GetKind() == ExprKind::AND);
     Expression *e1_lhs = e1->GetLhs();
     Expression *e1_rhs = e1->GetRhs();
-    assert(e1_lhs->GetKind() == ExpressionKind::TERM);
+    assert(e1_lhs->GetKind() == ExprKind::TERM);
     assert(e1_lhs->GetPin() == &c1.GetPin("A"));
-    assert(e1_rhs->GetKind() == ExpressionKind::NOT);
+    assert(e1_rhs->GetKind() == ExprKind::NOT);
     Expression *e1_rhs_lhs = e1_rhs->GetLhs();
-    assert(e1_rhs_lhs->GetKind() == ExpressionKind::TERM);
+    assert(e1_rhs_lhs->GetKind() == ExprKind::TERM);
     assert(e1_rhs_lhs->GetPin() == &c1.GetPin("B"));
 
     CHECK_FLOAT(lkg1, 0.059710);
@@ -64,14 +64,14 @@ static void test_nand2(Context &ctx, Algorithms &algs)
 
     auto [e2, lkg2] = c1.GetLeakageTable()[2];
 
-    assert(e2->GetKind() == ExpressionKind::AND);
+    assert(e2->GetKind() == ExprKind::AND);
     Expression *e2_lhs = e2->GetLhs();
     Expression *e2_rhs = e2->GetRhs();
-    assert(e2_lhs->GetKind() == ExpressionKind::NOT);
-    assert(e2_rhs->GetKind() == ExpressionKind::TERM);
+    assert(e2_lhs->GetKind() == ExprKind::NOT);
+    assert(e2_rhs->GetKind() == ExprKind::TERM);
     assert(e2_rhs->GetPin() == &c1.GetPin("B"));
     Expression *e2_lhs_lhs = e2_lhs->GetLhs();
-    assert(e2_lhs_lhs->GetKind() == ExpressionKind::TERM);
+    assert(e2_lhs_lhs->GetKind() == ExprKind::TERM);
     assert(e2_lhs_lhs->GetPin() == &c1.GetPin("A"));
 
     CHECK_FLOAT(lkg2, 0.061408);
@@ -83,12 +83,12 @@ static void test_nand2(Context &ctx, Algorithms &algs)
 
     auto [e3, lkg3] = c1.GetLeakageTable()[3];
 
-    assert(e3->GetKind() == ExpressionKind::AND);
+    assert(e3->GetKind() == ExprKind::AND);
     Expression *e3_lhs = e3->GetLhs();
     Expression *e3_rhs = e3->GetRhs();
-    assert(e3_lhs->GetKind() == ExpressionKind::TERM);
+    assert(e3_lhs->GetKind() == ExprKind::TERM);
     assert(e3_lhs->GetPin() == &c1.GetPin("A"));
-    assert(e3_rhs->GetKind() == ExpressionKind::TERM);
+    assert(e3_rhs->GetKind() == ExprKind::TERM);
     assert(e3_rhs->GetPin() == &c1.GetPin("B"));
 
     CHECK_FLOAT(lkg3, 0.134034);
