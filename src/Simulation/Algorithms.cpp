@@ -19,10 +19,9 @@ Algorithms::Algorithms(Context *ctx) :
     ctx_(ctx)
 {}
 
-int Algorithms::ToLogic(Volt val)
+int Algorithms::ToLogic(Volt val, Volt vdd)
 {
-    OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
-    if (std::fabs(val - op_cond.GetSupply()->GetVddVoltage()) < 0.01)
+    if (std::fabs(val - vdd) < 0.01)
         return 1;
     return 0;
 }
@@ -37,10 +36,8 @@ Simulation *Algorithms::NewSimulation(SimClass sim_class, std::string name, SimK
     Simulation *sim = new Simulation(ctx_, sim_class, name, cell, kind);
 
     sim->SetTimeStep(ctx_->GetVariables().GetDoubleVariable("sim_timestep"));
-
-    OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
-    sim->SetTemp(op_cond.GetTemperature());
-    sim->SetSupply(op_cond.GetSupply());
+    sim->SetTemp(ctx_->GetLibrary().GetOpCond().GetTemperature());
+    sim->SetSupply(cell->GetSupply());
 
     for (const auto & netlist : ctx_->GetNetlists())
         sim->AddInclude(netlist);
@@ -58,7 +55,7 @@ void Algorithms::PrepareSanitySim(Cell &cell)
 
     Simulation *sim = NewSimulation(SimClass::SANITY, "", SimKind::TRAN, &cell);
 
-    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+    Supply *supply = cell.GetSupply();
     Volt log0_v = supply->GetGndVoltage();
     Volt log1_v = supply->GetVddVoltage();
 
@@ -99,7 +96,7 @@ void Algorithms::PrepareInputCapSims(Cell &cell)
 
         Simulation *sim = NewSimulation(SimClass::ICAP, i_pin.name_, SimKind::TRAN, &cell);
 
-        Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+        Supply *supply = cell.GetSupply();
         Volt log0_v = supply->GetGndVoltage();
         Volt log1_v = supply->GetVddVoltage();
 
@@ -163,9 +160,7 @@ bool Algorithms::MeasureInputCap(Cell &cell)
 
             i_avg /= static_cast<double>(rise_end_index - rise_start_index);
 
-            OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
-            Supply *supply = op_cond.GetSupply();
-            Volt log1_v = supply->GetVddVoltage();
+            Volt log1_v = cell.GetSupply()->GetVddVoltage();
 
             // C = I / (dV/dT)
             // uA / ( V / 1 ns) = fF -> * 1E-3 to pF
@@ -214,8 +209,7 @@ bool Algorithms::MeasureInputCap(Cell &cell)
 
 void Algorithms::PrepareLeakageSims(Cell &cell)
 {
-    OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
-    Supply *supply = op_cond.GetSupply();
+    Supply *supply = cell.GetSupply();
     Volt log0_v = supply->GetGndVoltage();
     Volt log1_v = supply->GetVddVoltage();
 
@@ -264,10 +258,12 @@ bool Algorithms::MeasureLeakage(Cell &cell)
 
         Waves w = sim->ReadWaves();
 
-        Supply *s = cell.GetLibrary()->GetOpCond().GetSupply();
+        Supply *supply = cell.GetLibrary()->GetOpCond().GetSupply();
 
         // The power is drained by the cell when pin current is negative -> Need absolute value
-        NanoWatt lkg = std::abs(w.GetCurrent(s->GetVddName())[0]) * s->GetVddVoltage() * 1E3;
+        NanoWatt lkg = std::fabs(w.GetCurrent(supply->GetVddName())[0]) *
+                       supply->GetVddVoltage() *
+                       1E3;
 
         Expression *e = new Expression(ExprKind::CONSTANT, 1);
         int64_t i_pin_vect = sim->GetMetaDataAt(0);
@@ -290,8 +286,7 @@ bool Algorithms::MeasureLeakage(Cell &cell)
 
 void Algorithms::PrepareComLogicTablesSims(Cell &cell)
 {
-    OpCond &op_cond = ctx_->GetLibrary().GetOpCond();
-    Supply *supply = op_cond.GetSupply();
+    Supply *supply = cell.GetSupply();
     Volt log0_v = supply->GetGndVoltage();
     Volt log1_v = supply->GetVddVoltage();
 
@@ -342,7 +337,8 @@ bool Algorithms::MeasureComLogicTables(Cell &cell)
 
         int64_t i_pin_vect = sim->GetMetaDataAt(0);
         for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
-            o_pin.AddLogicTableEntry(i_pin_vect, ToLogic(w.GetVoltage(o_pin.name_)[0]));
+            o_pin.AddLogicTableEntry(i_pin_vect, ToLogic(w.GetVoltage(o_pin.name_)[0],
+                                     cell.GetSupply()->GetVddVoltage()));
         }
     }
 
@@ -568,8 +564,9 @@ int Algorithms::PrepareOneComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, i
                 std::string sim_name = sprintf("%sTRAN%f%sCAP%f", prefix, i_tran, o_pin.name_, o_cap);
                 Simulation *sim = NewSimulation(SimClass::COM_DLYTRANPWR, sim_name, SimKind::TRAN, cell);
 
-                Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
-                Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+                Supply *supply = op_cond.GetSupply();
+                Volt log0_v = supply->GetGndVoltage();
+                Volt log1_v = supply->GetVddVoltage();
 
                 int i = 0;
                 for (auto & i_pin : cell->GetPins(PinDir::IN)) {
@@ -630,11 +627,10 @@ int Algorithms::PrepareOneComboArcSims(Pin &o_pin, int64_t in_a, int64_t in_b, i
     return 0;
 }
 
-void Algorithms::MeasureOneComboDelay(Simulation *sim, Waves &w, Pin &o_pin, Arc &arc,
+void Algorithms::MeasureOneComboDelay(Simulation *sim, Waves &w, Cell &cell, Pin &o_pin, Arc &arc,
                                       size_t i_tran_index, size_t o_cap_index)
 {
-    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-    Volt vdd_voltage = supply->GetVddVoltage();
+    Volt vdd_voltage = cell.GetSupply()->GetVddVoltage();
     Variables &vars = ctx_->GetVariables();
 
     Pin *related_pin = arc.GetRelatedPin();
@@ -664,11 +660,10 @@ void Algorithms::MeasureOneComboDelay(Simulation *sim, Waves &w, Pin &o_pin, Arc
         arc.SetFallDelay(i_tran_index, o_cap_index, delay);
 }
 
-void Algorithms::MeasureOneComboTransition(Simulation *sim, Waves &w, Pin &o_pin, Arc &arc,
+void Algorithms::MeasureOneComboTransition(Simulation *sim, Waves &w, Cell &cell, Pin &o_pin, Arc &arc,
                                            size_t i_tran_index, size_t o_cap_index)
 {
-    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-    Volt vdd_voltage = supply->GetVddVoltage();
+    Volt vdd_voltage = cell.GetSupply()->GetVddVoltage();
     Variables &vars = ctx_->GetVariables();
 
     double slew_upper_rise = vars.GetDoubleVariable("slew_upper_rise");
@@ -694,10 +689,10 @@ void Algorithms::MeasureOneComboTransition(Simulation *sim, Waves &w, Pin &o_pin
     }
 }
 
-void Algorithms::MeasureOneComboPower(Simulation *sim, Waves &w, Pin &o_pin, Arc &arc,
+void Algorithms::MeasureOneComboPower(Simulation *sim, Waves &w, Cell &cell, Pin &o_pin, Arc &arc,
                                       size_t i_tran_index, size_t o_cap_index)
 {
-    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+    Supply *supply = cell.GetSupply();
     Volt vdd_voltage = supply->GetVddVoltage();
     std::string vdd_name = supply->GetVddName();
 
@@ -779,9 +774,9 @@ bool Algorithms::MeasureComDelaysTransitionsPowers(Cell &cell)
 
                         Waves w = sim->ReadWaves();
 
-                        MeasureOneComboDelay(sim, w, o_pin, arc, i_tran_index, o_cap_index);
-                        MeasureOneComboTransition(sim, w, o_pin, arc, i_tran_index, o_cap_index);
-                        MeasureOneComboPower(sim, w, o_pin, arc, i_tran_index, o_cap_index);
+                        MeasureOneComboDelay(sim, w, cell, o_pin, arc, i_tran_index, o_cap_index);
+                        MeasureOneComboTransition(sim, w, cell, o_pin, arc, i_tran_index, o_cap_index);
+                        MeasureOneComboPower(sim, w, cell, o_pin, arc, i_tran_index, o_cap_index);
                     }
                     o_cap_index++;
                 }
@@ -831,9 +826,9 @@ void Algorithms::PrepareSeqAsyncFunctionSims(Cell &cell)
             sim_name = sprintf("%s_%s%d", sim_name, d_pin.name_, d);
             Simulation *sim = NewSimulation(SimClass::SEQ_ASYNCFUNC, sim_name, SimKind::TRAN, &cell);
 
-            OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
-            Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
-            Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+            Supply *supply = cell.GetSupply();
+            Volt log0_v = supply->GetGndVoltage();
+            Volt log1_v = supply->GetVddVoltage();
 
             // Drive async pins
             tmp = a_pin_vect;
@@ -896,11 +891,12 @@ bool Algorithms::MeasureSeqAsyncFunctions(Cell &cell)
         Waves w = sim->ReadWaves();
         auto q_pin = cell.GetPins(PinDir::OUT, PinKind::DATA).front();
         Volt q_val = w.GetVoltage(q_pin.name_).back();
+        Volt vdd = cell.GetSupply()->GetVddVoltage();
 
-        if (row.d == 0 && ToLogic(q_val) == 1) {
+        if (row.d == 0 && ToLogic(q_val, vdd) == 1) {
             n_set_candidates++;
             row.set_candidate = true;
-        } else if (row.d == 1 && ToLogic(q_val) == 0) {
+        } else if (row.d == 1 && ToLogic(q_val, vdd) == 0) {
             n_clr_candidates++;
             row.clr_candidate = true;
         }
@@ -1037,9 +1033,9 @@ void Algorithms::PrepareSeqEdgeOrLvlSims(Cell &cell)
         std::string sim_name = sprintf("%s%d", c_pin.name_, clock_val);
         Simulation *sim = NewSimulation(SimClass::SEQ_EDGEORLVL, sim_name, SimKind::TRAN, &cell);
 
-        OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
-        Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
-        Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+        Supply *supply = cell.GetSupply();
+        Volt log0_v = supply->GetGndVoltage();
+        Volt log1_v = supply->GetVddVoltage();
 
         // Tie async pins to inactive value
         for (auto & a_pin : cell.GetPins(PinKind::ASYNC)) {
@@ -1087,11 +1083,12 @@ bool Algorithms::MeasureSeqEdgeOrLvl(Cell &cell)
         bool has_logic_0 = false;
         bool has_logic_1 = false;
 
+        Volt vdd = cell.GetSupply()->GetVddVoltage();
         for (auto & pin : cell.GetPins(PinDir::OUT)) {
             for (Volt v : w.GetVoltage(pin.name_)) {
-                if (ToLogic(v) == 1) {
+                if (ToLogic(v, vdd) == 1) {
                     has_logic_1 = true;
-                } else if (ToLogic(v) == 0) {
+                } else if (ToLogic(v, vdd) == 0) {
                     has_logic_0 = true;
                 }
             }
@@ -1139,9 +1136,9 @@ void Algorithms::PrepareFFClockPolaritySims(Cell &cell)
             }
             Simulation *sim = NewSimulation(SimClass::FF_CKPOL, sim_name, SimKind::TRAN, &cell);
 
-            OpCond& op_cond = ctx_->GetLibrary().GetOpCond();
-            Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
-            Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+            Supply *supply = cell.GetSupply();
+            Volt log0_v = supply->GetGndVoltage();
+            Volt log1_v = supply->GetVddVoltage();
 
             sim->SetDuration(2);
 
@@ -1191,11 +1188,13 @@ bool Algorithms::MeasureFFClockPolarity(Cell &cell)
 
         Waves w = sim->ReadWaves();
 
+        Volt vdd = cell.GetSupply()->GetVddVoltage();
+
         for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
             auto &out_v = w.GetVoltage(o_pin.name_);
 
-            int out_start = ToLogic(out_v.front());
-            int out_end = ToLogic(out_v.back());
+            int out_start = ToLogic(out_v.front(), vdd);
+            int out_end = ToLogic(out_v.back(), vdd);
 
             if (out_start != out_end) {
                 int clock_polarity = sim->GetMetaDataAt(0);
@@ -1259,9 +1258,9 @@ void Algorithms::PrepareFFClockDelayTransitionPowerSims(Cell &cell)
                                                     c_pin.name_, d_pin.name_, d_val, i_tran, o_cap);
                     Simulation *sim = NewSimulation(SimClass::FF_DLYTRANPWR, sim_name, SimKind::TRAN, &cell);
 
-                    OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
-                    Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
-                    Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+                    Supply *supply = cell.GetSupply();
+                    Volt log0_v = supply->GetGndVoltage();
+                    Volt log1_v = supply->GetVddVoltage();
 
                     sim->SetDuration(25);
 
@@ -1310,8 +1309,7 @@ void Algorithms::MeasureOneFFClockDelay(Cell &cell, Simulation *sim, Waves &w, A
                             vars.GetDoubleVariable("delay_in_rise") :
                             vars.GetDoubleVariable("delay_in_fall");
 
-    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-    Volt vdd_voltage = supply->GetVddVoltage();
+    Volt vdd_voltage = cell.GetSupply()->GetVddVoltage();
     q_th *= vdd_voltage;
     c_th *= vdd_voltage;
 
@@ -1327,7 +1325,7 @@ void Algorithms::MeasureOneFFClockDelay(Cell &cell, Simulation *sim, Waves &w, A
     }
 }
 
-void Algorithms::MeasureOneFFClockTransition(Simulation *sim, Waves &w, Arc &arc,
+void Algorithms::MeasureOneFFClockTransition(Simulation *sim, Waves &w, Cell &cell, Arc &arc,
                                              Pin &o_pin, size_t i_tran_index, size_t o_cap_index)
 {
     int d_val = sim->GetMetaDataAt(0);
@@ -1337,8 +1335,8 @@ void Algorithms::MeasureOneFFClockTransition(Simulation *sim, Waves &w, Arc &arc
                                   vars.GetDoubleVariable("slew_upper_fall");
     double lo_th = (d_val == 1) ? vars.GetDoubleVariable("slew_lower_rise") :
                                   vars.GetDoubleVariable("slew_lower_fall");
-    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-    Volt vdd_voltage = supply->GetVddVoltage();
+
+    Volt vdd_voltage = cell.GetSupply()->GetVddVoltage();
     hi_th *= vdd_voltage;
     lo_th *= vdd_voltage;
 
@@ -1358,7 +1356,7 @@ void Algorithms::MeasureOneFFClockPower(Cell &cell, Simulation *sim, Waves &w, A
 {
     int d_val = sim->GetMetaDataAt(0);
 
-    Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
+    Supply *supply = cell.GetSupply();
     Volt vdd_voltage = supply->GetVddVoltage();
     Pin *c_pin = cell.GetSequential().GetClockPin();
     EdgeKind edge_pol = cell.GetSequential().GetClockPolarity();
@@ -1427,7 +1425,7 @@ bool Algorithms::MeasureFFClockDelaysTransitionsPowers(Cell &cell)
                         Waves w = sim->ReadWaves();
 
                         MeasureOneFFClockDelay(cell, sim, w, arc, o_pin, i_tran_index, o_cap_index);
-                        MeasureOneFFClockTransition(sim, w, arc, o_pin, i_tran_index, o_cap_index);
+                        MeasureOneFFClockTransition(sim, w, cell, arc, o_pin, i_tran_index, o_cap_index);
                         MeasureOneFFClockPower(cell, sim, w, arc, o_pin, i_tran_index, o_cap_index);
                     }
 
@@ -1489,9 +1487,9 @@ void Algorithms::PrepareOneFFSetupOrHoldSim(Cell &cell, ArcKind a_kind, size_t a
                                     d_pin.name_, d_tran, c_pin.name_, ck_tran, ck_d_skew);
     Simulation *sim = NewSimulation(sim_class, sim_name, SimKind::TRAN, &cell);
 
-    OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
-    Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
-    Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+    Supply *supply = cell.GetSupply();
+    Volt log0_v = supply->GetGndVoltage();
+    Volt log1_v = supply->GetVddVoltage();
 
     sim->SetDuration(25);
 
@@ -1605,13 +1603,12 @@ std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind
                                 vars.GetDoubleVariable("delay_in_fall");
             double q_th = vars.GetDoubleVariable("delay_in_rise");
 
-            Supply *supply = ctx_->GetLibrary().GetOpCond().GetSupply();
-            Volt vdd_voltage = supply->GetVddVoltage();
-            ck_th *= vdd_voltage;
-            q_th *= vdd_voltage;
+            Volt vdd = cell.GetSupply()->GetVddVoltage();
+            ck_th *= vdd;
+            q_th *= vdd;
 
             Waves w = sim->ReadWaves();
-            int q_end = ToLogic(w.GetVoltage(q_pin.name_).back());
+            int q_end = ToLogic(w.GetVoltage(q_pin.name_).back(), vdd);
 
             // First simulation just measures the CK -> Q base delay.
             // Proceed further with the same step and skew
@@ -1713,9 +1710,9 @@ void Algorithms::PrepareOneFFClockMPWSim(Cell &cell, size_t arc_index, NanoSecon
     auto & d_pin = cell.GetPins(PinDir::IN, PinKind::DATA).front();
     auto & c_pin = cell.GetPins(PinKind::CLK).front();
 
-    OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
-    Volt log0_v = op_cond.GetSupply()->GetGndVoltage();
-    Volt log1_v = op_cond.GetSupply()->GetVddVoltage();
+    Supply *supply = cell.GetSupply();
+    Volt log0_v = supply->GetGndVoltage();
+    Volt log1_v = supply->GetVddVoltage();
 
     std::string sim_name = sprintf("%s%s_PW_%f_STEP_%f", c_pin.name_, (high) ? "HIGH" : "LOW",
                                    pulse_width, step);
@@ -1819,14 +1816,10 @@ std::pair<bool,bool> Algorithms::MeasureFFClockMPW(Cell &cell)
             NanoSecond pulse_width = sim->GetDoubleMetaDataAt(3);
             NanoSecond step        = sim->GetDoubleMetaDataAt(4);
 
-            OpCond & op_cond = ctx_->GetLibrary().GetOpCond();
-            Volt th_rising = op_cond.GetSupply()->GetVddVoltage();
-            Volt th_falling = th_rising;
-
+            Volt vdd = cell.GetSupply()->GetVddVoltage();
             Variables &vars = ctx_->GetVariables();
-
-            th_rising *= vars.GetDoubleVariable("delay_in_rise");
-            th_falling *= vars.GetDoubleVariable("delay_in_fall");
+            Volt th_rising = vdd * vars.GetDoubleVariable("delay_in_rise");
+            Volt th_falling = vdd * vars.GetDoubleVariable("delay_in_fall");
 
             Volt ck_th;
             NanoSecond ck_start;
@@ -1845,7 +1838,7 @@ std::pair<bool,bool> Algorithms::MeasureFFClockMPW(Cell &cell)
             }
 
             Waves w = sim->ReadWaves();
-            int q_end = ToLogic(w.GetVoltage(q_pin.name_).back());
+            int q_end = ToLogic(w.GetVoltage(q_pin.name_).back(), vdd);
             assert(q_end == 1 || q_end == 0);
 
             info("MeasureFFClockMPW:");

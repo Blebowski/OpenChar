@@ -169,7 +169,7 @@ void Pin::PrintLogicFunction()
 
 void Pin::WriteLiberty(FILE *f, size_t tab)
 {
-    Supply *supply = cell_->GetLibrary()->GetOpCond().GetSupply();
+    Supply *supply = cell_->GetSupply();
 
     switch (kind_) {
     case PinKind::PWR:

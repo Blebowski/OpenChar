@@ -124,6 +124,7 @@ CREATE_TCL_COMMAND(
 
         cell.SetArea(area);
         cell.SetFootprint(footprint);
+        cell.SetSupply(ctx_->GetLibrary().GetOpCond().GetSupply());
         cell.SetDelayTemplate(&(ctx_->GetLibrary().GetTemplate(d_templ_name)));
 
         if (opts_["-constraint"].isSet()) {

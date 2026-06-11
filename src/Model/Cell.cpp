@@ -15,6 +15,7 @@ Cell::Cell(std::string name, Library *library) :
     c_template_(nullptr),
     area_(0.0),
     footprint_(""),
+    supply_(nullptr),
     seq_(this),
     charact_state_(CharactState::START)
 {};
@@ -64,6 +65,17 @@ void Cell::SetFootprint(std::string footprint)
 std::string& Cell::GetFootPrint()
 {
     return footprint_;
+}
+
+void Cell::SetSupply(Supply *supply)
+{
+    supply_ = supply;
+}
+
+Supply* Cell::GetSupply()
+{
+    assert (supply_ != nullptr);
+    return supply_;
 }
 
 std::pair<Pin&, bool> Cell::AddPin(std::string name, PinDir direction, PinKind kind)

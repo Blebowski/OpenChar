@@ -93,6 +93,9 @@ class Cell {
         void SetCharactState(CharactState charact_state);
         CharactState GetCharactState();
 
+        void SetSupply(Supply *supply);
+        Supply* GetSupply();
+
         void WriteLiberty(FILE *f, size_t tab);
         void WriteVerilog(FILE *f);
 
@@ -105,6 +108,7 @@ class Cell {
         CellKind kind_;
         double area_;
         std::string footprint_;
+        Supply *supply_;
 
         // First value - Cell inputs
         // Second value - Leakage power upon such state

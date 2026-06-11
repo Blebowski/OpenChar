@@ -67,7 +67,7 @@ class Algorithms {
 
     private:
         Context *ctx_;
-        int ToLogic(Volt val);
+        int ToLogic(Volt val, Volt vdd);
         Simulation* NewSimulation(SimClass sim_class, std::string name, SimKind kind, Cell *cell);
         int GetBit(int64_t v, size_t index);
         Expression* ComboSumOfProducts(Cell& cell, Pin& o_pin);
@@ -76,16 +76,16 @@ class Algorithms {
 
         int PrepareOneComboArcSims(Pin &o_pin, int64_t in_from, int64_t in_to,
                                    int out_from, int out_to);
-        void MeasureOneComboDelay(Simulation *sim, Waves &w, Pin &o_pin, Arc &arc,
+        void MeasureOneComboDelay(Simulation *sim, Waves &w, Cell &cell, Pin &o_pin, Arc &arc,
                                   size_t i_tran_index, size_t o_cap_index);
-        void MeasureOneComboTransition(Simulation *sim, Waves &w, Pin &o_pin, Arc &arc,
+        void MeasureOneComboTransition(Simulation *sim, Waves &w, Cell &cell, Pin &o_pin, Arc &arc,
                                        size_t i_tran_index, size_t o_cap_index);
-        void MeasureOneComboPower(Simulation *sim, Waves &w, Pin &o_pin, Arc &arc,
+        void MeasureOneComboPower(Simulation *sim, Waves &w, Cell &cell, Pin &o_pin, Arc &arc,
                                   size_t i_tran_index, size_t o_cap_index);
 
         void MeasureOneFFClockDelay(Cell &cell, Simulation *sim, Waves &w, Arc &arc,
                                     Pin &o_pin, size_t i_tran_index, size_t o_cap_index);
-        void MeasureOneFFClockTransition(Simulation *sim, Waves &w, Arc &arc,
+        void MeasureOneFFClockTransition(Simulation *sim, Waves &w, Cell &cell, Arc &arc,
                                          Pin &o_pin, size_t i_tran_index, size_t o_cap_index);
         void MeasureOneFFClockPower(Cell &cell, Simulation *sim, Waves &w, Arc &arc,
                                     Pin &o_pin, size_t i_tran_index, size_t o_cap_index);
