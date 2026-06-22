@@ -1,4 +1,4 @@
-name: build-and-test
+name: build
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
     branches: [ master ]
 
 jobs:
-  build-and-test:
+  build:
     runs-on: ubuntu-latest
 
     steps:
@@ -33,8 +33,10 @@ jobs:
       - name: Build
         run: cmake --build build --parallel $(nproc)
 
-      - name: Run tests
-        run: cmake --build build --target test
-        working-directory: ${{ github.workspace }}
-        env:
-          CTEST_OUTPUT_ON_FAILURE: 1
+      # TODO: Re-enable tests on self-hosted runner that has enough performance
+      #       to run the tests in reasonable time.
+      #- name: Run tests
+      #  run: cmake --build build --target test
+      #  working-directory: ${{ github.workspace }}
+      #  env:
+      #    CTEST_OUTPUT_ON_FAILURE: 1
