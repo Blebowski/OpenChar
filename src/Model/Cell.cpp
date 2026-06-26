@@ -254,23 +254,26 @@ void Cell::WriteLiberty(FILE *f, size_t tab)
 
 void Cell::WriteVerilog(FILE *f)
 {
+    TAB_FPRINTF(0, f, "`celldefine\n");
+    TAB_FPRINTF(0, f, "module %s\n", name_);
+
     switch (kind_) {
     case CellKind::COMBINATIONAL:
     {
-        TAB_FPRINTF(0, f, "module %s\n", name_);
-
         for (auto & o_pin : GetPins(PinDir::OUT)) {
             TAB_FPRINTF(2, f, "assign %s = ", o_pin.name_);
             o_pin.GetLogicFunction()->Print(f);
             TAB_FPRINTF(0, f, ";\n");
         }
-
-        TAB_FPRINTF(0, f, "endmodule\n\n");
-    }
-
-    default:
         break;
     }
+    default:
+        fatal("Unhandled CellKind: %s", toString(kind_));
+        break;
+    }
+
+    TAB_FPRINTF(0, f, "endmodule\n");
+    TAB_FPRINTF(0, f, "`endcelldefine\n\n");
 }
 
 }
