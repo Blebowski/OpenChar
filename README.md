@@ -15,7 +15,8 @@ of views for digital ASIC design.
 
 # Documentation
 
-The documentation is currently missing.
+The user manual from latest build can be found at:
+[User manual](https://blebowski.github.io/OpenChar/openchar_manual.pdf)
 
 # Building
 
