@@ -43,10 +43,6 @@ namespace open_char {
     class SimulationPool;
     class Waves;
 
-    // TCL Commands
-    class TclCmd;
-    class TclCmdOpt;
-
     // Exposed routines;
     void CreateTclCommands(Context *ctx);
     void RegisterTclCommands(Context *ctx);
@@ -189,6 +185,24 @@ namespace open_char {
         x(DONE)
     OPENCHAR_ENUM(CharactState, CHARACT_STATE)
     #undef CHARACT_STATE
+
+    // TCL Commands
+    class TclCmd;
+    class TclCmdOpt;
+
+    #define TCL_VAR_KIND(x)         \
+        x(DOUBLE)                   \
+        x(INT)                      \
+        x(STRING)
+    OPENCHAR_ENUM(TclVarKind, TCL_VAR_KIND)
+    #undef TCL_VAR_KIND
+
+    struct TclVar {
+        TclVarKind  kind;
+        std::string s_val;
+        int         i_val;
+        double      d_val;
+    } ;
 
 
     typedef double Celsius;

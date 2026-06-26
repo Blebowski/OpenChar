@@ -71,5 +71,25 @@ int main(int argc, const char **argv)
         fclose(f);
     }
 
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+    // Generate TCL variables documentation
+    ///////////////////////////////////////////////////////////////////////////////////////////////
+
+    open_char::Variables vars = ctx.GetVariables();
+
+    for (auto [var_name, var] : vars.GetVariables()) {
+        std::string fpath = std::string(doc_folder) + "/variables/" +
+                            std::string(var_name) + ".tex";
+        FILE *f = fopen(fpath.c_str(), "w");
+
+        fprintf(f, "\\subsection*{%s}\n", var_name.c_str());
+        fprintf(f, "\\addcontentsline{toc}{subsection}{\\protect\\numberline{}%s}\n", var_name.c_str());
+        fprintf(f, "\\textbf{Type}: %s\\newline\n", open_char::toString(var.kind).c_str());
+        fprintf(f, "\\textbf{Default value}: %s\\newline\n", vars.GetVariable(var_name).c_str());
+        fprintf(f, "\\textbf{Description}:");
+
+        fclose(f);
+    }
+
     return 0;
 }

@@ -31,7 +31,7 @@ Variables::Variables() :
     variables_ ({
         {"delay_in_rise",
             {
-                .kind = VarKind::DOUBLE,
+                .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
                 .d_val = 0.5
@@ -39,7 +39,7 @@ Variables::Variables() :
         },
         {"delay_in_fall",
             {
-                .kind = VarKind::DOUBLE,
+                .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
                 .d_val = 0.5
@@ -47,7 +47,7 @@ Variables::Variables() :
         },
         {"delay_out_rise",
             {
-                .kind = VarKind::DOUBLE,
+                .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
                 .d_val = 0.5
@@ -55,7 +55,7 @@ Variables::Variables() :
         },
         {"delay_out_fall",
             {
-                .kind = VarKind::DOUBLE,
+                .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
                 .d_val = 0.5
@@ -63,7 +63,7 @@ Variables::Variables() :
         },
         {"max_threads",
             {
-                .kind = VarKind::INT,
+                .kind = TclVarKind::INT,
                 .s_val = "",
                 .i_val = static_cast<int>(std::thread::hardware_concurrency()),
                 .d_val = 0
@@ -71,7 +71,7 @@ Variables::Variables() :
         },
         {"run_directory",
             {
-                .kind = VarKind::STRING,
+                .kind = TclVarKind::STRING,
                 .s_val = std::filesystem::current_path(),
                 .i_val = 0,
                 .d_val = 0
@@ -79,7 +79,7 @@ Variables::Variables() :
         },
         {"slew_lower_fall",
             {
-                .kind = VarKind::DOUBLE,
+                .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
                 .d_val = 0.2
@@ -87,7 +87,7 @@ Variables::Variables() :
         },
         {"sim_timestep",
             {
-                .kind = VarKind::DOUBLE,
+                .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
                 .d_val = 0.001
@@ -95,7 +95,7 @@ Variables::Variables() :
         },
         {"slew_upper_fall",
             {
-                .kind = VarKind::DOUBLE,
+                .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
                 .d_val = 0.8
@@ -103,7 +103,7 @@ Variables::Variables() :
         },
         {"slew_lower_rise",
             {
-                .kind = VarKind::DOUBLE,
+                .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
                 .d_val = 0.2
@@ -111,7 +111,7 @@ Variables::Variables() :
         },
         {"slew_upper_rise",
             {
-                .kind = VarKind::DOUBLE,
+                .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
                 .d_val = 0.8
@@ -123,11 +123,11 @@ Variables::Variables() :
 
 std::string Variables::SetVariable(std::string name, std::string value)
 {
-    Var& v = variables_[name];
+    TclVar& v = variables_[name];
 
     // TODO: Put here per variable hook that validates the data to be set (e.g. range)
 
-    if (v.kind == VarKind::DOUBLE) {
+    if (v.kind == TclVarKind::DOUBLE) {
         std::string rv = value;
         try {
             v.d_val = stof(value);
@@ -138,7 +138,7 @@ std::string Variables::SetVariable(std::string name, std::string value)
             v.d_val = 0;
         }
         return rv;
-    } else if (v.kind == VarKind::INT) {
+    } else if (v.kind == TclVarKind::INT) {
         std::string rv = value;
         try {
             v.i_val = stoi(value);
@@ -157,11 +157,11 @@ std::string Variables::SetVariable(std::string name, std::string value)
 
 std::string Variables::GetVariable(std::string name)
 {
-    Var& v = variables_[name];
+    TclVar& v = variables_[name];
 
-    if (v.kind == VarKind::DOUBLE) {
+    if (v.kind == TclVarKind::DOUBLE) {
         return std::to_string(v.d_val);
-    } else if (v.kind == VarKind::INT) {
+    } else if (v.kind == TclVarKind::INT) {
         return std::to_string(v.i_val);
     }
 
@@ -170,27 +170,32 @@ std::string Variables::GetVariable(std::string name)
 
 double Variables::GetDoubleVariable(std::string name)
 {
-    Var& v = variables_[name];
-    assert (v.kind == VarKind::DOUBLE);
+    TclVar& v = variables_[name];
+    assert (v.kind == TclVarKind::DOUBLE);
 
     return v.d_val;
 }
 
 int Variables::GetIntVariable(std::string name)
 {
-    Var& v = variables_[name];
-    assert (v.kind == VarKind::INT);
+    TclVar& v = variables_[name];
+    assert (v.kind == TclVarKind::INT);
 
     return v.i_val;
+}
+
+std::map<std::string, TclVar> Variables::GetVariables()
+{
+    return variables_;
 }
 
 void Variables::PrintVariables()
 {
     for (const auto &r : variables_) {
         printf("%-25s", r.first);
-        if (r.second.kind == VarKind::DOUBLE) {
+        if (r.second.kind == TclVarKind::DOUBLE) {
             printf("%f\n", r.second.d_val);
-        } else if (r.second.kind == VarKind::INT) {
+        } else if (r.second.kind == TclVarKind::INT) {
             printf("%d\n", r.second.i_val);
         } else {
             printf("%s\n", r.second.s_val);

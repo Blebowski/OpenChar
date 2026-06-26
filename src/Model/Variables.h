@@ -36,25 +36,12 @@ class Variables {
         std::string GetVariable(std::string name);
         double GetDoubleVariable(std::string name);
         int GetIntVariable(std::string name);
+        std::map<std::string, TclVar> GetVariables();
 
         void PrintVariables();
 
     private:
-
-        enum class VarKind {
-            STRING,
-            INT,
-            DOUBLE
-        };
-
-        struct Var {
-            VarKind     kind;
-            std::string s_val;
-            int         i_val;
-            double      d_val;
-        } ;
-
-        std::map<std::string, Var> variables_;
+        std::map<std::string, TclVar> variables_;
 };
 
 }
