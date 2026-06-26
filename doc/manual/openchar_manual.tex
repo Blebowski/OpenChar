@@ -1,0 +1,319 @@
+\documentclass[12pt, a4paper]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage{lmodern}
+\usepackage{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{fancyhdr}
+\usepackage{hyperref}
+\usepackage{titling}
+\usepackage{parskip}
+\usepackage{underscore}
+
+\geometry{
+    a4paper,
+    top=2.5cm,
+    bottom=2.5cm,
+    left=2.5cm,
+    right=2.5cm,
+    headheight=15pt
+}
+
+\setlength{\parindent}{0cm}
+\setlength{\parskip}{0.5cm}
+
+\definecolor{ocblue}{RGB}{30, 90, 160}
+
+\newcommand{\documentversion}{0.1}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=ocblue,
+    urlcolor=ocblue,
+    citecolor=ocblue,
+    pdftitle={OpenChar User Manual},
+    pdfauthor={Ondrej Ille},
+    pdfsubject={VLSI Library Characterization Tool}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+
+% Header
+\fancyhead[L]{\textbf{OpenChar}}
+\fancyhead[C]{User Manual}
+\fancyhead[R]{Version \documentversion}
+\renewcommand{\headrulewidth}{0.5pt}
+\renewcommand{\headrule}{\hbox to\headwidth{\color{ocblue}\leaders\hrule height \headrulewidth\hfill}}
+
+% Footer
+\fancyfoot[L]{\href{https://github.com/Blebowski/OpenChar}{https://github.com/Blebowski/OpenChar}}
+\fancyfoot[C]{\textcolor{gray}{\small\thepage}}
+\fancyfoot[R]{\textcolor{gray}{\small\today}}
+\renewcommand{\footrulewidth}{0.5pt}
+\renewcommand{\footrule}{\hbox to\headwidth{\color{gray}\leaders\hrule height \footrulewidth\hfill}}
+
+% Plain style for title page (no header/footer)
+\fancypagestyle{plain}{
+    \fancyhf{}
+    \renewcommand{\headrulewidth}{0pt}
+    \renewcommand{\footrulewidth}{0pt}
+}
+
+\begin{document}
+
+\begin{titlepage}
+    \thispagestyle{plain}
+
+    \vspace*{3cm}
+
+    \Huge\bfseries{OpenChar}
+
+    \vspace*{0.5cm}
+
+    \Large{User Manual}
+
+    \textcolor{gray}{\rule{0.9\textwidth}{0.4pt}}
+
+    {\normalsize Version \documentversion}
+
+    {\normalsize\today}
+
+    \vfill
+
+    {\small
+        \href{https://github.com/Blebowski/OpenChar}{https://github.com/Blebowski/OpenChar}
+    }
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+\section{Introduction}
+
+OpenChar is an open-source VLSI library characterization tool. OpenChar invokes analog
+simulator to measure characteristics of analog circuits and produces digital views for
+ASIC VLSI design such as Synopsys Liberty (.lib) and Verilog model (.v).
+
+\subsection{Development status}
+
+OpenChar is in its pre-release / alfa version state, meaning internal APIs as well
+as user interface may change in the future.
+
+\subsection{Supported platforms}
+
+OpenChar is developed under Ubuntu Linux, and it is currently the only supported platform.
+
+\subsection{Building OpenChar}
+
+OpenChar is built with CMake and C++20 compliant compiler. OpenChar has following
+dependencies on Ubuntu:
+
+\texttt{build-essential cmake tcl tcl-dev libreadline-dev tcl-tclreadline tk tk-dev}
+
+\subsection{Invoking OpenChar}
+
+OpenChar is a command line application invoked like so:
+
+\texttt{\textbf{openchar}}\newline
+\hspace*{1cm}\obeyspaces{\texttt{-file <script>     TCL script to execute}}\newline
+\hspace*{1cm}\obeyspaces{\texttt{-help              Show this help}}\newline
+
+Upon launching, OpenChar starts a TCL shell and executes a TCL script if provided
+by the \texttt{-file} argument. After executing the TCL script,
+OpenChar stays in the TCL shell, unless the TCL script contains \texttt{exit}
+command.
+
+OpenChar uses analog simulator NGSPICE by invoking a \texttt{ngspice} executable.
+The \texttt{ngspice} executable shall be available in PATH environment variable
+when launching openchar.
+
+
+\pagebreak
+\section{Features}
+
+\subsection{Supported cell types}
+
+\begin{itemize}
+    \item{Combinatorial cells}
+    \item{D-style flip-flops with arbitrary clock polairty and preset/clear polarities}
+\end{itemize}
+
+\subsection{Measured parameters}
+
+\begin{itemize}
+    \item{Delays and transitions arcs on combinatorial cells}
+    \item{Internal power on combinatorial cells}
+    \item{Leakage power for combinatorial and sequential cells}
+    \item{D flip-flop delay from clock to output}
+    \item{Setup and Hold on D-flip-flop}
+    \item{Minimal pulse width on clock pin of D-flip-flop}
+\end{itemize}
+
+\subsection{Automatically recognized functions}
+
+\begin{itemize}
+    \item{Logic function of combinatorial cells}
+    \item{Polarity and function of asynchronous pins in sequential cells}
+    \item{Recognizing if sequential cell is latch or flip-flop}
+    \item{Clock polarity for sequential cells}
+\end{itemize}
+
+
+\pagebreak
+\section{TCL commands}
+
+OpenChar has a TCL shell that contains all TCL built-in commands.
+OpenChar specific commands are described in this section.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% characterize_library
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/characterize_library.tex}
+
+The cells should be previously defined by \texttt{define_cell} command.
+This commands shall be used only once during single invocation of OpenChar.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% define_cell
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/define_cell.tex}
+
+The name of the defined cell must match the .subckt definition in SPICE netlist
+of the cell. Use \texttt{-input}, \texttt{-output}, \texttt{-clock} and
+\texttt{-async} to define pins of the cell.
+
+OpenChar recognizes type of the cell to characterize according to the following rules:
+\begin{itemize}
+    \item {If only \texttt{-input} and \texttt{-output} are set, the cell is combinatorial cell.}
+    \item {If \texttt{-clock} or \texttt{-async} inputs are present, the cell is sequential cell.}
+\end{itemize}
+
+OpenChar automatically recognizes logic function of combinatorial cells.
+To set templates to be used when characterizing the cell, use \texttt{-delay}
+for delay template and \texttt{-constraint} for constraint template such as
+setups or hold.
+
+To specify additional data that do not impact characterization, but are
+written to Liberty file by \texttt{write_lib} command, use \texttt{-area}
+and \texttt{-footprint} switches.
+
+\subsubsection*{Examples}
+
+The following example defines an inverter cell and 2-input AND cell:
+
+\texttt{define_cell -input A -output Y -delay del_templ_5x5 INV} \newline
+\texttt{define_cell -input {A B} -output Y -delay del_templ_5x5 AND2}
+
+The following example defines D Flip-flop with asynchronous reset:
+
+\texttt{define_cell -input D -async RB -output Q -clock CK \textbackslash\\}
+\hspace*{2.6cm}\texttt{-delay del_templ_5x5 -constraint constr_templ_3x3 DFF}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% define_template
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/define_template.tex}
+
+A template is set of numeric values used when building NLDM delay or power tables
+as well as constraints. A template name shall be unique.
+Use \texttt{-index_1} and \texttt{-index_2} to specify set of incrementing numbers
+for the given template.
+For \texttt{-type delay} and \texttt{-type power} template, the \texttt{-index_1}
+corresponds to contrained pin transition and \texttt{-index_2} corresponds to output
+capacitance load.
+For \texttt{-type constraints} template, the \texttt{-index_1} corresponds to contrained
+pin transition and \texttt{-index_2} corresponds to related pin transition.
+
+\subsubsection*{Examples}
+
+The following example defines delay and constraint templates:
+
+\texttt{define_template -index_1 {0.01 0.02 0.05 0.1 0.2} \textbackslash}\newline
+\hspace*{3.5cm}\texttt{-index_2 {0.05 0.1 0.3 0.7 1.0} \textbackslash}\newline
+\hspace*{3.5cm}\texttt{-type delay del_templ_5x5} \newline
+
+\texttt{define_template -index_1 {0.01 0.1 0.5} \textbackslash}\newline
+\hspace*{3.5cm}\texttt{-index_2 {0.01 0.1 0.5} \textbackslash}\newline
+\hspace*{3.5cm}\texttt{-type constraint constr_templ_3x3} \newline
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% help
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/help.tex}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% read_spice
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/read_spice.tex}
+
+The spice files are included in the simulated analog testbench based on \texttt{-type}
+argument set:
+\begin{itemize}
+    \item{With \texttt{.lib} SPICE statement for \texttt{-type model}}
+    \item{With \texttt{.include} SPICE statement for \texttt{-type netlist}}
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% report_app_vars
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/report_app_vars.tex}
+
+See section \ref{TCL variables} for description of all OpenChar variables.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% set_gnd
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/set_gnd.tex}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% set_operating_condition
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/set_operating_condition.tex}
+
+The operating conditions are used for characterization and written to the
+\texttt{.lib} file when \texttt{write_lib} is invoked.
+
+If no operating conditions were defined, OpenChar uses default operating condition
+with folowing properties:
+\begin{itemize}
+    \item{\textbf{Name:} DEFAULT_OPCOND}
+    \item{\textbf{Power net:} VDD 1.2 V}
+    \item{\textbf{Ground net:} GND 0 V}
+    \item{\textbf{Temperature:} 25 C}
+\end{itemize}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% set_vdd
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/set_vdd.tex}
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% write_library
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/write_library.tex}
+
+The command shall be executed only after \texttt{characterize_library} was
+executed first.
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% write_verilog
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\input{commands/write_verilog.tex}
+
+\pagebreak
+\section{TCL variables}\label{TCL variables}
+
+
+\end{document}

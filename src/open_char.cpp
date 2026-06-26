@@ -47,6 +47,7 @@ int ShellInit(Tcl_Interp *interp)
         return TCL_ERROR;
     }
 
+    open_char::CreateTclCommands(ctx);
     open_char::RegisterTclCommands(ctx);
     open_char::CreateTclVariables(ctx);
 

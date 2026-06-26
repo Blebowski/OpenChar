@@ -14,7 +14,7 @@ namespace open_char {
 CREATE_TCL_COMMAND(
     CharacterizeLibrary,
     "characterize_library",
-    "Characterize all the defined cells into a library",
+    "Characterize defined cells into a library.",
     true,
 
     ARG({}),
@@ -29,16 +29,16 @@ CREATE_TCL_COMMAND(
 CREATE_TCL_COMMAND(
     DefineCell,
     "define_cell",
-    "Define cell to be characterized.",
+    "Define a cell to be characterized.",
     true,
 
     ARG({
         {"-input",      TclCmdOpt(true,         "{pin_names}",          "Input pin or pins.")},
         {"-output",     TclCmdOpt(true,         "{pin_names}",          "Output pin or pins.")},
         {"-clock",      TclCmdOpt(true,         "pin_name",             "Clock pin")},
-        {"-async",      TclCmdOpt(true,         "{pin_names}",          "Asynchrnous set/clear pin or pins.")},
-        {"-delay",      TclCmdOpt(true,         "delay_template",       "Name of delay template to use when characterizing the cell.")},
-        {"-constraint", TclCmdOpt(true,         "constraint_template",  "Name of constraint template to use when characterizing the cell.")},
+        {"-async",      TclCmdOpt(true,         "{pin_names}",          "Asynchronous set/clear pin or pins.")},
+        {"-delay",      TclCmdOpt(true,         "delay_template",       "Name of delay template to use.")},
+        {"-constraint", TclCmdOpt(true,         "constraint_template",  "Name of constraint template to use.")},
         {"-area",       TclCmdOpt(true,         "number",               "Cell area (in square microns).")},
         {"-footprint",  TclCmdOpt(true,         "footprint_name",       "Cell footprint.")},
         {"cell_name",   TclCmdOpt(false,        "cell_name",            "Name of the cell.")}
@@ -189,7 +189,7 @@ CREATE_TCL_COMMAND(
     true,
 
     ARG({
-        {"-type",         TclCmdOpt(true,       "{delay|power}",    "Type of template to be defined.")},
+        {"-type",         TclCmdOpt(true,       "(delay|power)",    "Type of template to be defined.")},
         {"-index_1",      TclCmdOpt(true,       "{values}",         "List of values to be used as first index.")},
         {"-index_2",      TclCmdOpt(true,       "{values}",         "List of values to be used as second index.")},
         {"template_name", TclCmdOpt(true,       "",                 "Name of the template.")},
@@ -302,7 +302,7 @@ CREATE_TCL_COMMAND(
 CREATE_TCL_COMMAND(
     ReadSpice,
     "read_spice",
-    "Read SPICE netlist(s) or model deck(s)",
+    "Read SPICE netlist(s) or model deck(s).",
     true,
 
     ARG({
@@ -345,7 +345,7 @@ CREATE_TCL_COMMAND(
 CREATE_TCL_COMMAND(
     ReportAppVars,
     "report_app_vars",
-    "Report application variables and their values",
+    "Report application variables and their values.",
     true,
 
     ARG({}),
@@ -359,7 +359,7 @@ CREATE_TCL_COMMAND(
 CREATE_TCL_COMMAND(
     SetVdd,
     "set_vdd",
-    "Define supply voltage and supply voltage net name",
+    "Define supply voltage and supply voltage net name.",
     true,
 
     ARG({
@@ -381,7 +381,7 @@ CREATE_TCL_COMMAND(
 CREATE_TCL_COMMAND(
     SetGnd,
     "set_gnd",
-    "Define ground voltage and ground net name",
+    "Define ground voltage and ground net name.",
     true,
 
     ARG({
@@ -403,7 +403,7 @@ CREATE_TCL_COMMAND(
 CREATE_TCL_COMMAND(
     SetOperatingCondition,
     "set_operating_condition",
-    "Define operating conditions (supply volate, temperature, name)",
+    "Define operating conditions (supply voltage, temperature, name).",
     true,
 
     ARG({
@@ -465,7 +465,7 @@ CREATE_TCL_COMMAND(
 CREATE_TCL_COMMAND(
     Help,
     "help",
-    "List all available commands",
+    "Show all available commands.",
     false,
 
     ARG({}),
@@ -482,11 +482,11 @@ CREATE_TCL_COMMAND(
 CREATE_TCL_COMMAND(
     WriteLibrary,
     "write_library",
-    "Create liberty file for the cells in the library",
+    "Write characterized library to a liberty file.",
     true,
 
     ARG({
-        {"library_name",            TclCmdOpt(true,     "string",       "Output library name.")},
+        {"liberty_file",            TclCmdOpt(true,     "string",       "Output library file name.")},
         }),
     ARG({
 
@@ -504,7 +504,7 @@ CREATE_TCL_COMMAND(
     true,
 
     ARG({
-        {"output_file",            TclCmdOpt(true,     "string",       "Output file name.")},
+        {"output_file",            TclCmdOpt(true,     "string",       "Output verilog file name.")},
         }),
     ARG({
 
@@ -515,7 +515,7 @@ CREATE_TCL_COMMAND(
     })
 )
 
-void RegisterTclCommands(Context *ctx)
+void CreateTclCommands(Context *ctx)
 {
     ctx->AddTclCommand(CharacterizeLibrary(ctx),    CharacterizeLibraryCb );
     ctx->AddTclCommand(DefineCell(ctx),             DefineCellCb );
@@ -528,7 +528,10 @@ void RegisterTclCommands(Context *ctx)
     ctx->AddTclCommand(WriteLibrary(ctx),           WriteLibraryCb );
     ctx->AddTclCommand(WriteVerilog(ctx),           WriteVerilogCb );
     ctx->AddTclCommand(Help(ctx),                   HelpCb );
+}
 
+void RegisterTclCommands(Context *ctx)
+{
     for (const auto &c : ctx->GetTclCommands()) {
         std::string full_name = "open_char::" + c.first.name_;
         Tcl_CreateObjCommand(c.first.ctx_->GetTclInterp(), full_name.c_str(),

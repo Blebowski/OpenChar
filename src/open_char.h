@@ -29,6 +29,7 @@ namespace open_char {
     class TclCmdOpt;
 
     // Exposed routines;
+    void CreateTclCommands(Context *ctx);
     void RegisterTclCommands(Context *ctx);
     void CreateTclVariables(Context *ctx);
 
