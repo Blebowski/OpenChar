@@ -256,4 +256,41 @@ void Pin::WriteLiberty(FILE *f, size_t tab)
     }
 }
 
+void Pin::WriteVerilog(FILE *f, size_t tab)
+{
+    switch (kind_) {
+    case PinKind::PWR:
+        TAB_FPRINTF(tab, f, "supply1");
+        break;
+
+    case PinKind::GND:
+        TAB_FPRINTF(tab, f, "supply0");
+        break;
+
+    case PinKind::DATA:
+    case PinKind::CLK:
+    case PinKind::ASYNC:
+
+        switch (direction_) {
+        case PinDir::IN:
+            TAB_FPRINTF(tab, f, "input  ");
+            break;
+        case PinDir::OUT:
+            TAB_FPRINTF(tab, f, "output ");
+            break;
+        case PinDir::INOUT:
+            TAB_FPRINTF(tab, f, "inout  ");
+            break;
+        default:
+            error("Unhandled PinDir: %s\n", toString(direction_));
+        }
+        break;
+
+    default:
+        break;
+    }
+
+    TAB_FPRINTF(tab, f, " %s;\n", name_);
+}
+
 }

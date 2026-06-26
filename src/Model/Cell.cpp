@@ -255,7 +255,18 @@ void Cell::WriteLiberty(FILE *f, size_t tab)
 void Cell::WriteVerilog(FILE *f)
 {
     TAB_FPRINTF(0, f, "`celldefine\n");
-    TAB_FPRINTF(0, f, "module %s\n", name_);
+    TAB_FPRINTF(0, f, "module %s (", name_);
+
+    bool first = true;
+    for (auto &pin : GetPins()) {
+        TAB_FPRINTF(0, f, "%s%s", (first) ? "" : ",", pin.name_);
+        first = false;
+    }
+    TAB_FPRINTF(0, f, ");\n");
+
+    for (auto &pin : GetPins()) {
+        pin.WriteVerilog(f, 2);
+    }
 
     switch (kind_) {
     case CellKind::COMBINATIONAL:

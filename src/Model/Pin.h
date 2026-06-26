@@ -85,6 +85,7 @@ class Pin {
         };
 
         void WriteLiberty(FILE *f, size_t tab);
+        void WriteVerilog(FILE *f, size_t tab);
 
     private:
         // First value - Cell inputs
