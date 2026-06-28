@@ -441,7 +441,7 @@ bool Expression::Equals(Expression *e, ExprEqualKind eq_kind)
                 return false;
             }
         } else {
-            assert(false);
+            should_not_reach();
         }
     }
 
@@ -519,7 +519,7 @@ int Expression::Evaluate(std::vector<std::pair<Pin*, int>> &terms)
         } else if (kind_ == ExprKind::XOR) {
             return ((lhs_v == 0x1 && rhs_v == 0x0) || (lhs_v == 0x0 && rhs_v == 0x1)) ? 1 : 0;
         }
-        assert(false);
+        should_not_reach();
         break;
     }
 
@@ -536,13 +536,15 @@ int Expression::Evaluate(std::vector<std::pair<Pin*, int>> &terms)
                 return pr.second;
             }
         }
-
         // Forces to have all terms defined otherwise we can't evaluate
         // an expression!
-        assert(false);
+        should_not_reach();
+        break;
+
+    default:
+        should_not_reach();
     }
 
-    assert(false);
     return 0;
 }
 

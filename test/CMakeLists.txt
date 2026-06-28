@@ -15,5 +15,5 @@ macro(OPEN_CHAR_TEST test_name)
     target_link_libraries(${test_name} lib_open_char)
 endmacro()
 
-add_subdirectory(unit)
+add_subdirectory(model)
 add_subdirectory(algorithms)

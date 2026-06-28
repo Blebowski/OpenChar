@@ -137,6 +137,8 @@ void debug(const std::string &fmt, const Args&... args)
     }
 }
 
+void should_not_reach();
+
 #define OPENCHAR_ENUM_ELEM(x) x,
 #define OPENCHAR_ENUM_MAP(x) {x, #x},
 

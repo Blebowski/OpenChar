@@ -183,7 +183,7 @@ Pin* Arc::GetRelatedPin()
         return pin_->cell_->GetSequential().GetClockPin();
     }
     default:
-        assert(false);
+        fatal("Unhandled ArcKind::%s", toString(kind_));
     }
 
     return nullptr;

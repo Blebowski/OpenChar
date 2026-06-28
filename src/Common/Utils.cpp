@@ -20,9 +20,16 @@
 #include "Utils.h"
 
 namespace open_char {
-    bool debug_enable           = false;
-    bool debug_expr_enable      = false;
-    bool debug_logtbl_enable    = false;
-    bool debug_stphld_enable    = false;
-    bool debug_mpw_enable       = false;
+
+bool debug_enable           = false;
+bool debug_expr_enable      = false;
+bool debug_logtbl_enable    = false;
+bool debug_stphld_enable    = false;
+bool debug_mpw_enable       = false;
+
+void should_not_reach()
+{
+    fatal("should not reach here!");
+}
+
 }
