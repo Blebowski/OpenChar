@@ -1,15 +1,15 @@
 
-OPEN_CHAR_TEST(MeasureInputCapTest)
-OPEN_CHAR_TEST(MeasureLeakageTest)
+OC_BASIC_TEST(MeasureInputCapTest)
+OC_BASIC_TEST(MeasureLeakageTest)
 
-OPEN_CHAR_TEST(MeasureComLogicTableLeakageTest)
-OPEN_CHAR_TEST(MeasureComDelayTransitionPowerTest)
+OC_BASIC_TEST(MeasureComLogicTableLeakageTest)
+OC_BASIC_TEST(MeasureComDelayTransitionPowerTest)
 
-OPEN_CHAR_TEST(CalculateComLogicFunctionTest)
+OC_BASIC_TEST(CalculateComLogicFunctionTest)
 
-OPEN_CHAR_TEST(MeasureSeqEdgeOrLvlTest)
+OC_BASIC_TEST(MeasureSeqEdgeOrLvlTest)
 
-OPEN_CHAR_TEST(MeasureFFClockPolarityTest)
-OPEN_CHAR_TEST(MeasureFFClockDelayPowerTransitionTest)
-OPEN_CHAR_TEST(MeasureFFSetupTest)
-OPEN_CHAR_TEST(MeasureFFHoldTest)
+OC_BASIC_TEST(MeasureFFClockPolarityTest)
+OC_BASIC_TEST(MeasureFFClockDelayPowerTransitionTest)
+OC_BASIC_TEST(MeasureFFSetupTest)
+OC_BASIC_TEST(MeasureFFHoldTest)

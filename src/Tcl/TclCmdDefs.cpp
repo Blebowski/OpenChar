@@ -63,35 +63,45 @@ CREATE_TCL_COMMAND(
         }),
     ARG({
 
+        if (!opts_["-input"].isSet()) {
+            error("Cell must have -input pin(s) set");
+            return TCL_ERROR;
+        }
+
+        if (!opts_["-output"].isSet()) {
+            error("Cell must have -output pin(s) set");
+            return TCL_ERROR;
+        }
+
         if (!opts_["-delay"].isSet()) {
-            error("You need to specify -delay template.\n");
+            error("Cell must have -delay template set");
             return TCL_ERROR;
         }
 
         if (opts_["-clock"].isSet() && !opts_["-constraint"].isSet()) {
-            error("Cells that contain -clock pins must have -constraint template set.\n");
+            error("Cells that contain -clock pins must have -constraint template set");
             return TCL_ERROR;
         }
 
         const std::string d_templ_name = Tcl_GetString(opts_["-delay"].objv_);
         if (!ctx_->GetLibrary().HasTemplate(d_templ_name)) {
-            error("Template '%s' does not exist.", d_templ_name);
+            error("Template '%s' does not exist", d_templ_name);
             return TCL_ERROR;
         }
 
         Template& t = ctx_->GetLibrary().GetTemplate(d_templ_name);
         if (t.GetKind() != TemplKind::DELAY) {
-            error("Template '%s' is not a delay template.", d_templ_name);
+            error("Template '%s' is not a delay template", d_templ_name);
             return TCL_ERROR;
         }
 
         if (opts_["-async"].isSet() && !opts_["-clock"].isSet()) {
-            error("Can't specify '-async' pins without clock pin.");
+            error("Can't specify '-async' pins without clock pin");
             return TCL_ERROR;
         }
 
         if (opts_["-constraint"].isSet() && !opts_["-clock"].isSet()) {
-            error("Can't specify '-constraint' pins without clock pin.");
+            error("Can't specify '-constraint' pins without clock pin");
             return TCL_ERROR;
         }
 
@@ -100,14 +110,14 @@ CREATE_TCL_COMMAND(
             c_templ_name = Tcl_GetString(opts_["-constraint"].objv_);
 
             if (!ctx_->GetLibrary().HasTemplate(c_templ_name)) {
-                error("Template '%s' does not exist.", c_templ_name);
+                error("Template '%s' does not exist", c_templ_name);
                 return TCL_ERROR;
             }
 
             Template& t = ctx_->GetLibrary().GetTemplate(c_templ_name);
 
             if (t.GetKind() != TemplKind::CONSTRAINT) {
-                error("Template '%s' is not a constraint template.", c_templ_name);
+                error("Template '%s' is not a constraint template", c_templ_name);
                 return TCL_ERROR;
             }
         }
@@ -118,11 +128,11 @@ CREATE_TCL_COMMAND(
             std::string val = std::string(Tcl_GetString(opts_["-area"].objv_));
             area = strtof(val.c_str(), &end);
             if (*end != '\0') {
-                error("%s is not float value in definition of -area\n", val);
+                error("%s is not float value in definition of -area", val);
                 return TCL_ERROR;
             }
             if (area < 0.0) {
-                error("-area can't be negative (%f)\n", area);
+                error("-area can't be negative (%f)", area);
                 return TCL_ERROR;
             }
         }
@@ -136,7 +146,7 @@ CREATE_TCL_COMMAND(
 
         auto [cell, was_added] = ctx_->GetLibrary().AddCell(cell_name);
         if (!was_added) {
-            error("Cell %s is already defined\n", cell_name);
+            error("Cell %s is already defined", cell_name);
             return TCL_ERROR;
         }
 

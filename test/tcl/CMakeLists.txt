@@ -1,0 +1,1 @@
+OC_TCL_TEST(define_cell)

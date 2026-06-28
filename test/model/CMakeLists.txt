@@ -1,4 +1,4 @@
-OPEN_CHAR_TEST(ContextTest)
-OPEN_CHAR_TEST(ExpressionTest)
-OPEN_CHAR_TEST(SupplyTest)
-OPEN_CHAR_TEST(VariablesTest)
+OC_BASIC_TEST(ContextTest)
+OC_BASIC_TEST(ExpressionTest)
+OC_BASIC_TEST(SupplyTest)
+OC_BASIC_TEST(VariablesTest)

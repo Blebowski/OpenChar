@@ -1,0 +1,18 @@
+define_cell C1
+define_cell -input A C2
+define_cell -input A -output Y C3
+define_template -type delay -index_1 {1 2 3} -index_2 {3 4 5} DEL_TEMPL
+define_cell -delay DEL_TEMPL -input A -output Y C4
+define_cell -clock CLK -input D -output Q DFF1
+define_cell -clock CLK -input D -output Q -delay DEL_TEMPL DFF2
+define_cell -input A -output Y -delay NON_EXISTING_DELAY C5
+define_template -type constraint -index_1 {1 2 3} -index_2 {3 4 5} CONSTR_TEMPL
+define_cell -clock CLK -input D -output Q -delay DEL_TEMPL -constraint DEL_TEMPL DFF3
+define_cell -async RB -input D -output Q -delay DEL_TEMPL DFF4
+define_cell -input D -output Q -delay DEL_TEMPL -constraint DEL_TEMPL DFF5
+define_cell -clock CLK -input D -output Q -delay DEL_TEMPL -constraint NON_EXISTING_CONSTR DFF6
+define_cell -delay DEL_TEMPL -input A -output Y C4
+define_cell -delay DEL_TEMPL -input A -output Y -area -10 C5
+define_cell -delay DEL_TEMPL -input A -output Y -area "NON_INTEGER_AREA" C6
+
+exit
