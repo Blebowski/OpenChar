@@ -97,18 +97,18 @@ std::string sprintf(std::string format, Args&&... args) {
 template<typename... Args>
 void fatal(const std::string &fmt, const Args&... args)
 {
-    std::printf("Fatal: ");
-    std::printf(fmt.c_str(), format_arg(args)...);
-    std::printf("\n");
+    std::fprintf(stderr, "Fatal: ");
+    std::fprintf(stderr, fmt.c_str(), format_arg(args)...);
+    std::fprintf(stderr, "\n");
     raise(SIGABRT);
 }
 
 template<typename... Args>
 void error(const std::string &fmt, const Args&... args)
 {
-    std::printf("Error: ");
-    std::printf(fmt.c_str(), format_arg(args)...);
-    std::printf("\n");
+    std::fprintf(stderr, "Error: ");
+    std::fprintf(stderr, fmt.c_str(), format_arg(args)...);
+    std::fprintf(stderr, "\n");
 }
 
 template<typename... Args>
