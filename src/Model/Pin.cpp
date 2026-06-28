@@ -73,34 +73,36 @@ std::vector<Arc>& Pin::GetArcs()
     return arcs_;
 }
 
-void Pin::PrintLogicTable()
+#define PRINT_LINE(fd, len) fprintf(fd, "%s\n", std::string(len, '-'));
+
+void Pin::PrintLogicTable(FILE *fd)
 {
     size_t i_pins_cnt = cell_->GetPinsCount(PinDir::IN);
     size_t line_len = (i_pins_cnt + 1) * 10 + 1;
 
-    PRINT_LINE(line_len)
+    PRINT_LINE(fd, line_len)
 
-    printf("|");
+    fprintf(fd, "|");
     for (const auto &i_pin : cell_->GetPins(PinDir::IN)) {
-        printf(" %7s |", i_pin.name_);
+        fprintf(fd, " %7s |", i_pin.name_);
     }
-    printf(" %7s |\n", name_);
+    fprintf(fd, " %7s |\n", name_);
 
-    PRINT_LINE(line_len)
+    PRINT_LINE(fd, line_len)
 
     for (const auto &v : logic_table_) {
-        printf("|");
+        fprintf(fd, "|");
 
         int64_t tmp = v.first;
         for (size_t i = 0; i < i_pins_cnt; i++) {
-            printf(" %7d |", tmp & 0x1);
+            fprintf(fd, " %7d |", tmp & 0x1);
             tmp >>= 1;
         }
 
-        printf(" %7d |\n", v.second & 0x1);
+        fprintf(fd, " %7d |\n", v.second & 0x1);
     }
 
-    PRINT_LINE(line_len)
+    PRINT_LINE(fd, line_len)
 }
 
 void Pin::SetLogicFunction(Expression *e)
@@ -176,13 +178,6 @@ void Pin::AddSimulation(Simulation *simulation)
 std::vector<Simulation*>& Pin::GetSimulations()
 {
     return simulations_;
-}
-
-void Pin::PrintLogicFunction()
-{
-    printf("%s: ", name_);
-    func_->Print(stdout);
-    printf("\n");
 }
 
 void Pin::WriteLiberty(FILE *f, size_t tab)

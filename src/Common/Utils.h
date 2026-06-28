@@ -35,7 +35,11 @@
 
 namespace open_char {
 
-#define DEBUG_MSG_ENABLED
+extern bool debug_enable;
+extern bool debug_expr_enable;
+extern bool debug_logtbl_enable;
+extern bool debug_stphld_enable;
+extern bool debug_mpw_enable;
 
 inline const char*              format_arg(const std::string& s)         { return s.c_str(); }
 inline const char*              format_arg(const char* s)                { return s; }
@@ -126,11 +130,11 @@ void info(const std::string &fmt, const Args&... args)
 template<typename... Args>
 void debug(const std::string &fmt, const Args&... args)
 {
-#ifdef DEBUG_MSG_ENABLED
-    std::printf("Debug: ");
-    std::printf(fmt.c_str(), format_arg(args)...);
-    std::printf("\n");
-#endif
+    if (debug_enable) {
+        std::printf("Debug: ");
+        std::printf(fmt.c_str(), format_arg(args)...);
+        std::printf("\n");
+    }
 }
 
 #define OPENCHAR_ENUM_ELEM(x) x,
@@ -143,8 +147,6 @@ void debug(const std::string &fmt, const Args&... args)
         std::unordered_map<name, std::string> map = {elements(OPENCHAR_ENUM_MAP)};                  \
         return map[v];                                                                              \
     }                                                                                               \
-
-#define PRINT_LINE(len) printf("%s\n", std::string(len, '-'));
 
 #define TAB_FPRINTF(size, f, ...) do {                          \
                 fprintf(f, "%s", std::string(2 * size, ' '));   \

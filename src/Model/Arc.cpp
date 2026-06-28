@@ -153,49 +153,6 @@ std::vector<std::vector<std::vector<Simulation*>>>& Arc::GetSimulations()
     return simulations_;
 }
 
-void Arc::Print()
-{
-    size_t width = std::max(rise_delays_[0].size() * 10 + 1,
-                            fall_delays_[0].size() * 10 + 1);
-
-    PRINT_LINE(width)
-
-    printf("Inputs A: %08b\n", in_a_);
-    printf("Inputs B: %08b\n", in_b_);
-    printf("Output A: %8b\n",  out_a_);
-    printf("Output B: %8b\n",  out_b_);
-
-    PRINT_LINE(width)
-
-    printf("Output Rise delays:\n");
-
-    PRINT_LINE(width)
-
-    for (const auto &row : rise_delays_) {
-        printf("|");
-        for (const auto & cell: row) {
-            printf(" %7.5f |", cell);
-        }
-        printf("\n");
-    }
-
-    PRINT_LINE(width)
-
-    printf("Output Fall delays:\n");
-
-    PRINT_LINE(width)
-
-    for (const auto &row : fall_delays_) {
-        printf("|");
-        for (const auto & cell: row) {
-            printf(" %7.5f |", cell);
-        }
-        printf("\n");
-    }
-
-    PRINT_LINE(width)
-}
-
 Pin* Arc::GetRelatedPin()
 {
     switch (kind_) {

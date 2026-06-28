@@ -53,11 +53,10 @@ class Pin {
         std::vector<Arc>& GetArcs();
 
         const std::vector<std::pair<int64_t, int>>& GetLogicTable();
-        void PrintLogicTable();
+        void PrintLogicTable(FILE *fd);
 
         void SetLogicFunction(Expression *e);
         Expression *GetLogicFunction();
-        void PrintLogicFunction();
 
         void SetPolarity(int polarity);
         int  GetPolarity();

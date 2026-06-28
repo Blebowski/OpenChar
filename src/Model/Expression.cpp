@@ -23,9 +23,6 @@
 #include "Utils.h"
 #include "Pin.h"
 
-//#define EXPR_DEBUG
-
-
 namespace open_char {
 
 Expression::Expression(ExprKind kind, Expression *lhs, Expression *rhs) :
@@ -81,6 +78,7 @@ Expression::~Expression()
 void Expression::Copy(Expression *e)
 {
     assert(e != nullptr);
+
     lhs_ = e->lhs_;
     rhs_ = e->rhs_;
     const_val_ = e->const_val_;
@@ -103,11 +101,11 @@ void Expression::DeMorgan()
         rhs_->DeMorgan();
     }
 
-#ifdef EXPR_DEBUG
-    printf("DeMorgan:\n");
-    Print(stdout);
-    printf("\n");
-#endif
+    if (debug_expr_enable) {
+        debug("DeMorgan:");
+        Print(stdout);
+        printf("\n");
+    }
 
     if (kind_ != ExprKind::NOT) {
         return;
@@ -179,11 +177,11 @@ void Expression::ConstFold()
         rhs_->ConstFold();
     }
 
-#ifdef EXPR_DEBUG
-    printf("Const Fold:\n");
-    Print(stdout);
-    printf("\n");
-#endif
+    if (debug_expr_enable) {
+        debug("Const Fold:");
+        Print(stdout);
+        printf("\n");
+    }
 
     switch (kind_) {
     case ExprKind::AND:
@@ -193,17 +191,21 @@ void Expression::ConstFold()
             Expression *old = rhs_;
             Copy(rhs_);
             old->Invalidate();
-#ifdef EXPR_DEBUG
-            printf("FOLDED AND\n");
-#endif
+
+            if (debug_expr_enable) {
+                debug("FOLDED AND");
+            }
+
             delete old;
         } else if (rhs_->kind_ == ExprKind::CONSTANT && rhs_->const_val_ == 1) {
             Expression *old = lhs_;
             Copy(lhs_);
             old->Invalidate();
-#ifdef EXPR_DEBUG
-            printf("FOLDED AND\n");
-#endif
+
+            if (debug_expr_enable) {
+                debug("FOLDED AND");
+            }
+
             delete old;
         }
         break;
@@ -215,17 +217,22 @@ void Expression::ConstFold()
             Expression *old = rhs_;
             Copy(rhs_);
             old->Invalidate();
-#ifdef EXPR_DEBUG
-            printf("FOLDED OR/XOR\n");
-#endif
+
+            if (debug_expr_enable) {
+                debug("FOLDED OR/XOR");
+            }
+
             delete old;
+
         } else if (rhs_->kind_ == ExprKind::CONSTANT && rhs_->const_val_ == 0) {
             Expression *old = lhs_;
             Copy(lhs_);
             old->Invalidate();
-#ifdef EXPR_DEBUG
-            printf("FOLDED OR/XOR\n");
-#endif
+
+            if (debug_expr_enable) {
+                debug("FOLDED OR/XOR");
+            }
+
             delete old;
         }
         break;
@@ -243,11 +250,11 @@ void Expression::Tautology()
         rhs_->Tautology();
     }
 
-#ifdef EXPR_DEBUG
-    printf("Tautology:\n");
-    Print(stdout);
-    printf("\n");
-#endif
+    if (debug_expr_enable) {
+        debug("Tautology:");
+        Print(stdout);
+        printf("\n");
+    }
 
     if (kind_ != ExprKind::OR) {
         return;
@@ -263,9 +270,10 @@ void Expression::Tautology()
         rhs_ = nullptr;
         kind_ = ExprKind::CONSTANT;
         const_val_ = 1;
-#ifdef EXPR_DEBUG
-        printf("Reduced to 1\n");
-#endif
+
+        if (debug_expr_enable) {
+            debug("Reduced to 1");
+        }
     }
 }
 
@@ -278,11 +286,11 @@ void Expression::Contradiction()
         rhs_->Contradiction();
     }
 
-#ifdef EXPR_DEBUG
-    printf("Contradiction:\n");
-    Print(stdout);
-    printf("\n");
-#endif
+    if (debug_expr_enable) {
+        debug("Contradiction:");
+        Print(stdout);
+        printf("\n");
+    }
 
     if (kind_ != ExprKind::AND) {
         return;
@@ -298,9 +306,10 @@ void Expression::Contradiction()
         rhs_ = nullptr;
         kind_ = ExprKind::CONSTANT;
         const_val_ = 0;
-#ifdef EXPR_DEBUG
-        printf("Reduced to 0\n");
-#endif
+
+        if (debug_expr_enable) {
+            printf("Reduced to 0");
+        }
     }
 }
 
@@ -313,11 +322,11 @@ void Expression::Associate()
         rhs_->Associate();
     }
 
-#ifdef EXPR_DEBUG
-    printf("Associate:\n");
-    Print(stdout);
-    printf("\n");
-#endif
+    if (debug_expr_enable) {
+        debug("Associate:");
+        Print(stdout);
+        printf("\n");
+    }
 
     if (kind_ != ExprKind::OR) {
         return;
@@ -371,11 +380,13 @@ void Expression::Associate()
             lhs_ = r.a1;
             kind_ = ExprKind::AND;
             rhs_ = new Expression(ExprKind::OR, r.a2, r.b2);
-#ifdef EXPR_DEBUG
-            printf("Asociated:\n");
-            Print(stdout);
-            printf("\n");
-#endif
+
+            if (debug_expr_enable) {
+                debug("Asociated:\n");
+                Print(stdout);
+                printf("\n");
+            }
+
             return;
         }
     }

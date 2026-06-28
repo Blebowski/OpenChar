@@ -21,6 +21,7 @@
 #define OPEN_CHAR
 
 #include "Utils.h"
+#include <functional>
 
 namespace open_char {
 
@@ -198,12 +199,12 @@ namespace open_char {
     #undef TCL_VAR_KIND
 
     struct TclVar {
-        TclVarKind  kind;
-        std::string s_val;
-        int         i_val;
-        double      d_val;
+        TclVarKind                                      kind;
+        std::string                                     s_val;
+        int                                             i_val;
+        double                                          d_val;
+        std::function<bool(std::string, std::string)>   validate;
     } ;
-
 
     typedef double Celsius;
     typedef double Volt;

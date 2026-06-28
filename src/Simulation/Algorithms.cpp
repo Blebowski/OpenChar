@@ -48,7 +48,8 @@ int Algorithms::GetBit(int64_t v, size_t index)
     return (v >> index) & 0x1;
 }
 
-Simulation *Algorithms::NewSimulation(SimClass sim_class, std::string name, SimKind kind, Cell *cell)
+Simulation *Algorithms::NewSimulation(SimClass sim_class, std::string name, SimKind kind,
+                                      Cell *cell)
 {
     Simulation *sim = new Simulation(ctx_, sim_class, name, cell, kind);
 
@@ -356,6 +357,13 @@ bool Algorithms::MeasureComLogicTables(Cell &cell)
         for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
             o_pin.AddLogicTableEntry(i_pin_vect, ToLogic(w.GetVoltage(o_pin.name_)[0],
                                      cell.GetSupply()->GetVddVoltage()));
+        }
+    }
+
+    if (debug_logtbl_enable) {
+        for (auto & o_pin : cell.GetPins(PinDir::OUT)) {
+            debug("%s - Logic Table:", o_pin.name_);
+            o_pin.PrintLogicTable(stdout);
         }
     }
 
@@ -1545,10 +1553,12 @@ void Algorithms::PrepareOneFFSetupOrHoldSim(Cell &cell, ArcKind a_kind, size_t a
     sim->PutDoubleMetaData(ck_d_skew);
     sim->PutDoubleMetaData(step);
 
-    info("PrepareOneFFSetupOrHoldSim:");
-    info("  ck_q_base:  %f ns", ck_q_base);
-    info("  ck_d_skew:  %f ns", ck_d_skew);
-    info("  step:       %f ns", step);
+    if (debug_stphld_enable) {
+        debug("PrepareOneFFSetupOrHoldSim:");
+        debug("  ck_q_base:  %f ns", ck_q_base);
+        debug("  ck_d_skew:  %f ns", ck_d_skew);
+        debug("  step:       %f ns", step);
+    }
 
     d_pin.GetArcs()[arc_index].AddSimulation(d_tran_index, ck_tran_index, sim);
     ctx_->GetSimulationPool().EnqueueSimulation(sim);
@@ -1607,11 +1617,6 @@ std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind
             NanoSecond ck_d_skew = sim->GetDoubleMetaDataAt(1);
             NanoSecond step = sim->GetDoubleMetaDataAt(2);
 
-            info("MeasureFFSetupOrHold:");
-            info("  ck_q_base:  %f ns", ck_q_base);
-            info("  ck_d_skew:  %f ns", ck_d_skew);
-            info("  step:       %f ns", step);
-
             EdgeKind ck_pol = cell.GetSequential().GetClockPolarity();
             Variables &vars = ctx_->GetVariables();
 
@@ -1627,11 +1632,18 @@ std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind
             Waves w = sim->ReadWaves();
             int q_end = ToLogic(w.GetVoltage(q_pin.name_).back(), vdd);
 
+            if (debug_stphld_enable) {
+                debug("MeasureFFSetupOrHold:");
+                debug("  ck_q_base:  %f ns", ck_q_base);
+                debug("  ck_d_skew:  %f ns", ck_d_skew);
+                debug("  step:       %f ns", step);
+                debug("  Q:          %d", q_end);
+            }
+
             // First simulation just measures the CK -> Q base delay.
             // Proceed further with the same step and skew
             bool is_first = std::isnan(ck_q_base);
             if (is_first) {
-                info("  First\n");
                 assert (q_end == 1 && "D not captured by clock -> First Setup/Hold Simulation failed");
 
                 // TODO: Pass expected transition times via Simulation object
@@ -1646,26 +1658,26 @@ std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind
 
             // Q == 1 -> CK edge took the D -> Mesure CK -> Q delay
             } else if (q_end == 1) {
-                info("  Q == 1");
-
                 NanoSecond ck_edge = w.FindTransitionTime(c_pin.name_, ck_th, 12.5, 17.5);
                 NanoSecond q_edge = w.FindTransitionTime(q_pin.name_, q_th, 12.5, 17.5);
                 NanoSecond ck_q_delay = q_edge - ck_edge;
 
-                info("  q_edge:     %f", q_edge);
-                info("  ck_edge:    %f", ck_edge);
-                info("  ck_q_delay: %f", ck_q_delay);
-
                 // TODO: This branch will repeat mutliple times -> Not needed!
                 // TODO: Make the percentage range configurable by user!
 
-                info("  Delay increment: %f %", (ck_q_delay - ck_q_base) / (ck_q_base) * 100.0);
+                if (debug_stphld_enable) {
+                    debug("  q_edge:     %f", q_edge);
+                    debug("  ck_edge:    %f", ck_edge);
+                    debug("  ck_q_delay: %f", ck_q_delay);
+                    debug("  Delay increment: %f %",
+                          (ck_q_delay - ck_q_base) / (ck_q_base) * 100.0);
+                }
 
                 // Upon 2.5 - 5 % delay increment, measured skew becomes the S/H time
                 if (ck_q_delay > ck_q_base * 1.025) {
 
                     if (ck_q_delay < ck_q_base * 1.05) {
-                        info("  DONE!\n");
+
                         if (ck_pol == EdgeKind::RISING) {
                             arc.SetRiseConstraint(d_tran_index, ck_tran_index, ck_d_skew);
                         } else {
@@ -1674,7 +1686,6 @@ std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind
 
                     // Q=1, but the delay is above 5 % -> Increment ck_d_skew
                     } else {
-                        info("  Delay more than 5 % increment...\n");
                         ck_d_skew += step;
                         step *= 2.0/3.0;
                         all_finished = false;
@@ -1687,7 +1698,6 @@ std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind
 
                 // Q=1, but the CK->Q delay is less than 2.5 % increment -> Decrement the skew
                 } else {
-                    info("  Delay less than 2.5 % increment...\n");
                     ck_d_skew -= step;
                     step *= 2.0/3.0;
                     all_finished = false;
@@ -1700,7 +1710,6 @@ std::pair<bool,bool> Algorithms::MeasureFFSetupOrHold(Cell &cell, ArcKind a_kind
 
             // Q == 0 -> Missed by CK edge -> Increment the skew
             } else if (q_end == 0) {
-                info("  Q == 0\n");
                 ck_d_skew += step;
                 step *= 2.0/3.0;
                 all_finished = false;
@@ -1858,14 +1867,16 @@ std::pair<bool,bool> Algorithms::MeasureFFClockMPW(Cell &cell)
             int q_end = ToLogic(w.GetVoltage(q_pin.name_).back(), vdd);
             assert(q_end == 1 || q_end == 0);
 
-            info("MeasureFFClockMPW:");
-            info("      high            %d", high);
-            info("      ck_q_base:      %f", ck_q_base);
-            info("      pulse_start:    %f", pulse_start);
-            info("      pulse_tran:     %f", pulse_tran);
-            info("      pulse_width:    %f", pulse_width);
-            info("      step:           %f", step);
-            info("      Q:              %d", q_end);
+            if (debug_mpw_enable) {
+                debug("MeasureFFClockMPW:");
+                debug("  high            %d", high);
+                debug("  ck_q_base:      %f", ck_q_base);
+                debug("  pulse_start:    %f", pulse_start);
+                debug("  pulse_tran:     %f", pulse_tran);
+                debug("  pulse_width:    %f", pulse_width);
+                debug("  step:           %f", step);
+                debug("  Q:              %d", q_end);
+            }
 
             bool first = std::isnan(ck_q_base);
 
@@ -1884,8 +1895,6 @@ std::pair<bool,bool> Algorithms::MeasureFFClockMPW(Cell &cell)
                                         high);
                 all_finished = false;
 
-                info("      first measurement");
-
             // D propagated to Q -> Measure CK -> Q
             } else if (q_end == 1) {
 
@@ -1898,10 +1907,12 @@ std::pair<bool,bool> Algorithms::MeasureFFClockMPW(Cell &cell)
                 double rel_delay_inc = (measured_ck_q - ck_q_base) / (ck_q_base);
                 assert(rel_delay_inc >= 0.0); // TODO: Precision issues ?
 
-                info("      ck_edge:        %f", ck_edge);
-                info("      q_edge:         %f", q_edge);
-                info("      measured_ck_q:  %f", measured_ck_q);
-                info("      delay_inc:      %f", rel_delay_inc);
+                if (debug_mpw_enable) {
+                    debug("  ck_edge:        %f", ck_edge);
+                    debug("  q_edge:         %f", q_edge);
+                    debug("  measured_ck_q:  %f", measured_ck_q);
+                    debug("  delay_inc:      %f", rel_delay_inc);
+                }
 
                 // Finish MPW search when:
                 //   1. CK -> Q has increased by 2.5 to 5 %
@@ -1909,8 +1920,6 @@ std::pair<bool,bool> Algorithms::MeasureFFClockMPW(Cell &cell)
                 //      not get latched, but CK -> Q does not increment (sharp loss of latch without
                 //      continous delay increment).
                 if (step < pulse_width * 0.01 || (rel_delay_inc > 0.025 && rel_delay_inc < 0.05)) {
-                    info("DONE!");
-
                     if (high) {
                         c_pin.GetArcs()[arc_index].SetRiseConstraint(0, 0, pulse_width);
                     } else {

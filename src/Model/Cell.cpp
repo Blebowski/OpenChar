@@ -122,6 +122,7 @@ Sequential& Cell::GetSequential()
 
 Template* Cell::GetDelayTemplate()
 {
+    assert(d_template_ != nullptr);
     return d_template_;
 }
 
@@ -132,6 +133,7 @@ void Cell::SetDelayTemplate(Template *d_template)
 
 Template* Cell::GetConstraintTemplate()
 {
+    assert(c_template_ != nullptr);
     return c_template_;
 }
 

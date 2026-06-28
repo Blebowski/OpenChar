@@ -24,17 +24,66 @@
 #include "Utils.h"
 #include "Variables.h"
 
-
 namespace open_char {
+
+static bool is_within_0_1(std::string name, std::string val)
+{
+    double d_val = std::stof(val);
+    if (d_val < 0 || d_val > 1) {
+        error("invalid value '%f' for variable %s. "
+              "The value shall be between 0 and 1 inclusive.",
+              val, name);
+        return false;
+    }
+
+    return true;
+}
+
+static bool is_positive_float(std::string name, std::string val)
+{
+    double d_val = std::stof(val);
+    if (d_val < 0) {
+        error("invalid value '%f' for variable %s. "
+              "The value shall be positive float number",
+              val, name);
+        return false;
+    }
+
+    return true;
+}
+
+static bool is_positive_int(std::string name, std::string val)
+{
+    int i_val = std::stoi(val);
+    if (i_val < 0) {
+        error("invalid value '%d' for variable %s. "
+              "The value shall be positive integer",
+              val, name);
+        return false;
+    }
+
+    return true;
+}
+
+#define SET_GLOBAL_VAR(var_name)                                \
+    [] ([[maybe_unused]] std::string name, std::string val) {   \
+        var_name = static_cast<bool>(std::stoi(val));           \
+        return true;                                            \
+    }
 
 Variables::Variables() :
     variables_ ({
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
+        // Application variables - to be exposed to the user
+        ///////////////////////////////////////////////////////////////////////////////////////////
         {"delay_in_rise",
             {
                 .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
-                .d_val = 0.5
+                .d_val = 0.5,
+                .validate = &is_within_0_1
             }
         },
         {"delay_in_fall",
@@ -42,7 +91,8 @@ Variables::Variables() :
                 .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
-                .d_val = 0.5
+                .d_val = 0.5,
+                .validate = &is_within_0_1
             }
         },
         {"delay_out_rise",
@@ -50,7 +100,8 @@ Variables::Variables() :
                 .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
-                .d_val = 0.5
+                .d_val = 0.5,
+                .validate = &is_within_0_1
             }
         },
         {"delay_out_fall",
@@ -58,7 +109,8 @@ Variables::Variables() :
                 .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
-                .d_val = 0.5
+                .d_val = 0.5,
+                .validate = &is_within_0_1
             }
         },
         {"max_threads",
@@ -66,7 +118,8 @@ Variables::Variables() :
                 .kind = TclVarKind::INT,
                 .s_val = "",
                 .i_val = static_cast<int>(std::thread::hardware_concurrency()),
-                .d_val = 0
+                .d_val = 0,
+                .validate = &is_positive_int
             }
         },
         {"run_directory",
@@ -74,15 +127,8 @@ Variables::Variables() :
                 .kind = TclVarKind::STRING,
                 .s_val = std::filesystem::current_path(),
                 .i_val = 0,
-                .d_val = 0
-            }
-        },
-        {"slew_lower_fall",
-            {
-                .kind = TclVarKind::DOUBLE,
-                .s_val = "",
-                .i_val = 0,
-                .d_val = 0.2
+                .d_val = 0,
+                .validate = nullptr
             }
         },
         {"sim_timestep",
@@ -90,7 +136,17 @@ Variables::Variables() :
                 .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
-                .d_val = 0.001
+                .d_val = 0.001,
+                .validate = &is_positive_float
+            }
+        },
+        {"slew_lower_fall",
+            {
+                .kind = TclVarKind::DOUBLE,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0.2,
+                .validate = &is_within_0_1
             }
         },
         {"slew_upper_fall",
@@ -98,7 +154,8 @@ Variables::Variables() :
                 .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
-                .d_val = 0.8
+                .d_val = 0.8,
+                .validate = &is_within_0_1
             }
         },
         {"slew_lower_rise",
@@ -106,7 +163,8 @@ Variables::Variables() :
                 .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
-                .d_val = 0.2
+                .d_val = 0.2,
+                .validate = &is_within_0_1
             }
         },
         {"slew_upper_rise",
@@ -114,44 +172,102 @@ Variables::Variables() :
                 .kind = TclVarKind::DOUBLE,
                 .s_val = "",
                 .i_val = 0,
-                .d_val = 0.8
+                .d_val = 0.8,
+                .validate = &is_within_0_1
             }
         },
+
+        ///////////////////////////////////////////////////////////////////////////////////////////
+        // Debug variables - only for internal development usage
+        ///////////////////////////////////////////////////////////////////////////////////////////
+        // TODO: Wrap the debug variables to be present only in debug build!
+        {"debug_enable",
+            {
+                .kind = TclVarKind::INT,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0,
+                .validate = [] ([[maybe_unused]] std::string name, std::string val) {
+                    debug_enable = static_cast<bool>(std::stoi(val));
+                    return true;
+                },
+            }
+        },
+        {"debug_expr_enable",
+            {
+                .kind = TclVarKind::INT,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0,
+                .validate = SET_GLOBAL_VAR(debug_expr_enable)
+            }
+        },
+        {"debug_logtbl_enable",
+            {
+                .kind = TclVarKind::INT,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0,
+                .validate = SET_GLOBAL_VAR(debug_logtbl_enable)
+            }
+        },
+        {"debug_stphld_enable",
+            {
+                .kind = TclVarKind::INT,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0,
+                .validate = SET_GLOBAL_VAR(debug_stphld_enable)
+            }
+        },
+        {"debug_mpw_enable",
+            {
+                .kind = TclVarKind::INT,
+                .s_val = "",
+                .i_val = 0,
+                .d_val = 0,
+                .validate = SET_GLOBAL_VAR(debug_mpw_enable)
+            }
+        }
     })
 {}
 
-
 std::string Variables::SetVariable(std::string name, std::string value)
 {
+    assert (variables_.contains(name));
     TclVar& v = variables_[name];
 
-    // TODO: Put here per variable hook that validates the data to be set (e.g. range)
-
-    if (v.kind == TclVarKind::DOUBLE) {
-        std::string rv = value;
-        try {
-            v.d_val = stof(value);
-        } catch (...) {
-            error("Invalid value '%s' for variable %s. Value shall be float. Setting %s to 0.",
-                   value, name, name);
-            rv = 0.0;
-            v.d_val = 0;
+    double d_val = 0.0;
+    int i_val = 0;
+    try {
+        if (v.kind == TclVarKind::DOUBLE) {
+            d_val = std::stof(value);
+        } else if (v.kind == TclVarKind::INT) {
+            i_val = std::stoi(value);
         }
-        return rv;
-    } else if (v.kind == TclVarKind::INT) {
-        std::string rv = value;
-        try {
-            v.i_val = stoi(value);
-        } catch (...) {
-            error("Invalid value '%s' for variable %s. Value shall be integer. Setting %s to 0.",
-                  value, name, name);
-            rv = 0.0;
-            v.i_val = 0;
-        }
-        return rv;
+    } catch (...) {
+        error("Invalid value '%s' for variable %s whose type is %s.",
+            value, name, toString(v.kind));
+        return v.s_val;
     }
 
-    v.s_val = value;
+    if (v.validate) {
+        bool is_ok = v.validate(name, value);
+        if (!is_ok) {
+            return v.s_val;
+        }
+    }
+
+    if (v.kind == TclVarKind::DOUBLE) {
+        v.s_val = value;
+        v.d_val = d_val;
+    } else if (v.kind == TclVarKind::INT) {
+        v.s_val = value;
+        v.i_val = i_val;
+    } else {
+        v.s_val = value;
+    }
+
     return value;
 }
 

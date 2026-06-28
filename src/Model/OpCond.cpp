@@ -64,6 +64,7 @@ void OpCond::WriteLiberty(FILE *f, size_t tab)
     TAB_FPRINTF(tab, f, "operating conditions (%s) {\n", name_);
 
     tab++;
+    // TODO: Make process configurable here
     TAB_FPRINTF(tab, f, "process : 1.00 ;\n");
     TAB_FPRINTF(tab, f, "voltage : %f ;\n", supply_->GetVddVoltage());
     TAB_FPRINTF(tab, f, "temperature : %f ;\n", temperature_);

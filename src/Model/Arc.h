@@ -32,7 +32,6 @@ class Arc {
         Arc(Pin *pin, Template *templ, ArcKind kind,
             int64_t in_a, int64_t in_b, int out_a, int out_b);
 
-        void Print();
         void WriteLiberty(FILE *f, size_t tab);
 
         Pin* GetRelatedPin();
