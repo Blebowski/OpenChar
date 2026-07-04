@@ -1,0 +1,11 @@
+Error: You need to specify -type for the template.
+Error: You need to specify -index_1 for the template.
+Error: You need to specify -index_2 for the template.
+Error: Allowed values for -type are: 'delay', 'power' or 'constraint'.
+Error: abc is not float value in definition of -index_1.
+Error: -index_1 value is invalid.
+Error: xyz is not float value in definition of -index_2.
+Error: -index_2 value is invalid.
+Error: Value 2.000000 is not larger than previous value 3.000000. Index values shall be monotonically increasing.
+Error: -index_1 value is invalid.
+Error: Template T7 already exists.

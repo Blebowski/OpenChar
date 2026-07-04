@@ -64,44 +64,44 @@ CREATE_TCL_COMMAND(
     ARG({
 
         if (!opts_["-input"].isSet()) {
-            error("Cell must have -input pin(s) set");
+            error("Cell must have -input pin(s) set.");
             return TCL_ERROR;
         }
 
         if (!opts_["-output"].isSet()) {
-            error("Cell must have -output pin(s) set");
+            error("Cell must have -output pin(s) set.");
             return TCL_ERROR;
         }
 
         if (!opts_["-delay"].isSet()) {
-            error("Cell must have -delay template set");
+            error("Cell must have -delay template set.");
             return TCL_ERROR;
         }
 
         if (opts_["-clock"].isSet() && !opts_["-constraint"].isSet()) {
-            error("Cells that contain -clock pins must have -constraint template set");
+            error("Cells that contain -clock pins must have -constraint template set.");
             return TCL_ERROR;
         }
 
         const std::string d_templ_name = Tcl_GetString(opts_["-delay"].objv_);
         if (!ctx_->GetLibrary().HasTemplate(d_templ_name)) {
-            error("Template '%s' does not exist", d_templ_name);
+            error("Template '%s' does not exist.", d_templ_name);
             return TCL_ERROR;
         }
 
         Template& t = ctx_->GetLibrary().GetTemplate(d_templ_name);
         if (t.GetKind() != TemplKind::DELAY) {
-            error("Template '%s' is not a delay template", d_templ_name);
+            error("Template '%s' is not a delay template.", d_templ_name);
             return TCL_ERROR;
         }
 
         if (opts_["-async"].isSet() && !opts_["-clock"].isSet()) {
-            error("Can't specify '-async' pins without clock pin");
+            error("Can't specify '-async' pins without clock pin.");
             return TCL_ERROR;
         }
 
         if (opts_["-constraint"].isSet() && !opts_["-clock"].isSet()) {
-            error("Can't specify '-constraint' pins without clock pin");
+            error("Can't specify '-constraint' pins without clock pin.");
             return TCL_ERROR;
         }
 
@@ -110,14 +110,14 @@ CREATE_TCL_COMMAND(
             c_templ_name = Tcl_GetString(opts_["-constraint"].objv_);
 
             if (!ctx_->GetLibrary().HasTemplate(c_templ_name)) {
-                error("Template '%s' does not exist", c_templ_name);
+                error("Template '%s' does not exist.", c_templ_name);
                 return TCL_ERROR;
             }
 
             Template& t = ctx_->GetLibrary().GetTemplate(c_templ_name);
 
             if (t.GetKind() != TemplKind::CONSTRAINT) {
-                error("Template '%s' is not a constraint template", c_templ_name);
+                error("Template '%s' is not a constraint template.", c_templ_name);
                 return TCL_ERROR;
             }
         }
@@ -128,11 +128,11 @@ CREATE_TCL_COMMAND(
             std::string val = std::string(Tcl_GetString(opts_["-area"].objv_));
             area = strtof(val.c_str(), &end);
             if (*end != '\0') {
-                error("%s is not float value in definition of -area", val);
+                error("%s is not float value in definition of -area.", val);
                 return TCL_ERROR;
             }
             if (area < 0.0) {
-                error("-area can't be negative (%f)", area);
+                error("-area can't be negative (%f).", area);
                 return TCL_ERROR;
             }
         }
@@ -146,7 +146,7 @@ CREATE_TCL_COMMAND(
 
         auto [cell, was_added] = ctx_->GetLibrary().AddCell(cell_name);
         if (!was_added) {
-            error("Cell %s is already defined", cell_name);
+            error("Cell %s is already defined.", cell_name);
             return TCL_ERROR;
         }
 
@@ -226,36 +226,64 @@ CREATE_TCL_COMMAND(
     ARG({
 
         if (!opts_["-type"].isSet()) {
-            error("You need to specify -type for the template.\n");
+            error("You need to specify -type for the template.");
             return TCL_ERROR;
         }
 
         if (!opts_["-index_1"].isSet()) {
-            error("You need to specify -index_1 for the template.\n");
+            error("You need to specify -index_1 for the template.");
             return TCL_ERROR;
         }
 
         if (!opts_["-index_2"].isSet()) {
-            error("You need to specify -index_2 for the template.\n");
+            error("You need to specify -index_2 for the template.");
             return TCL_ERROR;
         }
 
         if (!opts_["template_name"].isSet()) {
-            error("You need to specify template_name for the template.\n");
+            error("You need to specify template_name for the template.");
             return TCL_ERROR;
         }
 
         std::string type = Tcl_GetString(opts_["-type"].objv_);
         if (type != "delay" && type != "power" && type != "constraint") {
-            error("Allowed values for -type are: 'delay', 'power' or 'constraint'.\n");
+            error("Allowed values for -type are: 'delay', 'power' or 'constraint'.");
             return TCL_ERROR;
+        }
+
+        std::string indices[2] = {"-index_1", "-index_2"};
+        for (auto & index : indices) {
+            const std::string s = Tcl_GetString(opts_[index].objv_);
+            double min = -DBL_MAX;
+
+            int rv = ForEachInGroup(s, [&](const std::string &val){
+                char *end;
+                double v = strtof(val.c_str(), &end);
+                if (*end != '\0') {
+                    error("%s is not float value in definition of %s.", val, index);
+                    return TCL_ERROR;
+                }
+                if (v <= min) {
+                    error("Value %f is not larger than previous value %f. "
+                            "Index values shall be monotonically increasing.",
+                            v, min);
+                    return TCL_ERROR;
+                }
+                min = v;
+                return TCL_OK;
+            });
+
+            if (rv != TCL_OK) {
+                error("%s value is invalid.", index);
+                return TCL_ERROR;
+            }
         }
 
         std::pair<Template&, bool> template_p =
             ctx_->GetLibrary().AddTemplate(Tcl_GetString(opts_["template_name"].objv_));
 
         if (!template_p.second) {
-            error("Template %s already exists.\n", template_p.first.GetName());
+            error("Template %s already exists.", template_p.first.GetName());
             return TCL_ERROR;
         }
 
@@ -267,61 +295,28 @@ CREATE_TCL_COMMAND(
             template_p.first.SetKind(TemplKind::CONSTRAINT);
         }
 
-        if (opts_["-index_1"].isSet()) {
-            const std::string s = Tcl_GetString(opts_["-index_1"].objv_);
-            double min = -DBL_MAX;
+        // index_1 argument Checked for validity earlier
+        std::string s = Tcl_GetString(opts_["-index_1"].objv_);
+        double min = -DBL_MAX;
+        (void) ForEachInGroup(s, [&](const std::string &val){
+            char *end;
+            double v = strtof(val.c_str(), &end);
+            min = v;
+            template_p.first.AddIndex1(atof(val.c_str()));
+            return TCL_OK;
+        });
 
-            int rv = ForEachInGroup(s, [&](const std::string &val){
-                char *end;
-                double v = strtof(val.c_str(), &end);
-                if (*end != '\0') {
-                    error("%s is not float value in definition of -index_1\n", val);
-                    return TCL_ERROR;
-                }
-                if (v <= min) {
-                    error("Value %f is not larger than previous value %f. "
-                          "Index values shall be monotonically increasing.\n",
-                           v, min);
-                    return TCL_ERROR;
-                }
-                min = v;
-                template_p.first.AddIndex1(atof(val.c_str()));
-                return TCL_OK;
-            });
+        // index_2 argument Checked for validity earlier
+        s = Tcl_GetString(opts_["-index_2"].objv_);
+        min = -DBL_MAX;
 
-            if (rv != TCL_OK) {
-                error("-index_1 value is invalid.\n");
-                return TCL_ERROR;
-            }
-        }
-
-        if (opts_["-index_2"].isSet()) {
-            const std::string s = Tcl_GetString(opts_["-index_2"].objv_);
-            double min = -DBL_MAX;
-
-            int rv = ForEachInGroup(s, [&](const std::string &val){
-                char *end;
-                double v = strtof(val.c_str(), &end);
-                if (*end != '\0') {
-                    error("%s is not float value in definition of -index_2\n", val);
-                    return TCL_ERROR;
-                }
-                if (v <= min) {
-                    error("Value %f is not larger than previous value %f. "
-                          "Index values shall be monotonically increasing.\n",
-                          v, min);
-                    return TCL_ERROR;
-                }
-                min = v;
-                template_p.first.AddIndex2(atof(val.c_str()));
-                return TCL_OK;
-            });
-
-            if (rv != TCL_OK) {
-                error("-index_2 value is invalid.\n");
-                return TCL_ERROR;
-            }
-        }
+        (void) ForEachInGroup(s, [&](const std::string &val){
+            char *end;
+            double v = strtof(val.c_str(), &end);
+            min = v;
+            template_p.first.AddIndex2(atof(val.c_str()));
+            return TCL_OK;
+        });
 
         return TCL_OK;
     })

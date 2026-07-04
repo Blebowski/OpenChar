@@ -1,1 +1,2 @@
 OC_TCL_TEST(define_cell)
+OC_TCL_TEST(define_template)

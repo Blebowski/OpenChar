@@ -1,13 +1,13 @@
-Error: Cell must have -input pin(s) set
-Error: Cell must have -output pin(s) set
-Error: Cell must have -delay template set
-Error: Cell must have -delay template set
-Error: Cells that contain -clock pins must have -constraint template set
-Error: Template 'NON_EXISTING_DELAY' does not exist
-Error: Template 'DEL_TEMPL' is not a constraint template
-Error: Can't specify '-async' pins without clock pin
-Error: Can't specify '-constraint' pins without clock pin
-Error: Template 'NON_EXISTING_CONSTR' does not exist
-Error: Cell C4 is already defined
-Error: -area can't be negative (-10.000000)
-Error: NON_INTEGER_AREA is not float value in definition of -area
+Error: Cell must have -input pin(s) set.
+Error: Cell must have -output pin(s) set.
+Error: Cell must have -delay template set.
+Error: Cell must have -delay template set.
+Error: Cells that contain -clock pins must have -constraint template set.
+Error: Template 'NON_EXISTING_DELAY' does not exist.
+Error: Template 'DEL_TEMPL' is not a constraint template.
+Error: Can't specify '-async' pins without clock pin.
+Error: Can't specify '-constraint' pins without clock pin.
+Error: Template 'NON_EXISTING_CONSTR' does not exist.
+Error: Cell C4 is already defined.
+Error: -area can't be negative (-10.000000).
+Error: NON_INTEGER_AREA is not float value in definition of -area.
