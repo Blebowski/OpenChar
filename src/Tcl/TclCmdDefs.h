@@ -59,10 +59,8 @@ namespace open_char {
             return parse_rv;                                                                        \
         int rv = cmd->Execute();                                                                    \
         if (cmd->print_ret_code_) {                                                                 \
-            if (rv == TCL_OK)                                                                       \
-                printf("1\n");                                                                      \
-            else                                                                                    \
-                printf("0\n");                                                                      \
+            printf("%c\n", (rv == TCL_OK) ? '1' : '0');                                             \
+            fflush(stdout);                                                                         \
         }                                                                                           \
         return rv;                                                                                  \
     }                                                                                               \
