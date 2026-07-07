@@ -10,4 +10,4 @@ Error: Can't specify '-constraint' pins without clock pin.
 Error: Template 'NON_EXISTING_CONSTR' does not exist.
 Error: Cell C4 is already defined.
 Error: -area can't be negative (-10.000000).
-Error: NON_INTEGER_AREA is not float value in definition of -area.
+Error: 'NON_INTEGER_AREA' does not evaluate to a floating point value.

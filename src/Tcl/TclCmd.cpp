@@ -79,6 +79,42 @@ void TclCmd::Help(void)
     }
 }
 
+int TclCmd::GetDoubleFromExprObj(Tcl_Obj *in, double *val)
+{
+    Tcl_Obj *res;
+    int rv = Tcl_ExprObj(ctx_->GetTclInterp(), in, &res);
+    if (rv != TCL_OK) {
+        error("'%s' does not evaluate to a floating point value.", Tcl_GetString(in));
+        return rv;
+    }
+
+    Tcl_IncrRefCount(res);
+    rv = Tcl_GetDoubleFromObj(ctx_->GetTclInterp(), res, val);
+    if (rv != TCL_OK) {
+        error("'%s' does not evaluate to a floating point value.", Tcl_GetString(res));
+    }
+    Tcl_DecrRefCount(res);
+    return rv;
+}
+
+int TclCmd::GetStringFromExprObj(Tcl_Obj *in, std::string *val)
+{
+    Tcl_Interp *interp = ctx_->GetTclInterp();
+    Tcl_Obj *res;
+
+    // Accept bare-name expressions like pin_a which are not valid TCL expressions!
+    if (Tcl_ExprObj(interp, in, &res) != TCL_OK) {
+        Tcl_ResetResult(interp);
+        *val = Tcl_GetString(in);
+        return TCL_OK;
+    }
+
+    Tcl_IncrRefCount(res);
+    *val = Tcl_GetString(res);
+    Tcl_DecrRefCount(res);
+    return TCL_OK;
+}
+
 int TclCmd::ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv)
 {
     (void) objc;

@@ -27,6 +27,7 @@
 
 #include "Context.h"
 #include "TclCmdOpt.h"
+#include "Utils.h"
 
 namespace open_char {
 
@@ -44,28 +45,26 @@ class TclCmd {
 
         int ParseArgs(Tcl_Interp* interp, int objc, Tcl_Obj* const* objv);
 
+        int GetDoubleFromExprObj(Tcl_Obj *in, double *val);
+        int GetStringFromExprObj(Tcl_Obj *in, std::string *val);
+
         template <typename Func>
-        int ForEachInGroup(std::string val, Func func)
+        int ForEachInList(Tcl_Interp* interp, Tcl_Obj *listObj, Func func)
         {
-            std::size_t start = 0;
-            int rv = TCL_OK;
+            int objc;
+            Tcl_Obj **objv;
 
-            while (true) {
-                size_t pos = val.find(' ', start);
+            if (Tcl_ListObjGetElements(interp, listObj, &objc, &objv) != TCL_OK) {
+                error("'%s' is not a valid TCL list.", Tcl_GetString(listObj));
+                return TCL_ERROR;
+            }
 
-                if (pos == val.npos) {
-                    rv = func(val.substr(start));
-                    break;
-                }
-
-                rv = func(val.substr(start, pos - start));
-
+            for (int i = 0; i < objc; i++) {
+                int rv = func(objv[i]);
                 if (rv != TCL_OK)
                     return rv;
-
-                start = pos + 1;
             }
-            return rv;
+            return TCL_OK;
         }
 
         void Help(void);

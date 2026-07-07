@@ -124,11 +124,7 @@ CREATE_TCL_COMMAND(
 
         double area = 0.0;
         if (opts_["-area"].isSet()) {
-            char *end;
-            std::string val = std::string(Tcl_GetString(opts_["-area"].objv_));
-            area = strtof(val.c_str(), &end);
-            if (*end != '\0') {
-                error("%s is not float value in definition of -area.", val);
+            if (GetDoubleFromExprObj(opts_["-area"].objv_, &area) != TCL_OK) {
                 return TCL_ERROR;
             }
             if (area < 0.0) {
@@ -160,28 +156,25 @@ CREATE_TCL_COMMAND(
         }
 
         if (opts_["-output"].isSet()) {
-            const std::string s = Tcl_GetString(opts_["-output"].objv_);
             // TODO: Handle duplicit pins here!
-            ForEachInGroup(s, [&](const std::string &val){
-                cell.AddPin(val, PinDir::OUT, PinKind::DATA);
+            ForEachInList(ctx_->GetTclInterp(), opts_["-output"].objv_, [&](Tcl_Obj *val){
+                cell.AddPin(Tcl_GetString(val), PinDir::OUT, PinKind::DATA);
                 return TCL_OK;
             });
         }
 
         if (opts_["-input"].isSet()) {
-            const std::string s = Tcl_GetString(opts_["-input"].objv_);
             // TODO: Handle duplicit pins here!
-            ForEachInGroup(s, [&](const std::string &val){
-                cell.AddPin(val, PinDir::IN, PinKind::DATA);
+            ForEachInList(ctx_->GetTclInterp(), opts_["-input"].objv_, [&](Tcl_Obj *val){
+                cell.AddPin(Tcl_GetString(val), PinDir::IN, PinKind::DATA);
                 return TCL_OK;
             });
         }
 
         if (opts_["-async"].isSet()) {
-            const std::string s = Tcl_GetString(opts_["-async"].objv_);
             // TODO: Handle duplicit pins here!
-            ForEachInGroup(s, [&](const std::string &val){
-                cell.AddPin(val, PinDir::IN, PinKind::ASYNC);
+            ForEachInList(ctx_->GetTclInterp(), opts_["-async"].objv_, [&](Tcl_Obj *val){
+                cell.AddPin(Tcl_GetString(val), PinDir::IN, PinKind::ASYNC);
                 return TCL_OK;
             });
         }
@@ -253,14 +246,11 @@ CREATE_TCL_COMMAND(
 
         std::string indices[2] = {"-index_1", "-index_2"};
         for (auto & index : indices) {
-            const std::string s = Tcl_GetString(opts_[index].objv_);
             double min = -DBL_MAX;
 
-            int rv = ForEachInGroup(s, [&](const std::string &val){
-                char *end;
-                double v = strtof(val.c_str(), &end);
-                if (*end != '\0') {
-                    error("%s is not float value in definition of %s.", val, index);
+            int rv = ForEachInList(ctx_->GetTclInterp(), opts_[index].objv_, [&](Tcl_Obj *val){
+                double v;
+                if (GetDoubleFromExprObj(val, &v) != TCL_OK) {
                     return TCL_ERROR;
                 }
                 if (v <= min) {
@@ -296,25 +286,18 @@ CREATE_TCL_COMMAND(
         }
 
         // index_1 argument Checked for validity earlier
-        std::string s = Tcl_GetString(opts_["-index_1"].objv_);
-        double min = -DBL_MAX;
-        (void) ForEachInGroup(s, [&](const std::string &val){
-            char *end;
-            double v = strtof(val.c_str(), &end);
-            min = v;
-            template_p.first.AddIndex1(atof(val.c_str()));
+        (void) ForEachInList(ctx_->GetTclInterp(), opts_["-index_1"].objv_, [&](Tcl_Obj *val){
+            double v;
+            (void) GetDoubleFromExprObj(val, &v);
+            template_p.first.AddIndex1(v);
             return TCL_OK;
         });
 
         // index_2 argument Checked for validity earlier
-        s = Tcl_GetString(opts_["-index_2"].objv_);
-        min = -DBL_MAX;
-
-        (void) ForEachInGroup(s, [&](const std::string &val){
-            char *end;
-            double v = strtof(val.c_str(), &end);
-            min = v;
-            template_p.first.AddIndex2(atof(val.c_str()));
+        (void) ForEachInList(ctx_->GetTclInterp(), opts_["-index_2"].objv_, [&](Tcl_Obj *val){
+            double v;
+            (void) GetDoubleFromExprObj(val, &v);
+            template_p.first.AddIndex2(v);
             return TCL_OK;
         });
 
@@ -344,10 +327,9 @@ CREATE_TCL_COMMAND(
 
         // TODO: Check if corner is only specified with "model" type!
 
-        const std::string s = Tcl_GetString(opts_["{spice_files}"].objv_);
-
-        ForEachInGroup(s, [&](const std::string &val){
+        ForEachInList(ctx_->GetTclInterp(), opts_["{spice_files}"].objv_, [&](Tcl_Obj *val_obj){
             // TODO: Check existence of the file
+            const std::string val = Tcl_GetString(val_obj);
             if (type == "netlist") {
                 ctx_->AddNetlist(val);
             } else {
@@ -392,9 +374,13 @@ CREATE_TCL_COMMAND(
 
     ARG({
         Volt volts;
-        Tcl_GetDoubleFromObj(ctx_->GetTclInterp(), opts_["voltage_value"].objv_, &volts);
-        std::string name = Tcl_GetString(opts_["net_name"].objv_);
 
+        int rv = GetDoubleFromExprObj(opts_["voltage_value"].objv_, &volts);
+        if (rv != TCL_OK) {
+            return rv;
+        }
+
+        std::string name = Tcl_GetString(opts_["net_name"].objv_);
         ctx_->GetLibrary().SetDefaultSupplyVdd(name, volts);
 
         return TCL_OK;
@@ -414,9 +400,12 @@ CREATE_TCL_COMMAND(
 
     ARG({
         Volt volts;
-        Tcl_GetDoubleFromObj(ctx_->GetTclInterp(), opts_["voltage_value"].objv_, &volts);
-        std::string name = Tcl_GetString(opts_["net_name"].objv_);
+        int rv = GetDoubleFromExprObj(opts_["voltage_value"].objv_, &volts);
+        if (rv != TCL_OK) {
+            return rv;
+        }
 
+        std::string name = Tcl_GetString(opts_["net_name"].objv_);
         ctx_->GetLibrary().SetDefaultSupplyGnd(name, volts);
 
         return TCL_OK;
@@ -466,12 +455,18 @@ CREATE_TCL_COMMAND(
         op.SetName(Tcl_GetString(opts_["-name"].objv_));
 
         Celsius temp;
-        Tcl_GetDoubleFromObj(ctx_->GetTclInterp(), opts_["-temp"].objv_, &temp);
+        int rv = GetDoubleFromExprObj(opts_["-temp"].objv_, &temp);
+        if (rv != TCL_OK) {
+            return rv;
+        }
         op.SetTemperature(temp);
 
         if (opts_["-voltage"].isSet()) {
             Volt volts;
-            Tcl_GetDoubleFromObj(ctx_->GetTclInterp(), opts_["voltage"].objv_, &volts);
+            rv = GetDoubleFromExprObj(opts_["voltage"].objv_, &volts);
+            if (rv != TCL_OK) {
+                return rv;
+            }
             ctx_->GetLibrary().SetDefaultSupplyVdd(volts);
         }
 
