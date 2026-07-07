@@ -1,0 +1,24 @@
+Executing file: /WORK/characterizer/test/tcl/set_operating_condition/script.tcl
+set_operating_condition -temp 25 -voltage 1.05
+0
+set_operating_condition -name typical -voltage 1.05
+0
+set_operating_condition -name typical -temp 25
+0
+set_operating_condition -name typical -temp 25 -supply_name VDD -voltage 1.05
+0
+set_operating_condition -name typical -temp 25 -supply_name NON_EXISTENT
+0
+set_operating_condition -name typical -temp not_a_number -voltage 1.05
+0
+set_operating_condition -name typical -temp {"hello"} -voltage 1.05
+0
+set_operating_condition -name typical -temp 25 -voltage bad_volt
+0
+set_operating_condition -name typical -temp 25 -voltage 0.95+0.1
+1
+set_vdd VDD 1.2
+Info: Power supply rail set to: VDD : 1.200000
+1
+set_operating_condition -name best -temp 25 -supply_name VDD
+1

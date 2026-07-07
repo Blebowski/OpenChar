@@ -430,18 +430,18 @@ CREATE_TCL_COMMAND(
     ARG({
 
         if (!opts_["-name"].isSet()) {
-            error("You need to specify -name for operating conditions name\n");
+            error("You need to specify -name for operating conditions name.");
             return TCL_ERROR;
         }
 
         if (!opts_["-temp"].isSet()) {
-            error("You need to specify -temp for operating conditions temperature\n");
+            error("You need to specify -temp for operating conditions temperature.");
             return TCL_ERROR;
         }
 
         if ((!opts_["-supply_name"].isSet() && !opts_["-voltage"].isSet()) ||
             (opts_["-supply_name"].isSet() && opts_["-voltage"].isSet())) {
-            error("You need to specify exactly one of: -supply_name, -voltage .\n");
+            error("You need to specify exactly one of: -supply_name, -voltage.");
             return TCL_ERROR;
         }
 
@@ -465,7 +465,7 @@ CREATE_TCL_COMMAND(
 
         if (opts_["-voltage"].isSet()) {
             Volt volts;
-            rv = GetDoubleFromExprObj(opts_["voltage"].objv_, &volts);
+            rv = GetDoubleFromExprObj(opts_["-voltage"].objv_, &volts);
             if (rv != TCL_OK) {
                 return rv;
             }

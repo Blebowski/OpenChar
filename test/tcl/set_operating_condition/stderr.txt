@@ -1,0 +1,8 @@
+Error: You need to specify -name for operating conditions name.
+Error: You need to specify -temp for operating conditions temperature.
+Error: You need to specify exactly one of: -supply_name, -voltage.
+Error: You need to specify exactly one of: -supply_name, -voltage.
+Error: Supply NON_EXISTENT does not exists. Define it using set_vdd
+Error: 'not_a_number' is not a valid expression.
+Error: 'hello' does not evaluate to a floating point value.
+Error: 'bad_volt' is not a valid expression.
