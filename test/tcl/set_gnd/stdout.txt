@@ -1,0 +1,7 @@
+Executing file: /WORK/characterizer/test/tcl/set_gnd/script.tcl
+set_gnd GND xyz
+0
+set_gnd GND 0.0
+1
+set_gnd GND 0.05
+1

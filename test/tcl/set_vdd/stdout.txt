@@ -1,0 +1,7 @@
+Executing file: /WORK/characterizer/test/tcl/set_vdd/script.tcl
+set_vdd VDD abc
+0
+set_vdd VDD 1.05
+1
+set_vdd VDD 0.9
+1

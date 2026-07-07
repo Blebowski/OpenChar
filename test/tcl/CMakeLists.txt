@@ -1,2 +1,4 @@
 OC_TCL_TEST(define_cell)
 OC_TCL_TEST(define_template)
+OC_TCL_TEST(set_vdd)
+OC_TCL_TEST(set_gnd)
