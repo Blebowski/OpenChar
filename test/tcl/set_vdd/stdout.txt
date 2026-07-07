@@ -2,6 +2,8 @@ Executing file: /WORK/characterizer/test/tcl/set_vdd/script.tcl
 set_vdd VDD abc
 0
 set_vdd VDD 1.05
+Info: Power supply rail set to: VDD : 1.050000
 1
 set_vdd VDD 0.9
+Info: Power supply rail set to: VDD : 0.900000
 1

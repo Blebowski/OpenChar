@@ -382,6 +382,7 @@ CREATE_TCL_COMMAND(
 
         std::string name = Tcl_GetString(opts_["net_name"].objv_);
         ctx_->GetLibrary().SetDefaultSupplyVdd(name, volts);
+        info("Power supply rail set to: %s : %f", name, volts);
 
         return TCL_OK;
     })
@@ -407,6 +408,7 @@ CREATE_TCL_COMMAND(
 
         std::string name = Tcl_GetString(opts_["net_name"].objv_);
         ctx_->GetLibrary().SetDefaultSupplyGnd(name, volts);
+        info("Ground rail set to: %s : %f", name, volts);
 
         return TCL_OK;
     })

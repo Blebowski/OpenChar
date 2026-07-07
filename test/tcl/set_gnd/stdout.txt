@@ -2,6 +2,16 @@ Executing file: /WORK/characterizer/test/tcl/set_gnd/script.tcl
 set_gnd GND xyz
 0
 set_gnd GND 0.0
+Info: Ground rail set to: GND : 0.000000
 1
-set_gnd GND 0.05
+set_gnd GND 0.05+0.1
+Info: Ground rail set to: GND : 0.150000
+1
+set GND_SUFFIX "AAAA"
+AAAA
+set_gnd "GND_${GND_SUFFIX}" 0.2
+Info: Ground rail set to: GND_AAAA : 0.200000
+1
+set_gnd GND [expr 1 + 1]
+Info: Ground rail set to: GND : 2.000000
 1
